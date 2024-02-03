@@ -1,0 +1,143 @@
+:root {
+  --blue:#033c73;
+  --indigo:#6610f2;
+  --purple:#6f42c1;
+  --pink:#e83e8c;
+  --red:#c71c22;
+  --orange:#fd7e14;
+  --yellow:#dd5600;
+  --green:#73a839;
+  --teal:#20c997;
+  --cyan:#2fa4e7;
+  --white:#fff;
+  --gray:#868e96;
+  --gray-dark:#343a40;
+  --primary:#2fa4e7;
+  --secondary:#e9ecef;
+  --success:#73a839;
+  --info:#033c73;
+  --warning:#dd5600;
+  --danger:#c71c22;
+  --light:#f8f9fa;
+  --text:#343a40;
+  --dark:#343a40;
+  --body-bg: #fff;
+  --text-bg-mark: #fcf8e3;
+  --custom-select: #fff;
+  --breakpoint-xs:0;
+  --breakpoint-sm:576px;
+  --breakpoint-md:768px;
+  --breakpoint-lg:992px;
+  --breakpoint-xl:1200px;
+  --font-family-sans-serif:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";
+  --font-family-monospace:SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace
+}
+
+a {
+  color: mediumslateblue;
+}
+
+a:visited {
+  color: silver;
+}
+
+body {
+  display: flex;
+  height: 100vh;
+  background-color: black;
+  color: white;
+}
+
+div[id=container] {
+  display: grid;
+  width: 75%;
+  height: 90%;
+  min-width: 800px;
+  min-height: 600px;
+  grid-template-rows: auto auto auto minmax(0, 1fr) auto auto auto;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: auto;
+}
+
+h1[id=title] {
+  grid-column: 1 / 3;
+  grid-row: 1;
+  font-family: monospace;
+  font-size: 2em;
+}
+
+p[id=synopsis] {
+  color: lightgrey;
+  grid-column: 1 / 3;
+  grid-row: 2;
+  margin: 0;
+  font-family: sans-serif;
+  font-size: 10pt;
+  line-height: 1.5em;
+}
+
+p[id=features] {
+  grid-column: 1 / 3;
+  grid-row: 3;
+  text-align: center;
+  font-family: sans-serif;
+  font-style: italic;
+  font-size: 10pt;
+  line-height: 1.5em;
+  color: lightgrey;
+}
+
+div[id=cell-editor] {
+  grid-column: 1 / 2;
+  grid-row: 4;
+}
+
+[id=cell-editor] div[id=editor] {
+  border: 1px solid black;
+  height: calc(100% - 1px);
+  padding-right: 1.5em;
+}
+
+div[id=cell-syntax] {
+  grid-column: 2 / 3;
+  grid-row: 4;
+}
+
+div[id=cell-syntax] textarea {
+  height: 100%;
+}
+
+[id=container] label {
+  display: block;
+  font-family: monospace;
+  font-size: 14pt;
+}
+
+div[id=cell-console] {
+  grid-column: 1 / 3;
+  grid-row: 5;
+  margin-top: 2em;
+  overflow: hidden;
+}
+
+div[id=cell-client] {
+  grid-column: 1 / 3;
+  grid-row: 6;
+  overflow: hidden;
+}
+
+div[id=cell-server] {
+  grid-column: 1 / 3;
+  grid-row: 7;
+  overflow: hidden;
+}
+
+div[id=container] textarea {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  resize: none;
+  overflow-y: auto;
+  font-family: monospace;
+  font-family: 10pt;
+}
