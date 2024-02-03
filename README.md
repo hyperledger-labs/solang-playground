@@ -9,8 +9,7 @@ Welcome to Solang Playground, a Solidity web editor for that enables editing, co
 
 You can experiment with a live demo of the example server integrated with an in-browser editor here:
 
-https://salaheldinsoliman.github.io/solang-playground-lab/
-
+https://labs.hyperledger.org/solang-playground/
 
 ## Building
 
