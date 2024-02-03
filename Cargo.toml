@@ -1,0 +1,11 @@
+[profile.release]
+codegen-units = 1
+lto = "fat"
+opt-level = "z"
+
+[workspace]
+members = [
+  "crates/browser",
+  "crates/solang"
+]
+default-members = ["crates/browser"]

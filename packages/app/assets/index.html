@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body, html {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    #container {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+    #cell-editor {
+      flex-grow: 1;
+      min-height: 0;
+    }
+    #editor {
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+    }
+    textarea {
+      width: 100%;
+      resize: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <div id="cell-editor">
+      <label for="editor">editor</label>
+      <div id="editor"></div>
+    </div>
+    <div id="cell-console">
+      <label for="channel-console">console</label>
+      <textarea id="channel-console" autocomplete="off" spellcheck="off" wrap="off" readonly rows="3"></textarea>
+    </div>
+    <div id="cell-client">
+      <label for="channel-client">message trace (client ⇒ server)</label>
+      <textarea id="channel-client" autocomplete="off" spellcheck="off" wrap="off" readonly rows="4"></textarea>
+    </div>
+    <div id="cell-server">
+      <label for="channel-server">message trace (client ⇐ server)</label>
+      <textarea id="channel-server" autocomplete="off" spellcheck="off" wrap="off" readonly rows="8"></textarea>
+    </div>
+  </div>
+</body>
+</html>
