@@ -1,15 +1,16 @@
-<div align="center">
-  <h1><code>tower-lsp-web-demo</code></h1>
-  <p>
-    <strong>A minimal browser-hosted WASM demo for tower-lsp</strong>
-  </p>
-</div>
+# Solang Playground - A Solidity web editor for [Hyperledger Solang](https://github.com/hyperledger/solang)
+
+
+Welcome to Solang Playground, a Solidity web editor for that enables editing, compiling, deploying and interacting with Solidity smart contracts on Solana or Polkadot.
+
+
 
 ## Demo
 
 You can experiment with a live demo of the example server integrated with an in-browser editor here:
 
-https://silvanshade.github.io/tower-lsp-web-demo/
+https://salaheldinsoliman.github.io/solang-playground-lab/
+
 
 ## Building
 
@@ -25,51 +26,22 @@ cargo make build
 cargo make run
 ```
 
-## Project Structure
 
-The server implementation:
 
-```
-crates
-├── browser                   -- entry-point for launching the server in the browser
-│   └── src
-│       └── lib.rs
-├── language                  -- handles definitions for working with tree-sitter javascript grammar
-│   └── src
-│       ├── language.rs       -- handles loading the pre-compiled tree-sitter-javascript.wasm blob
-│       ├── lib.rs
-│       └── parser.rs         -- creates tree-sitter parsers from the loaded grammar blob
-└── server
-    └── src
-        ├── core
-        │   ├── document.rs   -- definitions for working with document related data
-        │   ├── error.rs
-        │   ├── session.rs    -- definitions for lsp session and related state
-        │   ├── syntax.rs     -- definitions for updating syntax text area in browser
-        │   └── text.rs       -- definitions for handling text and edits
-        ├── core.rs
-        ├── handler.rs        -- definitions for various feature handlers
-        ├── lib.rs
-        └── server.rs         -- definitions for the lsp server and impl of tower-lsp trait
-```
+## Roadmap and Status
 
-The webapp and client implementation for wiring up the Monaco editor to  communicate with the server:
+### V0.1
 
-```
-packages
-└── app
-    └── src
-        ├── app.ts            -- the browser app which launches the client and server and displays the user interface
-        ├── client.ts         -- definitions for the lsp client
-        ├── codec             -- definitions for encoding and decoding/demuxing messages between the client and server
-        │   ├── bytes.ts      -- utilities for working with Uint8Array
-        │   ├── demuxer.ts    -- demuxer for splitting output from server into streams of notifications, requests, and responses
-        │   ├── headers.ts    -- utilities for working with http headers
-        │   ├── map.ts        -- map for storing responses from server yet to be processed (fed by demuxer)
-        │   └── queue.ts      -- promise based queue used for storing notifications and requests
-        ├── index.ts
-        ├── language.ts       -- definition for the javascript language (e.g., language id, extensions, mime, etc.)
-        ├── queue.ts          -- promise based queue structure
-        ├── server.ts         -- prepares client->server and client<-server web streams and launches tower-lsp server
-        └── tracer.ts         -- utilities for tracing JSON-RPC messages and displaying in browser interface
-```
+| Milestone                                                                    | Related Feature                                                                                                                | Status      |
+| ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ----------- |
+| Compile Solang language server to WASM, and integrate it to a Monaco editor. | Allow editing Solidity source files in the browser, with smarts provided from the server (Diagnostics, code completion, etc..) | Completed   |
+| Host Solang on a backend service                                             | Allow compiling smart contracts on the web editor                                                                              | In progress |
+| Support Polkadot API                                                         | Allow the deployment and interaction with Solidity contracts on Polkadot                                                       | Not Started |
+| IDE Improvements                                                             | Improve developer experience when trying out the IDE, making it a more attractive option for Solidity devs                     | Not started |
+
+
+
+
+## Acknowledgments
+
+This project started out as a fork of https://github.com/silvanshade/tower-lsp-web-demo. [Darin Morrison](https://github.com/silvanshade) created a demo project where an example tower-lsp language server was compiled to WASM and integrated in a Monaco web editor.
