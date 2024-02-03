@@ -1,5 +1,8 @@
-This project is governed by the Contributor Covenant version 2.0 (https://www.contributor-covenant.org/version/2/0/code_of_conduct).
+Code of Conduct Guidelines
+==========================
 
-All contributors and participants agree to abide by its terms.
+Please review the Hyperledger [Code of
+Conduct](https://wiki.hyperledger.org/community/hyperledger-project-code-of-conduct)
+before participating. It is important that we keep things civil.
 
-To report violations, send an email to darinmorrison+conduct@gmail.com.
+<a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by/4.0/88x31.png" /></a><br />This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>.
