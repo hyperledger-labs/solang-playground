@@ -1,0 +1,4 @@
+# ignore all directories
+*/
+Cargo.lock
+package-lock.json
