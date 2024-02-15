@@ -43,7 +43,7 @@ use tower_lsp::{
         Hover, HoverContents, HoverParams, HoverProviderCapability,
         ImplementationProviderCapability, InitializeParams, InitializeResult, InitializedParams,
         Location, MarkedString, MessageType, OneOf, Position, Range, ReferenceParams, RenameParams,
-        ServerCapabilities, SignatureHelpOptions, TextDocumentContentChangeEvent,
+        ServerCapabilities, SignatureHelpOptions,
         TextDocumentSyncCapability, TextDocumentSyncKind, TextEdit,
         TypeDefinitionProviderCapability, Url, WorkspaceEdit, WorkspaceFoldersServerCapabilities,
         WorkspaceServerCapabilities, 
@@ -2139,7 +2139,7 @@ impl LanguageServer for SolangServer {
         let uri = params.text_document.uri;
         let uri_string = uri.to_string();
         match self.url_to_file_path(&uri) {
-            Ok(path) => {
+            Ok(_path) => {
                 self.files
                     .lock()
                     .await
@@ -2185,7 +2185,7 @@ impl LanguageServer for SolangServer {
         let uri_string = uri.to_string();
         
         match self.url_to_file_path(&uri) {
-            Ok(path) => {
+            Ok(_path) => {
                 if let Some(text_buf) = self.files.lock().await.text_buffers.get_mut(&uri_string) {
                     *text_buf = new_content.clone();
                 }
@@ -2207,7 +2207,7 @@ impl LanguageServer for SolangServer {
 
         let uri_string = uri.to_string();
         if let Some(text) = params.text {
-            if let Ok(path) = self.url_to_file_path(&uri) {
+            if let Ok(_path) = self.url_to_file_path(&uri) {
                 if let Some(text_buf) = self.files.lock().await.text_buffers.get_mut(&uri_string) {
                     *text_buf = text;
                 }
@@ -2221,7 +2221,7 @@ impl LanguageServer for SolangServer {
         let uri = params.text_document.uri;
 
         let uri_string = uri.to_string();
-        if let Ok(path) = self.url_to_file_path(&uri) {
+        if let Ok(_path) = self.url_to_file_path(&uri) {
             let mut files = self.files.lock().await;
             files.caches.remove(uri_string.as_str());
             files.text_buffers.remove(uri_string.as_str());
@@ -2402,7 +2402,7 @@ impl LanguageServer for SolangServer {
 
         let uri = txtdoc.uri;
         let uri_string = uri.to_string();
-        if let Ok(path) = self.url_to_file_path(&uri) {
+        if let Ok(_path) = self.url_to_file_path(&uri) {
             let files = &self.files.lock().await;
             if let Some(cache) = files.caches.get(&uri_string) {
                 if let Some(offset) = cache
@@ -2742,7 +2742,7 @@ impl LanguageServer for SolangServer {
         let caches = &self.files.lock().await.caches;
         let ws = caches
             .iter()
-            .map(|(p, cache)| {
+            .map(|(_p, cache)| {
                 let uri = Url::parse("sesa").unwrap();
                 let text_edits: Vec<_> = cache
                     .references
@@ -2882,158 +2882,4 @@ fn get_constants(expr: &Expression) -> Option<String> {
         _ => return None,
     };
     Some(val)
-}
-
-fn update_file_contents(
-    mut prev_content: String,
-    content_change: TextDocumentContentChangeEvent,
-) -> String {
-    
-    if let Some(range) = content_change.range {
-        let start_line = range.start.line as usize;
-        let start_col = range.start.character as usize;
-        let end_line = range.end.line as usize;
-        let end_col = range.end.character as usize;
-
-        // Directly add the changes to the buffer when changes are present at the end of the file.
-        if start_line == prev_content.lines().count() {
-            prev_content.push_str(&content_change.text);
-            return prev_content;
-        }
-
-        let mut new_content = String::new();
-        for (i, line) in prev_content.lines().enumerate() {
-            if i < start_line {
-                new_content.push_str(line);
-                new_content.push('\n');
-                continue;
-            }
-
-            if i > end_line {
-                new_content.push_str(line);
-                new_content.push('\n');
-                continue;
-            }
-
-            if i == start_line {
-                new_content.push_str(&line[..start_col]);
-                new_content.push_str(&content_change.text);
-            }
-
-            if i == end_line {
-                new_content.push_str(&line[end_col..]);
-                new_content.push('\n');
-            }
-        }
-        new_content
-    } else {
-        // When no range is provided, entire file is sent in the request.
-        content_change.text
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn without_range() {
-        let initial_content = "contract foo {\n    function bar(Book y, Book x) public returns (bool) {\n        return y.available;\n    }\n}\n".to_string();
-        let new_content = "struct Book {\n    string name;\n    string writer;\n    uint id;\n    bool available;\n}\n".to_string();
-        assert_eq!(
-            new_content.clone(),
-            update_file_contents(
-                initial_content,
-                TextDocumentContentChangeEvent {
-                    range: None,
-                    range_length: None,
-                    text: new_content
-                }
-            )
-        );
-    }
-
-    #[test]
-    fn at_the_end_of_file() {
-        let initial_content = "contract foo {\n    function bar(Book y, Book x) public returns (bool) {\n        return y.available;\n    }\n}\n".to_string();
-        let new_content = "struct Book {\n    string name;\n    string writer;\n    uint id;\n    bool available;\n}\n".to_string();
-        let final_content = "\
-            contract foo {\n    function bar(Book y, Book x) public returns (bool) {\n        return y.available;\n    }\n}\n\
-            struct Book {\n    string name;\n    string writer;\n    uint id;\n    bool available;\n}\n\
-        ".to_string();
-        assert_eq!(
-            final_content,
-            update_file_contents(
-                initial_content,
-                TextDocumentContentChangeEvent {
-                    range: Some(Range {
-                        start: Position {
-                            line: 5,
-                            character: 0
-                        },
-                        end: Position {
-                            line: 5,
-                            character: 0
-                        }
-                    }),
-                    range_length: Some(0),
-                    text: new_content
-                }
-            ),
-        );
-    }
-
-    #[test]
-    fn remove_content() {
-        let initial_content = "struct Book {\n    string name;\n    string writer;\n    uint id;\n    bool available;\n}\n".to_string();
-        let final_content =
-            "struct Book {\n    string name;\n    string id;\n    bool available;\n}\n".to_string();
-        assert_eq!(
-            final_content,
-            update_file_contents(
-                initial_content,
-                TextDocumentContentChangeEvent {
-                    range: Some(Range {
-                        start: Position {
-                            line: 2,
-                            character: 11
-                        },
-                        end: Position {
-                            line: 3,
-                            character: 9
-                        }
-                    }),
-                    range_length: Some(17),
-                    text: String::new(),
-                }
-            ),
-        );
-    }
-
-    #[test]
-    fn add_content() {
-        let initial_content =
-            "struct Book {\n    string name;\n    string id;\n    bool available;\n}\n".to_string();
-        let final_content = "struct Book {\n    string name;\n    string writer;\n    uint id;\n    bool available;\n}\n".to_string();
-        assert_eq!(
-            final_content,
-            update_file_contents(
-                initial_content,
-                TextDocumentContentChangeEvent {
-                    range: Some(Range {
-                        start: Position {
-                            line: 2,
-                            character: 11
-                        },
-                        end: Position {
-                            line: 2,
-                            character: 11
-                        }
-                    }),
-                    range_length: Some(0),
-                    text: "writer;\n    uint ".to_string(),
-                }
-            ),
-        );
-    }
 }

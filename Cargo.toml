@@ -9,3 +9,4 @@ members = [
   "crates/solang"
 ]
 default-members = ["crates/browser"]
+resolver = "1"

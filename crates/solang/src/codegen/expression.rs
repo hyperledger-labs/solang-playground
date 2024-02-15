@@ -50,9 +50,9 @@ pub fn expression(
 
     match &expr {
         ast::Expression::CodeLiteral {
-            loc,
-            contract_no,
-            runtime,
+            loc: _,
+            contract_no: _,
+            runtime: _,
         } => todo!("code literal"),
         ast::Expression::StorageVariable {
             loc,

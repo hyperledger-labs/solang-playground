@@ -609,10 +609,8 @@ impl AbiEncoding for ScaleEncoding {
                 }
                 Expression::NumberLiteral {
                     ty: Type::Uint(256),
-                    value,
                     ..
                 } => {
-                    let bytes = value.to_bytes_be().1;
                     result.extend_from_slice(&[0]);
                 }
                 _ => return None,

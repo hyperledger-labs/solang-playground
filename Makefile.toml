@@ -10,7 +10,7 @@ npm install
 
 [tasks.build-server]
 script = '''
-cargo build --release
+cargo build --release --target wasm32-unknown-unknown
 wasm-bindgen --out-dir ./packages/app/assets/wasm --target web --typescript ./target/wasm32-unknown-unknown/release/demo_lsp_browser.wasm
 '''
 
@@ -45,3 +45,7 @@ cargo +nightly fmt --all
 script = '''
 npm run app --workspace=packages/app
 '''
+
+[tasks.test]
+command = "cargo"
+args = ["test", "--target", "x86_64-unknown-linux-gnu"]
