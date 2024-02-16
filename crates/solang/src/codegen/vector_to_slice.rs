@@ -53,7 +53,7 @@ fn find_writable_vectors(
                 } else {
                     apply_transfers(&block.transfers[instr_no], vars, writable);
                 }
-            }
+            },
             // Call and return do not take slices
             Instr::Return { value: args } | Instr::Call { args, .. } => {
                 for arg in args {
@@ -65,7 +65,7 @@ fn find_writable_vectors(
                 }
 
                 apply_transfers(&block.transfers[instr_no], vars, writable);
-            }
+            },
             Instr::PushMemory { value, .. } => {
                 if let Expression::Variable { var_no, .. } = value.as_ref() {
                     if let Some(entry) = vars.get_mut(var_no) {
@@ -74,7 +74,7 @@ fn find_writable_vectors(
                 }
 
                 apply_transfers(&block.transfers[instr_no], vars, writable);
-            }
+            },
             Instr::Store { data, .. } => {
                 if let Expression::Variable { var_no, .. } = data {
                     if let Some(entry) = vars.get_mut(var_no) {
@@ -83,11 +83,8 @@ fn find_writable_vectors(
                 }
 
                 apply_transfers(&block.transfers[instr_no], vars, writable);
-            }
-            Instr::MemCopy {
-                destination: buf, ..
-            }
-            | Instr::WriteBuffer { buf, .. } => {
+            },
+            Instr::MemCopy { destination: buf, .. } | Instr::WriteBuffer { buf, .. } => {
                 if let Expression::Variable { var_no, .. } = buf {
                     if let Some(entry) = vars.get_mut(var_no) {
                         writable.extend(entry.keys());
@@ -95,7 +92,7 @@ fn find_writable_vectors(
                 }
 
                 apply_transfers(&block.transfers[instr_no], vars, writable);
-            }
+            },
             // These instructions are fine with vectors
             Instr::Set { .. }
             | Instr::Nop
@@ -121,7 +118,7 @@ fn find_writable_vectors(
             | Instr::AccountAccess { .. }
             | Instr::Unimplemented { .. } => {
                 apply_transfers(&block.transfers[instr_no], vars, writable);
-            }
+            },
         }
     }
 }
@@ -135,7 +132,7 @@ fn apply_transfers(
         match transfer {
             Transfer::Kill { var_no } => {
                 vars.swap_remove(var_no);
-            }
+            },
             Transfer::Mod { var_no } => {
                 if let Some(entry) = vars.get_mut(var_no) {
                     for e in entry.values_mut() {
@@ -144,14 +141,14 @@ fn apply_transfers(
 
                     writable.extend(entry.keys());
                 }
-            }
+            },
             Transfer::Copy { var_no, src } => {
                 if let Some(defs) = vars.get(src) {
                     let defs = defs.clone();
 
                     vars.insert(*var_no, defs);
                 }
-            }
+            },
             Transfer::Gen { var_no, def } => {
                 if let Some(entry) = vars.get_mut(var_no) {
                     entry.insert(*def, false);
@@ -160,16 +157,12 @@ fn apply_transfers(
                     v.insert(*def, false);
                     vars.insert(*var_no, v);
                 }
-            }
+            },
         }
     }
 }
 
-fn update_vectors_to_slice(
-    writable: &HashSet<Def>,
-    cfg: &mut ControlFlowGraph,
-    ns: &mut Namespace,
-) {
+fn update_vectors_to_slice(writable: &HashSet<Def>, cfg: &mut ControlFlowGraph, ns: &mut Namespace) {
     let mut defs_to_be_updated: HashSet<Def> = HashSet::new();
 
     for block_no in 0..cfg.blocks.len() {

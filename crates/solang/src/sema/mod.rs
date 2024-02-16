@@ -109,7 +109,7 @@ fn sema_file(file: &ResolvedFile, resolver: &mut FileResolver, ns: &mut ast::Nam
             ns.diagnostics.append(&mut errors);
 
             return;
-        }
+        },
     };
 
     let tree = collect_annotations_doccomments(&pt, &comments, ns);
@@ -122,11 +122,11 @@ fn sema_file(file: &ResolvedFile, resolver: &mut FileResolver, ns: &mut ast::Nam
             pt::SourceUnitPart::PragmaDirective(pragma) => {
                 annotions_not_allowed(&item.annotations, "pragma", ns);
                 resolve_pragma(pragma, ns);
-            }
+            },
             pt::SourceUnitPart::ImportDirective(import) => {
                 annotions_not_allowed(&item.annotations, "import", ns);
                 resolve_import(import, Some(file), file_no, resolver, ns);
-            }
+            },
             _ => (),
         }
     }
@@ -148,7 +148,7 @@ fn sema_file(file: &ResolvedFile, resolver: &mut FileResolver, ns: &mut ast::Nam
                 if let Some(func_no) = functions::function(func, file_no, &item.doccomments, ns) {
                     resolve_bodies.push((func_no, func));
                 }
-            }
+            },
             pt::SourceUnitPart::VariableDefinition(var) => {
                 annotions_not_allowed(&item.annotations, "variable", ns);
 
@@ -161,7 +161,7 @@ fn sema_file(file: &ResolvedFile, resolver: &mut FileResolver, ns: &mut ast::Nam
                     ns,
                     &mut Symtable::default(),
                 );
-            }
+            },
             _ => (),
         }
     }
@@ -191,7 +191,7 @@ fn sema_file(file: &ResolvedFile, resolver: &mut FileResolver, ns: &mut ast::Nam
             pt::SourceUnitPart::StraySemicolon(loc) => {
                 ns.diagnostics
                     .push(ast::Diagnostic::error(*loc, "stray semicolon".to_string()));
-            }
+            },
             pt::SourceUnitPart::ContractDefinition(contract) => {
                 for part in &contract.parts {
                     if let pt::ContractPart::StraySemicolon(loc) = part {
@@ -199,7 +199,7 @@ fn sema_file(file: &ResolvedFile, resolver: &mut FileResolver, ns: &mut ast::Nam
                             .push(ast::Diagnostic::error(*loc, "stray semicolon".to_string()));
                     }
                 }
-            }
+            },
             _ => (),
         }
     }
@@ -217,9 +217,7 @@ fn resolve_import(
     ns: &mut ast::Namespace,
 ) {
     let path = match import {
-        pt::Import::Plain(f, _)
-        | pt::Import::GlobalSymbol(f, _, _)
-        | pt::Import::Rename(f, _, _) => f,
+        pt::Import::Plain(f, _) | pt::Import::GlobalSymbol(f, _, _) | pt::Import::Rename(f, _, _) => f,
     };
 
     let filename = match path {
@@ -231,14 +229,12 @@ fn resolve_import(
             ));
 
             return;
-        }
+        },
     };
 
     if filename.string.is_empty() {
-        ns.diagnostics.push(ast::Diagnostic::error(
-            filename.loc,
-            "import path empty".into(),
-        ));
+        ns.diagnostics
+            .push(ast::Diagnostic::error(filename.loc, "import path empty".into()));
         return;
     }
 
@@ -269,11 +265,10 @@ fn resolve_import(
     } else {
         match resolver.resolve_file(parent, &os_filename) {
             Err(message) => {
-                ns.diagnostics
-                    .push(ast::Diagnostic::error(filename.loc, message));
+                ns.diagnostics.push(ast::Diagnostic::error(filename.loc, message));
 
                 return;
-            }
+            },
             Ok(file) => {
                 if !ns.files.iter().any(|f| f.path == file.full_path) {
                     sema_file(&file, resolver, ns);
@@ -288,45 +283,33 @@ fn resolve_import(
                     .iter()
                     .position(|f| f.path == file.full_path)
                     .expect("import should be loaded by now")
-            }
+            },
         }
     };
 
     match import {
         pt::Import::Rename(_, renames, _) => {
             for (from, rename_to) in renames {
-                if let Some(import) =
-                    ns.variable_symbols
-                        .get(&(import_file_no, None, from.name.to_owned()))
-                {
+                if let Some(import) = ns.variable_symbols.get(&(import_file_no, None, from.name.to_owned())) {
                     let import = import.clone();
 
                     let symbol = rename_to.as_ref().unwrap_or(from);
 
                     // Only add symbol if it does not already exist with same definition
-                    if let Some(existing) =
-                        ns.variable_symbols
-                            .get(&(file_no, None, symbol.name.clone()))
-                    {
+                    if let Some(existing) = ns.variable_symbols.get(&(file_no, None, symbol.name.clone())) {
                         if existing == &import {
                             continue;
                         }
                     }
 
                     ns.add_symbol(file_no, None, symbol, import);
-                } else if let Some(import) =
-                    ns.function_symbols
-                        .get(&(import_file_no, None, from.name.to_owned()))
-                {
+                } else if let Some(import) = ns.function_symbols.get(&(import_file_no, None, from.name.to_owned())) {
                     let import = import.clone();
 
                     let symbol = rename_to.as_ref().unwrap_or(from);
 
                     // Only add symbol if it does not already exist with same definition
-                    if let Some(existing) =
-                        ns.function_symbols
-                            .get(&(file_no, None, symbol.name.clone()))
-                    {
+                    if let Some(existing) = ns.function_symbols.get(&(file_no, None, symbol.name.clone())) {
                         if existing == &import {
                             continue;
                         }
@@ -336,14 +319,11 @@ fn resolve_import(
                 } else {
                     ns.diagnostics.push(ast::Diagnostic::error(
                         from.loc,
-                        format!(
-                            "import '{}' does not export '{}'",
-                            filename.string, from.name
-                        ),
+                        format!("import '{}' does not export '{}'", filename.string, from.name),
                     ));
                 }
             }
-        }
+        },
         pt::Import::Plain(..) => {
             // find all the exports for the file
             let exports = ns
@@ -365,10 +345,7 @@ fn resolve_import(
                 };
 
                 // Only add symbol if it does not already exist with same definition
-                if let Some(existing) =
-                    ns.variable_symbols
-                        .get(&(file_no, contract_no, name.clone()))
-                {
+                if let Some(existing) = ns.variable_symbols.get(&(file_no, contract_no, name.clone())) {
                     if existing == &symbol {
                         continue;
                     }
@@ -404,15 +381,10 @@ fn resolve_import(
 
                 ns.add_symbol(file_no, None, &new_symbol, symbol);
             }
-        }
+        },
         pt::Import::GlobalSymbol(_, symbol, _) => {
-            ns.add_symbol(
-                file_no,
-                None,
-                symbol,
-                ast::Symbol::Import(symbol.loc, import_file_no),
-            );
-        }
+            ns.add_symbol(file_no, None, symbol, ast::Symbol::Import(symbol.loc, import_file_no));
+        },
     }
 }
 
@@ -427,7 +399,7 @@ fn resolve_pragma(pragma: &pt::PragmaDirective, ns: &mut ast::Namespace) {
                 name: ident.clone(),
                 value: value.clone(),
             });
-        }
+        },
         pt::PragmaDirective::StringLiteral(loc, ident, value) => {
             plain_pragma(loc, &ident.name, &value.string, ns);
 
@@ -436,7 +408,7 @@ fn resolve_pragma(pragma: &pt::PragmaDirective, ns: &mut ast::Namespace) {
                 name: ident.clone(),
                 value: value.clone(),
             });
-        }
+        },
         pt::PragmaDirective::Version(loc, ident, versions) => {
             if ident.name != "solidity" {
                 ns.diagnostics.push(ast::Diagnostic::error(
@@ -459,7 +431,7 @@ fn resolve_pragma(pragma: &pt::PragmaDirective, ns: &mut ast::Namespace) {
                     versions: res,
                 });
             }
-        }
+        },
         pt::PragmaDirective::Identifier { .. } => (),
     }
 }
@@ -488,10 +460,7 @@ fn plain_pragma(loc: &pt::Loc, name: &str, value: &str, ns: &mut ast::Namespace)
     }
 }
 
-fn parse_version_comparator(
-    version: &pt::VersionComparator,
-    ns: &mut ast::Namespace,
-) -> Result<ast::VersionReq, ()> {
+fn parse_version_comparator(version: &pt::VersionComparator, ns: &mut ast::Namespace) -> Result<ast::VersionReq, ()> {
     match version {
         pt::VersionComparator::Plain { loc, version } => Ok(ast::VersionReq::Plain {
             loc: *loc,
@@ -515,21 +484,15 @@ fn parse_version_comparator(
     }
 }
 
-fn parse_version(
-    loc: &pt::Loc,
-    version: &[String],
-    ns: &mut ast::Namespace,
-) -> Result<ast::Version, ()> {
+fn parse_version(loc: &pt::Loc, version: &[String], ns: &mut ast::Namespace) -> Result<ast::Version, ()> {
     let mut res = Vec::new();
 
     for v in version {
         if let Ok(v) = v.parse() {
             res.push(v);
         } else {
-            ns.diagnostics.push(ast::Diagnostic::error(
-                *loc,
-                format!("'{v}' is not a valid number"),
-            ));
+            ns.diagnostics
+                .push(ast::Diagnostic::error(*loc, format!("'{v}' is not a valid number")));
             return Err(());
         }
     }
@@ -582,10 +545,9 @@ fn collect_annotations_doccomments<'a>(
                     pt::ContractPart::Annotation(note) => {
                         parts_annotations.push(note);
                         continue;
-                    }
+                    },
                     _ => {
-                        let tags =
-                            parse_doccomments(comments, doc_comment_start, part.loc().start());
+                        let tags = parse_doccomments(comments, doc_comment_start, part.loc().start());
 
                         parts.push(ContractPart {
                             part,
@@ -593,7 +555,7 @@ fn collect_annotations_doccomments<'a>(
                             annotations: parts_annotations,
                         });
                         parts_annotations = Vec::new();
-                    }
+                    },
                 }
 
                 if let pt::ContractPart::FunctionDefinition(f) = &part {
@@ -686,12 +648,10 @@ fn osstring_from_vec(loc: &pt::Loc, bs: Vec<u8>, ns: &mut ast::Namespace) -> Opt
     match str::from_utf8(&bs) {
         Ok(s) => Some(OsString::from(s)),
         Err(_) => {
-            ns.diagnostics.push(ast::Diagnostic::error(
-                *loc,
-                "string is not a valid filename".into(),
-            ));
+            ns.diagnostics
+                .push(ast::Diagnostic::error(*loc, "string is not a valid filename".into()));
 
             None
-        }
+        },
     }
 }

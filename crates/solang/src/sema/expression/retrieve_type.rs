@@ -65,18 +65,18 @@ impl RetrieveType for Expression {
             | Expression::EventSelector { ty, .. } => ty.clone(),
             Expression::ExternalFunctionCallRaw { .. } => {
                 panic!("two return values");
-            }
+            },
             Expression::Builtin { tys: returns, .. }
             | Expression::InternalFunctionCall { returns, .. }
             | Expression::ExternalFunctionCall { returns, .. } => {
                 assert_eq!(returns.len(), 1);
                 returns[0].clone()
-            }
+            },
             Expression::List { list, .. } => {
                 assert_eq!(list.len(), 1);
 
                 list[0].ty()
-            }
+            },
             Expression::Constructor { contract_no, .. } => Type::Contract(*contract_no),
             Expression::InterfaceId { .. } => Type::FunctionSelector,
             Expression::FormatString { .. } => Type::String,

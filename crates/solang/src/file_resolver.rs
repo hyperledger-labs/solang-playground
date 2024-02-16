@@ -131,12 +131,7 @@ impl FileResolver {
     }
 
     /// Populate the cache with absolute file path
-    fn load_file(
-        &mut self,
-        filename: &OsStr,
-        path: &Path,
-        import_no: Option<usize>,
-    ) -> Result<&ResolvedFile, String> {
+    fn load_file(&mut self, filename: &OsStr, path: &Path, import_no: Option<usize>) -> Result<&ResolvedFile, String> {
         let path_filename = PathBuf::from(filename);
         if let Some(cache) = self.cached_paths.get(&path_filename) {
             if self.files[*cache].import_no == import_no {
@@ -147,12 +142,8 @@ impl FileResolver {
         // read the file
         let mut f = match File::open(path) {
             Err(err_info) => {
-                return Err(format!(
-                    "cannot open file '{}': {}",
-                    path.display(),
-                    err_info
-                ));
-            }
+                return Err(format!("cannot open file '{}': {}", path.display(), err_info));
+            },
             Ok(file) => file,
         };
 
@@ -178,11 +169,7 @@ impl FileResolver {
     /// Walk the import path to search for a file. If no import path is set up,
     /// return. Check each import path if the file can be found in a subdirectory
     /// of that path, and return the canonicalized path.
-    pub fn resolve_file(
-        &mut self,
-        parent: Option<&ResolvedFile>,
-        filename: &OsStr,
-    ) -> Result<ResolvedFile, String> {
+    pub fn resolve_file(&mut self, parent: Option<&ResolvedFile>, filename: &OsStr) -> Result<ResolvedFile, String> {
         let path_filename = PathBuf::from(filename);
 
         // See https://docs.soliditylang.org/en/v0.8.17/path-resolution.html
@@ -193,9 +180,7 @@ impl FileResolver {
         // will only the path relative to the current file.
         if path_filename.starts_with("./") || path_filename.starts_with("../") {
             if let Some(ResolvedFile {
-                import_no,
-                full_path,
-                ..
+                import_no, full_path, ..
             }) = parent
             {
                 let curdir = PathBuf::from(".");
@@ -258,20 +243,13 @@ impl FileResolver {
             _ => Err(format!(
                 "found multiple files matching '{}': {}",
                 path_filename.display(),
-                result
-                    .iter()
-                    .map(|f| format!("'{}'", f.full_path.display()))
-                    .join(", ")
+                result.iter().map(|f| format!("'{}'", f.full_path.display())).join(", ")
             )),
         }
     }
 
     /// Get line and the target symbol's offset from loc
-    pub fn get_line_and_offset_from_loc(
-        &self,
-        file: &ast::File,
-        loc: &Loc,
-    ) -> (String, usize, usize, usize) {
+    pub fn get_line_and_offset_from_loc(&self, file: &ast::File, loc: &Loc) -> (String, usize, usize, usize) {
         let (start, end) = if let Loc::File(_, start, end) = loc {
             (start, end)
         } else {

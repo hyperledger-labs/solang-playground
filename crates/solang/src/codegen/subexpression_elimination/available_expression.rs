@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::codegen::subexpression_elimination::{
-    AvailableExpression, AvailableExpressionSet, AvailableVariable, BasicExpression,
-    ExpressionType, NodeId,
+    AvailableExpression, AvailableExpressionSet, AvailableVariable, BasicExpression, ExpressionType, NodeId,
 };
 use crate::codegen::Expression;
 use std::cell::RefCell;

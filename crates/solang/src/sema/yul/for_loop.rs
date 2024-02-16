@@ -37,8 +37,7 @@ pub(crate) fn resolve_for_loop(
     )?;
     next_reachable &= resolved_init_block.1;
 
-    let resolved_cond =
-        resolve_condition(&yul_for.condition, context, symtable, function_table, ns)?;
+    let resolved_cond = resolve_condition(&yul_for.condition, context, symtable, function_table, ns)?;
 
     loop_scope.enter_scope();
 

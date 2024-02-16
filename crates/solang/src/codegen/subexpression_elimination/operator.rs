@@ -60,21 +60,21 @@ impl Expression {
                 } else {
                     Operator::Add
                 }
-            }
+            },
             Expression::Subtract { overflowing, .. } => {
                 if *overflowing {
                     Operator::OverflowingSubtract
                 } else {
                     Operator::Subtract
                 }
-            }
+            },
             Expression::Multiply { overflowing, .. } => {
                 if *overflowing {
                     Operator::OverflowingMultiply
                 } else {
                     Operator::Multiply
                 }
-            }
+            },
             Expression::SignedDivide { .. } => Operator::SignedDivide,
             Expression::UnsignedDivide { .. } => Operator::UnsignedDivide,
             Expression::SignedModulo { .. } => Operator::SignedModulo,
@@ -85,7 +85,7 @@ impl Expression {
                 } else {
                     Operator::Power
                 }
-            }
+            },
             Expression::BitwiseOr { .. } => Operator::BitwiseOr,
             Expression::BitwiseAnd { .. } => Operator::BitwiseAnd,
             Expression::BitwiseXor { .. } => Operator::BitwiseXor,
@@ -104,7 +104,7 @@ impl Expression {
                 } else {
                     Operator::Negate
                 }
-            }
+            },
             Expression::More { signed: true, .. } => Operator::SignedMore,
             Expression::More { signed: false, .. } => Operator::UnsignedMore,
             Expression::Less { signed: true, .. } => Operator::SignedLess,
@@ -120,7 +120,7 @@ impl Expression {
             Expression::AdvancePointer { .. } => Operator::AdvancePointer,
             _ => {
                 unreachable!("Expression does not represent an operator.")
-            }
+            },
         }
     }
 }

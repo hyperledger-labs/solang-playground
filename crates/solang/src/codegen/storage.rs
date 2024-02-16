@@ -22,13 +22,7 @@ use solang_parser::pt;
 /// Given a storage slot which is the start of the array, calculate the
 /// offset of the array element. This function exists to avoid doing
 /// 256 bit multiply if possible.
-pub fn array_offset(
-    loc: &pt::Loc,
-    start: Expression,
-    index: Expression,
-    elem_ty: Type,
-    ns: &Namespace,
-) -> Expression {
+pub fn array_offset(loc: &pt::Loc, start: Expression, index: Expression, elem_ty: Type, ns: &Namespace) -> Expression {
     let elem_size = elem_ty.storage_slots(ns);
     let slot_ty = ns.storage_type();
 
@@ -340,9 +334,7 @@ pub fn storage_slots_array_pop(
             var_no: res_pos,
         }
     } else {
-        Expression::Undefined {
-            ty: elem_ty.clone(),
-        }
+        Expression::Undefined { ty: elem_ty.clone() }
     };
 
     cfg.add(
@@ -390,15 +382,7 @@ pub fn array_push(
     let mut ty = args[0].ty().storage_array_elem();
 
     let value = if args.len() > 1 {
-        Some(expression(
-            &args[1],
-            cfg,
-            contract_no,
-            func,
-            ns,
-            vartab,
-            opt,
-        ))
+        Some(expression(&args[1], cfg, contract_no, func, ns, vartab, opt))
     } else {
         ty.deref_any().default(ns)
     };

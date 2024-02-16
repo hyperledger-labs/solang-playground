@@ -95,70 +95,56 @@ pub fn strength_reduce(cfg: &mut ControlFlowGraph, ns: &mut Namespace) {
 
 /// Walk through all the expressions in a block, and find any expressions which can be
 /// replaced with cheaper ones.
-fn block_reduce(
-    block_no: usize,
-    cfg: &mut ControlFlowGraph,
-    mut vars: Variables,
-    ns: &mut Namespace,
-) {
+fn block_reduce(block_no: usize, cfg: &mut ControlFlowGraph, mut vars: Variables, ns: &mut Namespace) {
     for instr in &mut cfg.blocks[block_no].instr {
         match instr {
             Instr::Set { expr, .. } => {
                 *expr = expression_reduce(expr, &vars, ns);
-            }
+            },
             Instr::Call { args, .. } => {
-                *args = args
-                    .iter()
-                    .map(|e| expression_reduce(e, &vars, ns))
-                    .collect();
-            }
+                *args = args.iter().map(|e| expression_reduce(e, &vars, ns)).collect();
+            },
             Instr::Return { value } => {
-                *value = value
-                    .iter()
-                    .map(|e| expression_reduce(e, &vars, ns))
-                    .collect();
-            }
+                *value = value.iter().map(|e| expression_reduce(e, &vars, ns)).collect();
+            },
             Instr::Store { dest, data } => {
                 *dest = expression_reduce(dest, &vars, ns);
                 *data = expression_reduce(data, &vars, ns);
-            }
+            },
             Instr::AssertFailure {
                 encoded_args: Some(expr),
             } => {
                 *expr = expression_reduce(expr, &vars, ns);
-            }
+            },
             Instr::Print { expr } => {
                 *expr = expression_reduce(expr, &vars, ns);
-            }
+            },
             Instr::ClearStorage { storage, .. } => {
                 *storage = expression_reduce(storage, &vars, ns);
-            }
+            },
             Instr::SetStorage { storage, value, .. } => {
                 *value = expression_reduce(value, &vars, ns);
                 *storage = expression_reduce(storage, &vars, ns);
-            }
+            },
             Instr::SetStorageBytes {
-                storage,
-                value,
-                offset,
-                ..
+                storage, value, offset, ..
             } => {
                 *value = expression_reduce(value, &vars, ns);
                 *storage = expression_reduce(storage, &vars, ns);
                 *offset = expression_reduce(offset, &vars, ns);
-            }
+            },
             Instr::PushStorage { storage, value, .. } => {
                 if let Some(value) = value {
                     *value = expression_reduce(value, &vars, ns);
                 }
                 *storage = expression_reduce(storage, &vars, ns);
-            }
+            },
             Instr::PopStorage { storage, .. } => {
                 *storage = expression_reduce(storage, &vars, ns);
-            }
+            },
             Instr::PushMemory { value, .. } => {
                 *value = Box::new(expression_reduce(value, &vars, ns));
-            }
+            },
             Instr::Constructor {
                 encoded_args,
                 value,
@@ -178,7 +164,7 @@ fn block_reduce(
                     *accounts = expression_reduce(accounts, &vars, ns);
                 }
                 *gas = expression_reduce(gas, &vars, ns);
-            }
+            },
             Instr::ExternalCall {
                 address,
                 payload,
@@ -192,21 +178,18 @@ fn block_reduce(
                 }
                 *payload = expression_reduce(payload, &vars, ns);
                 *gas = expression_reduce(gas, &vars, ns);
-            }
+            },
             Instr::ValueTransfer { address, value, .. } => {
                 *address = expression_reduce(address, &vars, ns);
                 *value = expression_reduce(value, &vars, ns);
-            }
+            },
             Instr::EmitEvent { topics, data, .. } => {
-                *topics = topics
-                    .iter()
-                    .map(|e| expression_reduce(e, &vars, ns))
-                    .collect();
+                *topics = topics.iter().map(|e| expression_reduce(e, &vars, ns)).collect();
                 *data = expression_reduce(data, &vars, ns);
-            }
+            },
             Instr::WriteBuffer { offset, .. } => {
                 *offset = expression_reduce(offset, &vars, ns);
-            }
+            },
             _ => (),
         }
 
@@ -241,11 +224,7 @@ fn expression_reduce(expr: &Expression, vars: &Variables, ns: &mut Namespace) ->
                                 if cmp == right {
                                     ns.hover_overrides.insert(
                                         *loc,
-                                        format!(
-                                            "{} multiply optimized to shift left {}",
-                                            ty.to_string(ns),
-                                            shift
-                                        ),
+                                        format!("{} multiply optimized to shift left {}", ty.to_string(ns), shift),
                                     );
 
                                     return Expression::ShiftLeft {
@@ -263,7 +242,7 @@ fn expression_reduce(expr: &Expression, vars: &Variables, ns: &mut Namespace) ->
                                 cmp *= 2;
                                 shift += 1;
                             }
-                        }
+                        },
                         _ => (), // SHL would disable overflow check
                     }
 
@@ -275,10 +254,7 @@ fn expression_reduce(expr: &Expression, vars: &Variables, ns: &mut Namespace) ->
                             if (left_max * right_max).to_i64().is_some() {
                                 ns.hover_overrides.insert(
                                     *loc,
-                                    format!(
-                                        "{} multiply optimized to int64 multiply",
-                                        ty.to_string(ns),
-                                    ),
+                                    format!("{} multiply optimized to int64 multiply", ty.to_string(ns),),
                                 );
 
                                 return Expression::SignExt {
@@ -288,12 +264,8 @@ fn expression_reduce(expr: &Expression, vars: &Variables, ns: &mut Namespace) ->
                                         loc: *loc,
                                         ty: Type::Int(64),
                                         overflowing: *overflowing,
-                                        left: Box::new(
-                                            left.as_ref().clone().cast(&Type::Int(64), ns),
-                                        ),
-                                        right: Box::new(
-                                            right.as_ref().clone().cast(&Type::Int(64), ns),
-                                        ),
+                                        left: Box::new(left.as_ref().clone().cast(&Type::Int(64), ns)),
+                                        right: Box::new(right.as_ref().clone().cast(&Type::Int(64), ns)),
                                     }),
                                 };
                             }
@@ -306,10 +278,7 @@ fn expression_reduce(expr: &Expression, vars: &Variables, ns: &mut Namespace) ->
                         if left_max * right_max <= BigInt::from(u64::MAX) {
                             ns.hover_overrides.insert(
                                 *loc,
-                                format!(
-                                    "{} multiply optimized to uint64 multiply",
-                                    ty.to_string(ns),
-                                ),
+                                format!("{} multiply optimized to uint64 multiply", ty.to_string(ns),),
                             );
 
                             return Expression::ZeroExt {
@@ -320,9 +289,7 @@ fn expression_reduce(expr: &Expression, vars: &Variables, ns: &mut Namespace) ->
                                     ty: Type::Uint(64),
                                     overflowing: *overflowing,
                                     left: Box::new(left.as_ref().clone().cast(&Type::Uint(64), ns)),
-                                    right: Box::new(
-                                        right.as_ref().clone().cast(&Type::Uint(64), ns),
-                                    ),
+                                    right: Box::new(right.as_ref().clone().cast(&Type::Uint(64), ns)),
                                 }),
                             };
                         }
@@ -330,19 +297,8 @@ fn expression_reduce(expr: &Expression, vars: &Variables, ns: &mut Namespace) ->
                 }
 
                 expr.clone()
-            }
-            Expression::UnsignedDivide {
-                loc,
-                ty,
-                left,
-                right,
-            }
-            | Expression::SignedDivide {
-                loc,
-                ty,
-                left,
-                right,
-            } => {
+            },
+            Expression::UnsignedDivide { loc, ty, left, right } | Expression::SignedDivide { loc, ty, left, right } => {
                 let bits = ty.bits(ns) as usize;
 
                 if bits >= 128 {
@@ -359,11 +315,7 @@ fn expression_reduce(expr: &Expression, vars: &Variables, ns: &mut Namespace) ->
                             if cmp == right {
                                 ns.hover_overrides.insert(
                                     *loc,
-                                    format!(
-                                        "{} divide optimized to shift right {}",
-                                        ty.to_string(ns),
-                                        shift
-                                    ),
+                                    format!("{} divide optimized to shift right {}", ty.to_string(ns), shift),
                                 );
 
                                 return Expression::ShiftRight {
@@ -389,13 +341,8 @@ fn expression_reduce(expr: &Expression, vars: &Variables, ns: &mut Namespace) ->
                             (get_max_signed(&left_values), get_max_signed(&right_values))
                         {
                             if left_max.to_i64().is_some() && right_max.to_i64().is_some() {
-                                ns.hover_overrides.insert(
-                                    *loc,
-                                    format!(
-                                        "{} divide optimized to int64 divide",
-                                        ty.to_string(ns),
-                                    ),
-                                );
+                                ns.hover_overrides
+                                    .insert(*loc, format!("{} divide optimized to int64 divide", ty.to_string(ns),));
 
                                 return Expression::SignExt {
                                     loc: *loc,
@@ -403,12 +350,8 @@ fn expression_reduce(expr: &Expression, vars: &Variables, ns: &mut Namespace) ->
                                     expr: Box::new(Expression::UnsignedDivide {
                                         loc: *loc,
                                         ty: Type::Int(64),
-                                        left: Box::new(
-                                            left.as_ref().clone().cast(&Type::Int(64), ns),
-                                        ),
-                                        right: Box::new(
-                                            right.as_ref().clone().cast(&Type::Int(64), ns),
-                                        ),
+                                        left: Box::new(left.as_ref().clone().cast(&Type::Int(64), ns)),
+                                        right: Box::new(right.as_ref().clone().cast(&Type::Int(64), ns)),
                                     }),
                                 };
                             }
@@ -419,10 +362,8 @@ fn expression_reduce(expr: &Expression, vars: &Variables, ns: &mut Namespace) ->
 
                         // If both values fit into u64, then the result must too
                         if left_max.to_u64().is_some() && right_max.to_u64().is_some() {
-                            ns.hover_overrides.insert(
-                                *loc,
-                                format!("{} divide optimized to uint64 divide", ty.to_string(ns),),
-                            );
+                            ns.hover_overrides
+                                .insert(*loc, format!("{} divide optimized to uint64 divide", ty.to_string(ns),));
 
                             return Expression::ZeroExt {
                                 loc: *loc,
@@ -431,9 +372,7 @@ fn expression_reduce(expr: &Expression, vars: &Variables, ns: &mut Namespace) ->
                                     loc: *loc,
                                     ty: Type::Uint(64),
                                     left: Box::new(left.as_ref().clone().cast(&Type::Uint(64), ns)),
-                                    right: Box::new(
-                                        right.as_ref().clone().cast(&Type::Uint(64), ns),
-                                    ),
+                                    right: Box::new(right.as_ref().clone().cast(&Type::Uint(64), ns)),
                                 }),
                             };
                         }
@@ -441,19 +380,8 @@ fn expression_reduce(expr: &Expression, vars: &Variables, ns: &mut Namespace) ->
                 }
 
                 expr.clone()
-            }
-            Expression::SignedModulo {
-                loc,
-                ty,
-                left,
-                right,
-            }
-            | Expression::UnsignedModulo {
-                loc,
-                ty,
-                left,
-                right,
-            } => {
+            },
+            Expression::SignedModulo { loc, ty, left, right } | Expression::UnsignedModulo { loc, ty, left, right } => {
                 let bits = ty.bits(ns) as usize;
 
                 if bits >= 128 {
@@ -498,13 +426,8 @@ fn expression_reduce(expr: &Expression, vars: &Variables, ns: &mut Namespace) ->
                             (get_max_signed(&left_values), get_max_signed(&right_values))
                         {
                             if left_max.to_i64().is_some() && right_max.to_i64().is_some() {
-                                ns.hover_overrides.insert(
-                                    *loc,
-                                    format!(
-                                        "{} modulo optimized to int64 modulo",
-                                        ty.to_string(ns),
-                                    ),
-                                );
+                                ns.hover_overrides
+                                    .insert(*loc, format!("{} modulo optimized to int64 modulo", ty.to_string(ns),));
 
                                 return Expression::SignExt {
                                     loc: *loc,
@@ -512,12 +435,8 @@ fn expression_reduce(expr: &Expression, vars: &Variables, ns: &mut Namespace) ->
                                     expr: Box::new(Expression::SignedModulo {
                                         loc: *loc,
                                         ty: Type::Int(64),
-                                        left: Box::new(
-                                            left.as_ref().clone().cast(&Type::Int(64), ns),
-                                        ),
-                                        right: Box::new(
-                                            right.as_ref().clone().cast(&Type::Int(64), ns),
-                                        ),
+                                        left: Box::new(left.as_ref().clone().cast(&Type::Int(64), ns)),
+                                        right: Box::new(right.as_ref().clone().cast(&Type::Int(64), ns)),
                                     }),
                                 };
                             }
@@ -528,10 +447,8 @@ fn expression_reduce(expr: &Expression, vars: &Variables, ns: &mut Namespace) ->
 
                         // If both values fit into u64, then the result must too
                         if left_max.to_u64().is_some() && right_max.to_u64().is_some() {
-                            ns.hover_overrides.insert(
-                                *loc,
-                                format!("{} modulo optimized to uint64 modulo", ty.to_string(ns)),
-                            );
+                            ns.hover_overrides
+                                .insert(*loc, format!("{} modulo optimized to uint64 modulo", ty.to_string(ns)));
 
                             return Expression::ZeroExt {
                                 loc: *loc,
@@ -540,9 +457,7 @@ fn expression_reduce(expr: &Expression, vars: &Variables, ns: &mut Namespace) ->
                                     loc: *loc,
                                     ty: Type::Uint(64),
                                     left: Box::new(left.as_ref().clone().cast(&Type::Uint(64), ns)),
-                                    right: Box::new(
-                                        right.as_ref().clone().cast(&Type::Uint(64), ns),
-                                    ),
+                                    right: Box::new(right.as_ref().clone().cast(&Type::Uint(64), ns)),
                                 }),
                             };
                         }
@@ -550,7 +465,7 @@ fn expression_reduce(expr: &Expression, vars: &Variables, ns: &mut Namespace) ->
                 }
 
                 expr.clone()
-            }
+            },
             _ => expr.clone(),
         }
     };
@@ -585,14 +500,7 @@ fn highest_set_bit(bs: &[u8]) -> usize {
 fn bigint_to_bitarr(v: &BigInt, bits: usize) -> BitArray<[u8; 32], Lsb0> {
     let mut bs = v.to_signed_bytes_le();
 
-    bs.resize(
-        32,
-        if v.sign() == Sign::Minus {
-            u8::MAX
-        } else {
-            u8::MIN
-        },
-    );
+    bs.resize(32, if v.sign() == Sign::Minus { u8::MAX } else { u8::MIN });
 
     let mut ba = BitArray::new(bs.try_into().unwrap());
 

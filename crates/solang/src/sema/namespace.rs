@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use super::{
-    ast::{
-        ArrayLength, Diagnostic, Mapping, Mutability, Namespace, Note, Parameter, RetrieveType,
-        Symbol, Type,
-    },
+    ast::{ArrayLength, Diagnostic, Mapping, Mutability, Namespace, Note, Parameter, RetrieveType, Symbol, Type},
     builtin,
     diagnostics::Diagnostics,
     eval::eval_const_number,
@@ -70,7 +67,7 @@ impl Namespace {
         match target {
             Target::Solana => ns.add_solana_builtins(),
             Target::Polkadot { .. } => ns.add_polkadot_builtins(),
-            _ => {}
+            _ => {},
         }
 
         ns
@@ -91,10 +88,7 @@ impl Namespace {
             ));
         }
 
-        if let Some(Symbol::Function(v)) =
-            self.function_symbols
-                .get(&(file_no, contract_no, id.name.to_owned()))
-        {
+        if let Some(Symbol::Function(v)) = self.function_symbols.get(&(file_no, contract_no, id.name.to_owned())) {
             let notes = v
                 .iter()
                 .map(|(pos, _)| Note {
@@ -112,10 +106,7 @@ impl Namespace {
             return false;
         }
 
-        if let Some(sym) = self
-            .variable_symbols
-            .get(&(file_no, contract_no, id.name.to_owned()))
-        {
+        if let Some(sym) = self.variable_symbols.get(&(file_no, contract_no, id.name.to_owned())) {
             match sym {
                 Symbol::Contract(c, _) => {
                     self.diagnostics.push(Diagnostic::error_with_note(
@@ -124,7 +115,7 @@ impl Namespace {
                         *c,
                         "location of previous definition".to_string(),
                     ));
-                }
+                },
                 Symbol::Enum(c, _) => {
                     self.diagnostics.push(Diagnostic::error_with_note(
                         id.loc,
@@ -132,7 +123,7 @@ impl Namespace {
                         *c,
                         "location of previous definition".to_string(),
                     ));
-                }
+                },
                 Symbol::Struct(c, _) => {
                     self.diagnostics.push(Diagnostic::error_with_note(
                         id.loc,
@@ -140,7 +131,7 @@ impl Namespace {
                         *c,
                         "location of previous definition".to_string(),
                     ));
-                }
+                },
                 Symbol::Event(events) => {
                     self.diagnostics.push(Diagnostic::error_with_note(
                         id.loc,
@@ -148,7 +139,7 @@ impl Namespace {
                         events[0].0,
                         "location of previous definition".to_string(),
                     ));
-                }
+                },
                 Symbol::Error(c, _) => {
                     self.diagnostics.push(Diagnostic::error_with_note(
                         id.loc,
@@ -156,7 +147,7 @@ impl Namespace {
                         *c,
                         "location of previous definition".to_string(),
                     ));
-                }
+                },
                 Symbol::Variable(c, _, _) => {
                     self.diagnostics.push(Diagnostic::error_with_note(
                         id.loc,
@@ -164,7 +155,7 @@ impl Namespace {
                         *c,
                         "location of previous definition".to_string(),
                     ));
-                }
+                },
                 Symbol::Import(loc, _) => {
                     self.diagnostics.push(Diagnostic::error_with_note(
                         id.loc,
@@ -172,7 +163,7 @@ impl Namespace {
                         *loc,
                         "location of previous definition".to_string(),
                     ));
-                }
+                },
                 Symbol::UserType(loc, _) => {
                     self.diagnostics.push(Diagnostic::error_with_note(
                         id.loc,
@@ -180,7 +171,7 @@ impl Namespace {
                         *loc,
                         "location of previous definition".to_string(),
                     ));
-                }
+                },
                 Symbol::Function(_) => unreachable!(),
             }
 
@@ -189,10 +180,7 @@ impl Namespace {
 
         // if there is nothing on the contract level
         if contract_no.is_some() {
-            if let Some(Symbol::Function(v)) =
-                self.function_symbols
-                    .get(&(file_no, None, id.name.to_owned()))
-            {
+            if let Some(Symbol::Function(v)) = self.function_symbols.get(&(file_no, None, id.name.to_owned())) {
                 let notes = v
                     .iter()
                     .map(|(pos, _)| Note {
@@ -208,10 +196,7 @@ impl Namespace {
                 ));
             }
 
-            if let Some(sym) = self
-                .variable_symbols
-                .get(&(file_no, None, id.name.to_owned()))
-            {
+            if let Some(sym) = self.variable_symbols.get(&(file_no, None, id.name.to_owned())) {
                 match sym {
                     Symbol::Contract(c, _) => {
                         self.diagnostics.push(Diagnostic::warning_with_note(
@@ -220,7 +205,7 @@ impl Namespace {
                             *c,
                             "location of previous definition".to_string(),
                         ));
-                    }
+                    },
                     Symbol::Enum(c, _) => {
                         self.diagnostics.push(Diagnostic::warning_with_note(
                             id.loc,
@@ -228,7 +213,7 @@ impl Namespace {
                             *c,
                             "location of previous definition".to_string(),
                         ));
-                    }
+                    },
                     Symbol::Struct(c, _) => {
                         self.diagnostics.push(Diagnostic::warning_with_note(
                             id.loc,
@@ -236,7 +221,7 @@ impl Namespace {
                             *c,
                             "location of previous definition".to_string(),
                         ));
-                    }
+                    },
                     Symbol::Event(_) if symbol.is_event() => (),
                     Symbol::Event(e) => {
                         self.diagnostics.push(Diagnostic::warning_with_note(
@@ -245,7 +230,7 @@ impl Namespace {
                             e[0].0,
                             "location of previous definition".to_string(),
                         ));
-                    }
+                    },
                     Symbol::Error(c, _) => {
                         self.diagnostics.push(Diagnostic::warning_with_note(
                             id.loc,
@@ -253,7 +238,7 @@ impl Namespace {
                             *c,
                             "location of previous definition".to_string(),
                         ));
-                    }
+                    },
                     Symbol::Variable(c, _, _) => {
                         self.diagnostics.push(Diagnostic::warning_with_note(
                             id.loc,
@@ -261,7 +246,7 @@ impl Namespace {
                             *c,
                             "location of previous definition".to_string(),
                         ));
-                    }
+                    },
                     Symbol::Function(_) => unreachable!(),
                     Symbol::Import(loc, _) => {
                         self.diagnostics.push(Diagnostic::warning_with_note(
@@ -270,7 +255,7 @@ impl Namespace {
                             *loc,
                             "location of previous definition".to_string(),
                         ));
-                    }
+                    },
                     Symbol::UserType(loc, _) => {
                         self.diagnostics.push(Diagnostic::warning_with_note(
                             id.loc,
@@ -278,7 +263,7 @@ impl Namespace {
                             *loc,
                             "location of previous definition".to_string(),
                         ));
-                    }
+                    },
                 }
             }
         }
@@ -295,16 +280,8 @@ impl Namespace {
     }
 
     /// Resolve enum by name
-    pub fn resolve_enum(
-        &self,
-        file_no: usize,
-        contract_no: Option<usize>,
-        id: &pt::Identifier,
-    ) -> Option<usize> {
-        if let Some(Symbol::Enum(_, n)) =
-            self.variable_symbols
-                .get(&(file_no, contract_no, id.name.to_owned()))
-        {
+    pub fn resolve_enum(&self, file_no: usize, contract_no: Option<usize>, id: &pt::Identifier) -> Option<usize> {
+        if let Some(Symbol::Enum(_, n)) = self.variable_symbols.get(&(file_no, contract_no, id.name.to_owned())) {
             return Some(*n);
         }
 
@@ -313,10 +290,7 @@ impl Namespace {
                 return Some(*n);
             }
 
-            if let Some(Symbol::Enum(_, n)) =
-                self.variable_symbols
-                    .get(&(file_no, None, id.name.to_owned()))
-            {
+            if let Some(Symbol::Enum(_, n)) = self.variable_symbols.get(&(file_no, None, id.name.to_owned())) {
                 return Some(*n);
             }
         }
@@ -326,10 +300,7 @@ impl Namespace {
 
     /// Resolve a contract name
     pub fn resolve_contract(&self, file_no: usize, id: &pt::Identifier) -> Option<usize> {
-        if let Some(Symbol::Contract(_, n)) =
-            self.variable_symbols
-                .get(&(file_no, None, id.name.to_owned()))
-        {
+        if let Some(Symbol::Contract(_, n)) = self.variable_symbols.get(&(file_no, None, id.name.to_owned())) {
             return Some(*n);
         }
 
@@ -397,8 +368,7 @@ impl Namespace {
         expr: &pt::Expression,
         diagnostics: &mut Diagnostics,
     ) -> Result<Vec<usize>, ()> {
-        let (namespace, id, dimensions) =
-            self.expr_to_type(file_no, contract_no, expr, diagnostics)?;
+        let (namespace, id, dimensions) = self.expr_to_type(file_no, contract_no, expr, diagnostics)?;
 
         if !dimensions.is_empty() {
             diagnostics.push(Diagnostic::decl_error(
@@ -416,7 +386,7 @@ impl Namespace {
                     "expression found where event type expected".to_string(),
                 ));
                 return Err(());
-            }
+            },
         };
 
         // If we are resolving an event name without namespace (so no explicit contract name
@@ -429,29 +399,28 @@ impl Namespace {
                 for contract_no in self.contract_bases(contract_no).into_iter().rev() {
                     let file_no = self.contracts[contract_no].loc.file_no();
 
-                    match self.variable_symbols.get(&(
-                        file_no,
-                        Some(contract_no),
-                        id.name.to_owned(),
-                    )) {
+                    match self
+                        .variable_symbols
+                        .get(&(file_no, Some(contract_no), id.name.to_owned()))
+                    {
                         None => (),
                         Some(Symbol::Event(ev)) => {
                             for (_, event_no) in ev {
                                 events.push(*event_no);
                             }
-                        }
+                        },
                         sym => {
                             let error = Namespace::wrong_symbol(sym, &id);
 
                             diagnostics.push(error);
 
                             return Err(());
-                        }
+                        },
                     }
 
-                    if let Some(sym) =
-                        self.function_symbols
-                            .get(&(file_no, Some(contract_no), id.name.to_owned()))
+                    if let Some(sym) = self
+                        .function_symbols
+                        .get(&(file_no, Some(contract_no), id.name.to_owned()))
                     {
                         let error = Namespace::wrong_symbol(Some(sym), &id);
 
@@ -462,10 +431,7 @@ impl Namespace {
                 }
             }
 
-            if let Some(sym) = self
-                .function_symbols
-                .get(&(file_no, None, id.name.to_owned()))
-            {
+            if let Some(sym) = self.function_symbols.get(&(file_no, None, id.name.to_owned())) {
                 let error = Namespace::wrong_symbol(Some(sym), &id);
 
                 diagnostics.push(error);
@@ -473,31 +439,25 @@ impl Namespace {
                 return Err(());
             }
 
-            return match self
-                .variable_symbols
-                .get(&(file_no, None, id.name.to_owned()))
-            {
+            return match self.variable_symbols.get(&(file_no, None, id.name.to_owned())) {
                 None if events.is_empty() => {
-                    diagnostics.push(Diagnostic::decl_error(
-                        id.loc,
-                        format!("event '{}' not found", id.name),
-                    ));
+                    diagnostics.push(Diagnostic::decl_error(id.loc, format!("event '{}' not found", id.name)));
                     Err(())
-                }
+                },
                 None => Ok(events),
                 Some(Symbol::Event(ev)) => {
                     for (_, event_no) in ev {
                         events.push(*event_no);
                     }
                     Ok(events)
-                }
+                },
                 sym => {
                     let error = Namespace::wrong_symbol(sym, &id);
 
                     diagnostics.push(error);
 
                     Err(())
-                }
+                },
             };
         }
 
@@ -535,27 +495,26 @@ impl Namespace {
                 for contract_no in self.contract_bases(contract_no).into_iter().rev() {
                     let file_no = self.contracts[contract_no].loc.file_no();
 
-                    match self.variable_symbols.get(&(
-                        file_no,
-                        Some(contract_no),
-                        id.name.to_owned(),
-                    )) {
+                    match self
+                        .variable_symbols
+                        .get(&(file_no, Some(contract_no), id.name.to_owned()))
+                    {
                         None => (),
                         Some(Symbol::Error(_, error_no)) => {
                             return Ok(*error_no);
-                        }
+                        },
                         sym => {
                             let error = Namespace::wrong_symbol(sym, id);
 
                             diagnostics.push(error);
 
                             return Err(());
-                        }
+                        },
                     }
 
-                    if let Some(sym) =
-                        self.function_symbols
-                            .get(&(file_no, Some(contract_no), id.name.to_owned()))
+                    if let Some(sym) = self
+                        .function_symbols
+                        .get(&(file_no, Some(contract_no), id.name.to_owned()))
                     {
                         let error = Namespace::wrong_symbol(Some(sym), id);
 
@@ -566,10 +525,7 @@ impl Namespace {
                 }
             }
 
-            if let Some(sym) = self
-                .function_symbols
-                .get(&(file_no, None, id.name.to_owned()))
-            {
+            if let Some(sym) = self.function_symbols.get(&(file_no, None, id.name.to_owned())) {
                 let error = Namespace::wrong_symbol(Some(sym), id);
 
                 diagnostics.push(error);
@@ -577,17 +533,11 @@ impl Namespace {
                 return Err(());
             }
 
-            return match self
-                .variable_symbols
-                .get(&(file_no, None, id.name.to_owned()))
-            {
+            return match self.variable_symbols.get(&(file_no, None, id.name.to_owned())) {
                 None => {
-                    diagnostics.push(Diagnostic::decl_error(
-                        id.loc,
-                        format!("error '{}' not found", id.name),
-                    ));
+                    diagnostics.push(Diagnostic::decl_error(id.loc, format!("error '{}' not found", id.name)));
                     Err(())
-                }
+                },
                 Some(Symbol::Error(_, error_no)) => Ok(*error_no),
                 sym => {
                     let error = Namespace::wrong_symbol(sym, id);
@@ -595,7 +545,7 @@ impl Namespace {
                     diagnostics.push(error);
 
                     Err(())
-                }
+                },
             };
         }
 
@@ -621,42 +571,22 @@ impl Namespace {
     pub fn wrong_symbol(sym: Option<&Symbol>, id: &pt::Identifier) -> Diagnostic {
         match sym {
             None => Diagnostic::decl_error(id.loc, format!("'{}' not found", id.name)),
-            Some(Symbol::Enum(..)) => {
-                Diagnostic::decl_error(id.loc, format!("'{}' is an enum", id.name))
-            }
-            Some(Symbol::Struct(..)) => {
-                Diagnostic::decl_error(id.loc, format!("'{}' is a struct", id.name))
-            }
-            Some(Symbol::Event(_)) => {
-                Diagnostic::decl_error(id.loc, format!("'{}' is an event", id.name))
-            }
-            Some(Symbol::Error(..)) => {
-                Diagnostic::decl_error(id.loc, format!("'{}' is an error", id.name))
-            }
-            Some(Symbol::Function(_)) => {
-                Diagnostic::decl_error(id.loc, format!("'{}' is a function", id.name))
-            }
-            Some(Symbol::Contract(..)) => {
-                Diagnostic::decl_error(id.loc, format!("'{}' is a contract", id.name))
-            }
-            Some(Symbol::Import(..)) => {
-                Diagnostic::decl_error(id.loc, format!("'{}' is an import", id.name))
-            }
-            Some(Symbol::UserType(..)) => {
-                Diagnostic::decl_error(id.loc, format!("'{}' is an user type", id.name))
-            }
+            Some(Symbol::Enum(..)) => Diagnostic::decl_error(id.loc, format!("'{}' is an enum", id.name)),
+            Some(Symbol::Struct(..)) => Diagnostic::decl_error(id.loc, format!("'{}' is a struct", id.name)),
+            Some(Symbol::Event(_)) => Diagnostic::decl_error(id.loc, format!("'{}' is an event", id.name)),
+            Some(Symbol::Error(..)) => Diagnostic::decl_error(id.loc, format!("'{}' is an error", id.name)),
+            Some(Symbol::Function(_)) => Diagnostic::decl_error(id.loc, format!("'{}' is a function", id.name)),
+            Some(Symbol::Contract(..)) => Diagnostic::decl_error(id.loc, format!("'{}' is a contract", id.name)),
+            Some(Symbol::Import(..)) => Diagnostic::decl_error(id.loc, format!("'{}' is an import", id.name)),
+            Some(Symbol::UserType(..)) => Diagnostic::decl_error(id.loc, format!("'{}' is an user type", id.name)),
             Some(Symbol::Variable(..)) => {
                 Diagnostic::decl_error(id.loc, format!("'{}' is a contract variable", id.name))
-            }
+            },
         }
     }
 
     /// Does a parent contract have a function symbol defined with this name (recursive)
-    fn resolve_func_base_contract(
-        &self,
-        contract_no: usize,
-        id: &pt::Identifier,
-    ) -> Option<&Symbol> {
+    fn resolve_func_base_contract(&self, contract_no: usize, id: &pt::Identifier) -> Option<&Symbol> {
         for base in self.contracts[contract_no].bases.iter() {
             // find file this contract was defined in
             let file_no = self.contracts[base.contract_no].loc.file_no();
@@ -675,18 +605,14 @@ impl Namespace {
     }
 
     /// Does a parent contract have a non-func symbol defined with this name (recursive)
-    fn resolve_var_base_contract(
-        &self,
-        contract_no: usize,
-        id: &pt::Identifier,
-    ) -> Option<&Symbol> {
+    fn resolve_var_base_contract(&self, contract_no: usize, id: &pt::Identifier) -> Option<&Symbol> {
         for base in self.contracts[contract_no].bases.iter() {
             // find file this contract was defined in
             let file_no = self.contracts[base.contract_no].loc.file_no();
 
-            if let Some(sym) =
-                self.variable_symbols
-                    .get(&(file_no, Some(base.contract_no), id.name.to_owned()))
+            if let Some(sym) = self
+                .variable_symbols
+                .get(&(file_no, Some(base.contract_no), id.name.to_owned()))
             {
                 if let Symbol::Variable(_, var_contract_no, var_no) = sym {
                     if *var_contract_no != Some(base.contract_no) {
@@ -725,9 +651,7 @@ impl Namespace {
         function_first: bool,
     ) -> Option<&Symbol> {
         let func = || {
-            let mut s = self
-                .function_symbols
-                .get(&(file_no, contract_no, id.name.to_owned()));
+            let mut s = self.function_symbols.get(&(file_no, contract_no, id.name.to_owned()));
 
             if s.is_none() {
                 if let Some(contract_no) = contract_no {
@@ -735,16 +659,11 @@ impl Namespace {
                 }
             }
 
-            s.or_else(|| {
-                self.function_symbols
-                    .get(&(file_no, None, id.name.to_owned()))
-            })
+            s.or_else(|| self.function_symbols.get(&(file_no, None, id.name.to_owned())))
         };
 
         let var = || {
-            let mut s = self
-                .variable_symbols
-                .get(&(file_no, contract_no, id.name.to_owned()));
+            let mut s = self.variable_symbols.get(&(file_no, contract_no, id.name.to_owned()));
 
             if s.is_none() {
                 if let Some(contract_no) = contract_no {
@@ -752,10 +671,7 @@ impl Namespace {
                 }
             }
 
-            s.or_else(|| {
-                self.variable_symbols
-                    .get(&(file_no, None, id.name.to_owned()))
-            })
+            s.or_else(|| self.variable_symbols.get(&(file_no, None, id.name.to_owned())))
         };
 
         if function_first {
@@ -766,12 +682,7 @@ impl Namespace {
     }
 
     /// Check if an name would shadow an existing symbol
-    pub fn check_shadowing(
-        &mut self,
-        file_no: usize,
-        contract_no: Option<usize>,
-        id: &pt::Identifier,
-    ) {
+    pub fn check_shadowing(&mut self, file_no: usize, contract_no: Option<usize>, id: &pt::Identifier) {
         if builtin::is_reserved(&id.name) {
             self.diagnostics.push(Diagnostic::warning(
                 id.loc,
@@ -783,18 +694,9 @@ impl Namespace {
         let s = self
             .variable_symbols
             .get(&(file_no, contract_no, id.name.to_owned()))
-            .or_else(|| {
-                self.function_symbols
-                    .get(&(file_no, contract_no, id.name.to_owned()))
-            })
-            .or_else(|| {
-                self.variable_symbols
-                    .get(&(file_no, None, id.name.to_owned()))
-            })
-            .or_else(|| {
-                self.function_symbols
-                    .get(&(file_no, None, id.name.to_owned()))
-            });
+            .or_else(|| self.function_symbols.get(&(file_no, contract_no, id.name.to_owned())))
+            .or_else(|| self.variable_symbols.get(&(file_no, None, id.name.to_owned())))
+            .or_else(|| self.function_symbols.get(&(file_no, None, id.name.to_owned())));
 
         match s {
             Some(Symbol::Enum(loc, _)) => {
@@ -805,7 +707,7 @@ impl Namespace {
                     loc,
                     "previous definition of enum".to_string(),
                 ));
-            }
+            },
             Some(Symbol::Struct(loc, _)) => {
                 let loc = *loc;
                 self.diagnostics.push(Diagnostic::warning_with_note(
@@ -814,7 +716,7 @@ impl Namespace {
                     loc,
                     "previous definition of struct".to_string(),
                 ));
-            }
+            },
             Some(Symbol::Event(events)) => {
                 let notes = events
                     .iter()
@@ -829,7 +731,7 @@ impl Namespace {
                     format!("declaration of '{}' shadows event definition", id.name),
                     notes,
                 ));
-            }
+            },
             Some(Symbol::Error(loc, _)) => {
                 let loc = *loc;
                 self.diagnostics.push(Diagnostic::warning_with_note(
@@ -838,7 +740,7 @@ impl Namespace {
                     loc,
                     "previous definition of error".to_string(),
                 ));
-            }
+            },
             Some(Symbol::Function(v)) => {
                 let notes = v
                     .iter()
@@ -852,7 +754,7 @@ impl Namespace {
                     format!("declaration of '{}' shadows function", id.name),
                     notes,
                 ));
-            }
+            },
             Some(Symbol::Variable(loc, _, _)) => {
                 let loc = *loc;
                 self.diagnostics.push(Diagnostic::warning_with_note(
@@ -861,7 +763,7 @@ impl Namespace {
                     loc,
                     "previous declaration of state variable".to_string(),
                 ));
-            }
+            },
             Some(Symbol::Contract(loc, _)) => {
                 let loc = *loc;
                 self.diagnostics.push(Diagnostic::warning_with_note(
@@ -870,7 +772,7 @@ impl Namespace {
                     loc,
                     "previous declaration of contract name".to_string(),
                 ));
-            }
+            },
             Some(Symbol::UserType(loc, _)) => {
                 let loc = *loc;
                 self.diagnostics.push(Diagnostic::warning_with_note(
@@ -879,7 +781,7 @@ impl Namespace {
                     loc,
                     "previous declaration of type".to_string(),
                 ));
-            }
+            },
             Some(Symbol::Import(loc, _)) => {
                 let loc = *loc;
                 self.diagnostics.push(Diagnostic::warning_with_note(
@@ -888,7 +790,7 @@ impl Namespace {
                     loc,
                     "previous declaration of import".to_string(),
                 ));
-            }
+            },
             None => (),
         }
     }
@@ -906,8 +808,7 @@ impl Namespace {
     ) -> Result<Type, ()> {
         let is_polkadot = self.target.is_polkadot();
 
-        let resolve_dimensions = |ast_dimensions: &[Option<(pt::Loc, BigInt)>],
-                                  diagnostics: &mut Diagnostics| {
+        let resolve_dimensions = |ast_dimensions: &[Option<(pt::Loc, BigInt)>], diagnostics: &mut Diagnostics| {
             let mut dimensions = Vec::new();
 
             for d in ast_dimensions.iter().rev() {
@@ -925,9 +826,7 @@ impl Namespace {
                         ));
                         return Err(());
                     } else if is_polkadot && n > &u32::MAX.into() {
-                        let msg = format!(
-                            "array dimension of {n} exceeds the maximum of 4294967295 on Polkadot"
-                        );
+                        let msg = format!("array dimension of {n} exceeds the maximum of 4294967295 on Polkadot");
                         diagnostics.push(Diagnostic::decl_error(*loc, msg));
                         return Err(());
                     }
@@ -940,8 +839,7 @@ impl Namespace {
             Ok(dimensions)
         };
 
-        let (namespace, id, dimensions) =
-            self.expr_to_type(file_no, contract_no, id, diagnostics)?;
+        let (namespace, id, dimensions) = self.expr_to_type(file_no, contract_no, id, diagnostics)?;
 
         if let pt::Expression::Type(loc, ty) = &id {
             assert!(namespace.is_empty());
@@ -954,20 +852,9 @@ impl Namespace {
                     value_name,
                     ..
                 } => {
-                    let key_ty = self.resolve_type(
-                        file_no,
-                        contract_no,
-                        ResolveTypeContext::None,
-                        key,
-                        diagnostics,
-                    )?;
-                    let value_ty = self.resolve_type(
-                        file_no,
-                        contract_no,
-                        ResolveTypeContext::None,
-                        value,
-                        diagnostics,
-                    )?;
+                    let key_ty = self.resolve_type(file_no, contract_no, ResolveTypeContext::None, key, diagnostics)?;
+                    let value_ty =
+                        self.resolve_type(file_no, contract_no, ResolveTypeContext::None, value, diagnostics)?;
 
                     match key_ty {
                         Type::Mapping(..) => {
@@ -976,21 +863,21 @@ impl Namespace {
                                 "key of mapping cannot be another mapping type".to_string(),
                             ));
                             return Err(());
-                        }
+                        },
                         Type::Struct(_) => {
                             diagnostics.push(Diagnostic::decl_error(
                                 key.loc(),
                                 "key of mapping cannot be struct type".to_string(),
                             ));
                             return Err(());
-                        }
+                        },
                         Type::Array(..) => {
                             diagnostics.push(Diagnostic::decl_error(
                                 key.loc(),
                                 "key of mapping cannot be array type".to_string(),
                             ));
                             return Err(());
-                        }
+                        },
                         _ => Type::Mapping(Mapping {
                             key: Box::new(key_ty),
                             key_name: key_name.clone(),
@@ -998,7 +885,7 @@ impl Namespace {
                             value_name: value_name.clone(),
                         }),
                     }
-                }
+                },
                 pt::Type::Function {
                     params,
                     attributes,
@@ -1017,9 +904,7 @@ impl Namespace {
                                         m.loc(),
                                         format!("function type mutability redeclared '{m}'"),
                                         e.loc(),
-                                        format!(
-                                            "location of previous mutability declaration of '{e}'"
-                                        ),
+                                        format!("location of previous mutability declaration of '{e}'"),
                                     ));
                                     success = false;
                                     continue;
@@ -1035,26 +920,26 @@ impl Namespace {
                                 } else {
                                     mutability = Some(m.clone());
                                 }
-                            }
+                            },
                             pt::FunctionAttribute::Visibility(v @ pt::Visibility::Internal(_))
                             | pt::FunctionAttribute::Visibility(v @ pt::Visibility::External(_))
                                 if visibility.is_none() =>
                             {
                                 visibility = Some(v.clone());
-                            }
+                            },
                             pt::FunctionAttribute::Visibility(v) => {
                                 diagnostics.push(Diagnostic::error(
                                     v.loc_opt().unwrap(),
                                     format!("function type cannot have visibility '{v}'"),
                                 ));
                                 success = false;
-                            }
+                            },
                             pt::FunctionAttribute::Immutable(loc) => {
                                 diagnostics.push(Diagnostic::error(
                                     *loc,
                                     "function type cannot be 'immutable'".to_string(),
                                 ));
-                            }
+                            },
                             _ => unreachable!(),
                         }
                     }
@@ -1069,7 +954,7 @@ impl Namespace {
                             ));
                             success = false;
                             false
-                        }
+                        },
                     };
 
                     let (params, params_success) = resolve_params(
@@ -1087,14 +972,8 @@ impl Namespace {
                         None => (&[], &[]),
                     };
 
-                    let (returns, returns_success) = resolve_returns(
-                        returns,
-                        is_external,
-                        file_no,
-                        contract_no,
-                        self,
-                        diagnostics,
-                    );
+                    let (returns, returns_success) =
+                        resolve_returns(returns, is_external, file_no, contract_no, self, diagnostics);
 
                     // trailing attribute should not be there
                     // trailing visibility for contract variables should be removed already
@@ -1106,21 +985,21 @@ impl Namespace {
                                     "function type cannot be 'immutable'".to_string(),
                                 ));
                                 success = false;
-                            }
+                            },
                             pt::FunctionAttribute::Mutability(m) => {
                                 diagnostics.push(Diagnostic::error(
                                     m.loc(),
                                     format!("mutability '{m}' cannot be declared after returns"),
                                 ));
                                 success = false;
-                            }
+                            },
                             pt::FunctionAttribute::Visibility(v) => {
                                 diagnostics.push(Diagnostic::error(
                                     v.loc_opt().unwrap(),
                                     format!("function type cannot have visibility '{v}'"),
                                 ));
                                 success = false;
-                            }
+                            },
                             _ => unreachable!(),
                         }
                     }
@@ -1176,7 +1055,7 @@ impl Namespace {
                             returns,
                         }
                     }
-                }
+                },
                 pt::Type::Payable => {
                     if resolve_context != ResolveTypeContext::Casting {
                         diagnostics.push(Diagnostic::decl_error(
@@ -1188,17 +1067,14 @@ impl Namespace {
                     } else {
                         Type::Address(true)
                     }
-                }
+                },
                 _ => Type::from(ty),
             };
 
             return if dimensions.is_empty() {
                 Ok(ty)
             } else {
-                Ok(Type::Array(
-                    Box::new(ty),
-                    resolve_dimensions(&dimensions, diagnostics)?,
-                ))
+                Ok(Type::Array(Box::new(ty), resolve_dimensions(&dimensions, diagnostics)?))
             };
         }
 
@@ -1211,12 +1087,9 @@ impl Namespace {
 
         match s {
             None => {
-                diagnostics.push(Diagnostic::decl_error(
-                    id.loc,
-                    format!("type '{}' not found", id.name),
-                ));
+                diagnostics.push(Diagnostic::decl_error(id.loc, format!("type '{}' not found", id.name)));
                 Err(())
-            }
+            },
             Some(Symbol::Enum(_, n)) if dimensions.is_empty() => Ok(Type::Enum(*n)),
             Some(Symbol::Enum(_, n)) => Ok(Type::Array(
                 Box::new(Type::Enum(*n)),
@@ -1228,9 +1101,7 @@ impl Namespace {
                 resolve_dimensions(&dimensions, diagnostics)?,
             )),
             Some(Symbol::Contract(_, n)) => {
-                if self.target == Target::Solana
-                    && resolve_context != ResolveTypeContext::FunctionType
-                {
+                if self.target == Target::Solana && resolve_context != ResolveTypeContext::FunctionType {
                     diagnostics.push(Diagnostic::error(
                         id.loc,
                         "contracts are not allowed as types on Solana".to_string(),
@@ -1245,42 +1116,33 @@ impl Namespace {
                         resolve_dimensions(&dimensions, diagnostics)?,
                     ))
                 }
-            }
+            },
             Some(Symbol::Event(_)) => {
-                diagnostics.push(Diagnostic::decl_error(
-                    id.loc,
-                    format!("'{}' is an event", id.name),
-                ));
+                diagnostics.push(Diagnostic::decl_error(id.loc, format!("'{}' is an event", id.name)));
                 Err(())
-            }
+            },
             Some(Symbol::Error(..)) => {
-                diagnostics.push(Diagnostic::decl_error(
-                    id.loc,
-                    format!("'{}' is an error", id.name),
-                ));
+                diagnostics.push(Diagnostic::decl_error(id.loc, format!("'{}' is an error", id.name)));
                 Err(())
-            }
+            },
             Some(Symbol::Function(_)) => {
-                diagnostics.push(Diagnostic::decl_error(
-                    id.loc,
-                    format!("'{}' is a function", id.name),
-                ));
+                diagnostics.push(Diagnostic::decl_error(id.loc, format!("'{}' is a function", id.name)));
                 Err(())
-            }
+            },
             Some(Symbol::Variable(..)) => {
                 diagnostics.push(Diagnostic::decl_error(
                     id.loc,
                     format!("'{}' is a contract variable", id.name),
                 ));
                 Err(())
-            }
+            },
             Some(Symbol::Import(..)) => {
                 diagnostics.push(Diagnostic::decl_error(
                     id.loc,
                     format!("'{}' is an import variable", id.name),
                 ));
                 Err(())
-            }
+            },
             Some(Symbol::UserType(_, n)) => Ok(Type::UserType(*n)),
         }
     }
@@ -1324,7 +1186,7 @@ impl Namespace {
                         format!("'{}' not found", contract_name.name),
                     ));
                     return Err(());
-                }
+                },
                 Some(Symbol::Contract(_, n)) => {
                     if namespace.len() > 1 {
                         diagnostics.push(Diagnostic::decl_error(
@@ -1335,56 +1197,56 @@ impl Namespace {
                     };
                     namespace.clear();
                     Some(*n)
-                }
+                },
                 Some(Symbol::Function(_)) => {
                     diagnostics.push(Diagnostic::decl_error(
                         contract_name.loc,
                         format!("'{}' is a function", contract_name.name),
                     ));
                     return Err(());
-                }
+                },
                 Some(Symbol::Variable(..)) => {
                     diagnostics.push(Diagnostic::decl_error(
                         contract_name.loc,
                         format!("'{}' is a contract variable", contract_name.name),
                     ));
                     return Err(());
-                }
+                },
                 Some(Symbol::Event(_)) => {
                     diagnostics.push(Diagnostic::decl_error(
                         contract_name.loc,
                         format!("'{}' is an event", contract_name.name),
                     ));
                     return Err(());
-                }
+                },
                 Some(Symbol::Error(..)) => {
                     diagnostics.push(Diagnostic::decl_error(
                         contract_name.loc,
                         format!("'{}' is an error", contract_name.name),
                     ));
                     return Err(());
-                }
+                },
                 Some(Symbol::Struct(..)) => {
                     diagnostics.push(Diagnostic::decl_error(
                         contract_name.loc,
                         format!("'{}' is a struct", contract_name.name),
                     ));
                     return Err(());
-                }
+                },
                 Some(Symbol::Enum(..)) => {
                     diagnostics.push(Diagnostic::decl_error(
                         contract_name.loc,
                         format!("'{}' is an enum variable", contract_name.name),
                     ));
                     return Err(());
-                }
+                },
                 Some(Symbol::UserType(..)) => {
                     diagnostics.push(Diagnostic::decl_error(
                         contract_name.loc,
                         format!("'{}' is an user type", contract_name.name),
                     ));
                     return Err(());
-                }
+                },
                 Some(Symbol::Import(..)) => unreachable!(),
             };
         }
@@ -1411,15 +1273,11 @@ impl Namespace {
 
             // try global scope
             if s.is_none() {
-                s = self
-                    .variable_symbols
-                    .get(&(import_file_no, None, id.name.to_owned()));
+                s = self.variable_symbols.get(&(import_file_no, None, id.name.to_owned()));
             }
 
             if s.is_none() {
-                s = self
-                    .function_symbols
-                    .get(&(import_file_no, None, id.name.to_owned()));
+                s = self.function_symbols.get(&(import_file_no, None, id.name.to_owned()));
             }
         }
 
@@ -1446,21 +1304,15 @@ impl Namespace {
                     dimensions.push(None);
 
                     r.as_ref()
-                }
+                },
                 pt::Expression::ArraySubscript(_, r, Some(index)) => {
-                    dimensions.push(self.resolve_array_dimension(
-                        file_no,
-                        contract_no,
-                        None,
-                        index,
-                        diagnostics,
-                    )?);
+                    dimensions.push(self.resolve_array_dimension(file_no, contract_no, None, index, diagnostics)?);
 
                     r.as_ref()
-                }
+                },
                 pt::Expression::Variable(_) | pt::Expression::Type(..) => {
                     return Ok((Vec::new(), expr.clone(), dimensions))
-                }
+                },
                 pt::Expression::MemberAccess(_, namespace, id) => {
                     let mut names = Vec::new();
 
@@ -1483,14 +1335,14 @@ impl Namespace {
                         ));
                         return Err(());
                     }
-                }
+                },
                 _ => {
                     diagnostics.push(Diagnostic::decl_error(
                         expr.loc(),
                         "expression found where type expected".to_string(),
                     ));
                     return Err(());
-                }
+                },
             }
         }
     }
@@ -1545,14 +1397,14 @@ impl Namespace {
         )?;
 
         match size_expr.ty() {
-            Type::Uint(_) | Type::Int(_) => {}
+            Type::Uint(_) | Type::Int(_) => {},
             _ => {
                 diagnostics.push(Diagnostic::decl_error(
                     expr.loc(),
                     "expression is not a number".to_string(),
                 ));
                 return Err(());
-            }
+            },
         }
 
         let n = eval_const_number(&size_expr, self, diagnostics)?;
@@ -1567,10 +1419,7 @@ impl Namespace {
         format!(
             "{}({})",
             name,
-            params
-                .iter()
-                .map(|p| p.ty.to_signature_string(false, self))
-                .join(",")
+            params.iter().map(|p| p.ty.to_signature_string(false, self)).join(",")
         )
     }
 }

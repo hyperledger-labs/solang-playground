@@ -5,10 +5,8 @@
 pub mod abi;
 pub mod codegen;
 pub mod file_resolver;
-pub mod standard_json;
 pub mod languageserver;
-
-
+pub mod standard_json;
 
 // In Sema, we use result unit for returning early
 // when code-misparses. The error will be added to the namespace diagnostics, no need to have anything but unit
@@ -26,10 +24,7 @@ pub enum Target {
     /// Solana, see <https://solana.com/>
     Solana,
     /// Parachains with the Substrate `contracts` pallet, see <https://substrate.io/>
-    Polkadot {
-        address_length: usize,
-        value_length: usize,
-    },
+    Polkadot { address_length: usize, value_length: usize },
     /// Ethereum EVM, see <https://ethereum.org/en/developers/docs/evm/>
     EVM,
 }
@@ -122,11 +117,7 @@ impl Target {
 /// informational messages like `found contact N`.
 ///
 /// Note that multiple contracts can be specified in on solidity source file.
-pub fn parse_and_resolve(
-    filename: &OsStr,
-    resolver: &mut FileResolver,
-    target: Target,
-) -> sema::ast::Namespace {
+pub fn parse_and_resolve(filename: &OsStr, resolver: &mut FileResolver, target: Target) -> sema::ast::Namespace {
     let mut ns = sema::ast::Namespace::new(target);
 
     match resolver.resolve_file(None, filename) {
@@ -138,14 +129,13 @@ pub fn parse_and_resolve(
                 loc: pt::Loc::CommandLine,
                 notes: Vec::new(),
             });
-        }
+        },
         Ok(file) => {
             sema::sema(&file, resolver, &mut ns);
-        }
+        },
     }
 
     ns.diagnostics.sort_and_dedup();
 
     ns
 }
-

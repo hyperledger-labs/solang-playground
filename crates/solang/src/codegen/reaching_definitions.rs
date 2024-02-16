@@ -26,16 +26,16 @@ impl fmt::Display for Transfer {
         match self {
             Transfer::Gen { def, var_no } => {
                 write!(f, "Gen %{var_no} = ({}, {})", def.block_no, def.instr_no)
-            }
+            },
             Transfer::Mod { var_no } => {
                 write!(f, "Mod %{var_no}")
-            }
+            },
             Transfer::Copy { var_no, src } => {
                 write!(f, "Copy %{var_no} from %{src}")
-            }
+            },
             Transfer::Kill { var_no } => {
                 write!(f, "Kill %{var_no}")
-            }
+            },
         }
     }
 }
@@ -131,30 +131,22 @@ fn instr_transfers(block_no: usize, block: &BasicBlock) -> Vec<Vec<Transfer>> {
                         src: *src,
                     },
                 ]
-            }
+            },
             Instr::Set { res, .. } => set_var(&[*res]),
             Instr::Call { res, .. } => set_var(res),
-            Instr::LoadStorage { res, .. } | Instr::PopStorage { res: Some(res), .. } => {
-                set_var(&[*res])
-            }
+            Instr::LoadStorage { res, .. } | Instr::PopStorage { res: Some(res), .. } => set_var(&[*res]),
             Instr::PushMemory { array, res, .. } => {
                 let mut v = set_var(&[*res]);
                 v.push(Transfer::Mod { var_no: *array });
 
                 v
-            }
+            },
             Instr::PopMemory { array, .. } => {
                 vec![Transfer::Mod { var_no: *array }]
-            }
-            Instr::ExternalCall {
-                success: Some(res), ..
-            }
-            | Instr::Constructor {
-                success: None, res, ..
-            }
-            | Instr::ValueTransfer {
-                success: Some(res), ..
-            } => set_var(&[*res]),
+            },
+            Instr::ExternalCall { success: Some(res), .. }
+            | Instr::Constructor { success: None, res, .. }
+            | Instr::ValueTransfer { success: Some(res), .. } => set_var(&[*res]),
             Instr::ClearStorage { storage: dest, .. }
             | Instr::SetStorageBytes { storage: dest, .. }
             | Instr::SetStorage { storage: dest, .. }
@@ -166,7 +158,7 @@ fn instr_transfers(block_no: usize, block: &BasicBlock) -> Vec<Vec<Transfer>> {
                 }
 
                 v
-            }
+            },
             Instr::Constructor {
                 success: Some(success),
                 res,
@@ -182,9 +174,7 @@ fn instr_transfers(block_no: usize, block: &BasicBlock) -> Vec<Vec<Transfer>> {
 fn array_var(expr: &Expression) -> Option<usize> {
     match expr {
         Expression::Variable { var_no, .. } => Some(*var_no),
-        Expression::Subscript { expr, .. } | Expression::StructMember { expr, .. } => {
-            array_var(expr)
-        }
+        Expression::Subscript { expr, .. } | Expression::StructMember { expr, .. } => array_var(expr),
         _ => None,
     }
 }
@@ -194,21 +184,21 @@ pub fn apply_transfers(transfers: &[Transfer], vars: &mut IndexMap<usize, IndexM
         match transfer {
             Transfer::Kill { var_no } => {
                 vars.swap_remove(var_no);
-            }
+            },
             Transfer::Mod { var_no } => {
                 if let Some(entry) = vars.get_mut(var_no) {
                     for e in entry.values_mut() {
                         *e = true;
                     }
                 }
-            }
+            },
             Transfer::Copy { var_no, src } => {
                 if let Some(defs) = vars.get(src) {
                     let defs = defs.clone();
 
                     vars.insert(*var_no, defs);
                 }
-            }
+            },
             Transfer::Gen { var_no, def } => {
                 if let Some(entry) = vars.get_mut(var_no) {
                     entry.insert(*def, false);
@@ -217,7 +207,7 @@ pub fn apply_transfers(transfers: &[Transfer], vars: &mut IndexMap<usize, IndexM
                     v.insert(*def, false);
                     vars.insert(*var_no, v);
                 }
-            }
+            },
         }
     }
 }

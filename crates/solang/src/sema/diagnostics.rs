@@ -80,10 +80,7 @@ impl Diagnostics {
     }
 
     pub fn count_warnings(&self) -> usize {
-        self.contents
-            .iter()
-            .filter(|&x| x.level == Level::Warning)
-            .count()
+        self.contents.iter().filter(|&x| x.level == Level::Warning).count()
     }
 
     pub fn first_warning(&self) -> &Diagnostic {
@@ -143,10 +140,7 @@ impl Diagnostics {
     }
 }
 
-fn convert_diagnostic(
-    msg: &Diagnostic,
-    file_id: &HashMap<usize, usize>,
-) -> diagnostic::Diagnostic<usize> {
+fn convert_diagnostic(msg: &Diagnostic, file_id: &HashMap<usize, usize>) -> diagnostic::Diagnostic<usize> {
     let diagnostic = diagnostic::Diagnostic::new(match msg.level {
         Level::Debug => diagnostic::Severity::Help,
         Level::Info => diagnostic::Severity::Note,
@@ -164,8 +158,7 @@ fn convert_diagnostic(
     for note in &msg.notes {
         if let Loc::File(file_no, start, end) = note.loc {
             labels.push(
-                diagnostic::Label::secondary(file_id[&file_no], start..end)
-                    .with_message(note.message.to_owned()),
+                diagnostic::Label::secondary(file_id[&file_no], start..end).with_message(note.message.to_owned()),
             );
         } else {
             unreachable!("note without file position");
@@ -262,10 +255,7 @@ impl Namespace {
         json
     }
 
-    fn convert_files(
-        &self,
-        cache: &FileResolver,
-    ) -> (files::SimpleFiles<String, Arc<str>>, HashMap<usize, usize>) {
+    fn convert_files(&self, cache: &FileResolver) -> (files::SimpleFiles<String, Arc<str>>, HashMap<usize, usize>) {
         let mut files = files::SimpleFiles::new();
         let mut file_id = HashMap::new();
 

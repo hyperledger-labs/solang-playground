@@ -194,10 +194,10 @@ impl<'input> fmt::Display for Token<'input> {
             Token::Number(integer, exp) => write!(f, "{integer}e{exp}"),
             Token::RationalNumber(integer, fraction, exp) if exp.is_empty() => {
                 write!(f, "{integer}.{fraction}")
-            }
+            },
             Token::RationalNumber(integer, fraction, exp) => {
                 write!(f, "{integer}.{fraction}e{exp}")
-            }
+            },
             Token::HexNumber(n) => write!(f, "{n}"),
             Token::Uint(w) => write!(f, "uint{w}"),
             Token::Int(w) => write!(f, "int{w}"),
@@ -595,19 +595,15 @@ impl<'input> Lexer<'input> {
                 let mut end = match self.chars.next() {
                     Some((end, ch)) if ch.is_ascii_hexdigit() => end,
                     Some((..)) => {
-                        return Err(LexicalError::MissingNumber(Loc::File(
-                            self.file_no,
-                            start,
-                            start + 1,
-                        )));
-                    }
+                        return Err(LexicalError::MissingNumber(Loc::File(self.file_no, start, start + 1)));
+                    },
                     None => {
                         return Err(LexicalError::EndofFileInHex(Loc::File(
                             self.file_no,
                             start,
                             self.input.len(),
                         )));
-                    }
+                    },
                 };
 
                 while let Some((i, ch)) = self.chars.peek() {
@@ -702,11 +698,7 @@ impl<'input> Lexer<'input> {
             let fraction = &self.input[rational_start..=rational_end];
             let exp = &self.input[exp_start..=end];
 
-            return Ok((
-                start,
-                Token::RationalNumber(integer, fraction, exp),
-                end + 1,
-            ));
+            return Ok((start, Token::RationalNumber(integer, fraction, exp), end + 1));
         }
 
         let integer = &self.input[start..=old_end];
@@ -715,13 +707,7 @@ impl<'input> Lexer<'input> {
         Ok((start, Token::Number(integer, exp), end + 1))
     }
 
-    fn string(
-        &mut self,
-        unicode: bool,
-        token_start: usize,
-        string_start: usize,
-        quote_char: char,
-    ) -> Result<'input> {
+    fn string(&mut self, unicode: bool, token_start: usize, string_start: usize, quote_char: char) -> Result<'input> {
         let mut end;
 
         let mut last_was_escape = false;
@@ -770,7 +756,7 @@ impl<'input> Lexer<'input> {
                                     Err(lex_err) => self.errors.push(lex_err),
                                     Ok(val) => return Some(val),
                                 }
-                            }
+                            },
                             _ => (),
                         }
                     }
@@ -784,11 +770,7 @@ impl<'input> Lexer<'input> {
 
                                 for (i, ch) in &mut self.chars {
                                     if ch == quote_char {
-                                        return Some((
-                                            start,
-                                            Token::HexLiteral(&self.input[start..=i]),
-                                            i + 1,
-                                        ));
+                                        return Some((start, Token::HexLiteral(&self.input[start..=i]), i + 1));
                                     }
 
                                     if !ch.is_ascii_hexdigit() && ch != '_' {
@@ -799,12 +781,10 @@ impl<'input> Lexer<'input> {
                                             }
                                         }
 
-                                        self.errors.push(
-                                            LexicalError::InvalidCharacterInHexLiteral(
-                                                Loc::File(self.file_no, i, i + 1),
-                                                ch,
-                                            ),
-                                        );
+                                        self.errors.push(LexicalError::InvalidCharacterInHexLiteral(
+                                            Loc::File(self.file_no, i, i + 1),
+                                            ch,
+                                        ));
                                         continue 'toplevel;
                                     }
                                 }
@@ -815,7 +795,7 @@ impl<'input> Lexer<'input> {
                                     self.input.len(),
                                 )));
                                 return None;
-                            }
+                            },
                             _ => (),
                         }
                     }
@@ -829,11 +809,7 @@ impl<'input> Lexer<'input> {
 
                                 for (i, ch) in &mut self.chars {
                                     if ch == quote_char {
-                                        return Some((
-                                            start,
-                                            Token::AddressLiteral(&self.input[start..=i]),
-                                            i + 1,
-                                        ));
+                                        return Some((start, Token::AddressLiteral(&self.input[start..=i]), i + 1));
                                     }
                                 }
 
@@ -843,7 +819,7 @@ impl<'input> Lexer<'input> {
                                     self.input.len(),
                                 )));
                                 return None;
-                            }
+                            },
                             _ => (),
                         }
                     }
@@ -853,20 +829,20 @@ impl<'input> Lexer<'input> {
                     } else {
                         Some((start, Token::Identifier(id), end))
                     };
-                }
+                },
                 Some((start, quote_char @ '"')) | Some((start, quote_char @ '\'')) => {
                     let str_res = self.string(false, start, start + 1, quote_char);
                     match str_res {
                         Err(lex_err) => self.errors.push(lex_err),
                         Ok(val) => return Some(val),
                     }
-                }
+                },
                 Some((start, '/')) => {
                     match self.chars.peek() {
                         Some((_, '=')) => {
                             self.chars.next();
                             return Some((start, Token::DivideAssign, start + 2));
-                        }
+                        },
                         Some((_, '/')) => {
                             // line comment
                             self.chars.next();
@@ -877,11 +853,11 @@ impl<'input> Lexer<'input> {
                                 Some((_, '/')) => {
                                     // ///(/)+ is still a line comment
                                     !matches!(self.chars.peek(), Some((_, '/')))
-                                }
+                                },
                                 Some((_, ch)) if ch == '\n' || ch == '\r' => {
                                     newline = true;
                                     false
-                                }
+                                },
                                 _ => false,
                             };
 
@@ -893,11 +869,11 @@ impl<'input> Lexer<'input> {
                                         None => {
                                             last = self.input.len();
                                             break;
-                                        }
+                                        },
                                         Some((offset, '\n' | '\r')) => {
                                             last = offset;
                                             break;
-                                        }
+                                        },
                                         Some(_) => (),
                                     }
                                 }
@@ -914,7 +890,7 @@ impl<'input> Lexer<'input> {
                                     self.input[start..last].to_owned(),
                                 ));
                             }
-                        }
+                        },
                         Some((_, '*')) => {
                             // multiline comment
                             self.chars.next();
@@ -953,12 +929,12 @@ impl<'input> Lexer<'input> {
                                     self.input[start..last + 2].to_owned(),
                                 ));
                             }
-                        }
+                        },
                         _ => {
                             return Some((start, Token::Divide, start + 1));
-                        }
+                        },
                     }
-                }
+                },
                 Some((start, ch)) if ch.is_ascii_digit() => {
                     let parse_result = self.parse_number(start, ch);
                     match parse_result {
@@ -967,10 +943,10 @@ impl<'input> Lexer<'input> {
                             if matches!(lex_err, LexicalError::EndofFileInHex(_)) {
                                 return None;
                             }
-                        }
+                        },
                         Ok(parse_result) => return Some(parse_result),
                     }
-                }
+                },
                 Some((start, '@')) => {
                     let (id, end) = self.match_identifier(start);
                     if id.len() == 1 {
@@ -981,11 +957,11 @@ impl<'input> Lexer<'input> {
                     } else {
                         return Some((start, Token::Annotation(&id[1..]), end));
                     };
-                }
+                },
                 Some((i, ';')) => {
                     self.parse_semver = false;
                     return Some((i, Token::Semicolon, i + 1));
-                }
+                },
                 Some((i, ',')) => return Some((i, Token::Comma, i + 1)),
                 Some((i, '(')) => return Some((i, Token::OpenParenthesis, i + 1)),
                 Some((i, ')')) => return Some((i, Token::CloseParenthesis, i + 1)),
@@ -997,14 +973,14 @@ impl<'input> Lexer<'input> {
                         Some((_, '=')) => {
                             self.chars.next();
                             Some((i, Token::Equal, i + 2))
-                        }
+                        },
                         Some((_, '>')) => {
                             self.chars.next();
                             Some((i, Token::Arrow, i + 2))
-                        }
+                        },
                         _ => Some((i, Token::Assign, i + 1)),
                     }
-                }
+                },
                 Some((i, '!')) => {
                     return if let Some((_, '=')) = self.chars.peek() {
                         self.chars.next();
@@ -1012,94 +988,94 @@ impl<'input> Lexer<'input> {
                     } else {
                         Some((i, Token::Not, i + 1))
                     }
-                }
+                },
                 Some((i, '|')) => {
                     return match self.chars.peek() {
                         Some((_, '=')) => {
                             self.chars.next();
                             Some((i, Token::BitwiseOrAssign, i + 2))
-                        }
+                        },
                         Some((_, '|')) => {
                             self.chars.next();
                             Some((i, Token::Or, i + 2))
-                        }
+                        },
                         _ => Some((i, Token::BitwiseOr, i + 1)),
                     };
-                }
+                },
                 Some((i, '&')) => {
                     return match self.chars.peek() {
                         Some((_, '=')) => {
                             self.chars.next();
                             Some((i, Token::BitwiseAndAssign, i + 2))
-                        }
+                        },
                         Some((_, '&')) => {
                             self.chars.next();
                             Some((i, Token::And, i + 2))
-                        }
+                        },
                         _ => Some((i, Token::BitwiseAnd, i + 1)),
                     };
-                }
+                },
                 Some((i, '^')) => {
                     return match self.chars.peek() {
                         Some((_, '=')) => {
                             self.chars.next();
                             Some((i, Token::BitwiseXorAssign, i + 2))
-                        }
+                        },
                         _ => Some((i, Token::BitwiseXor, i + 1)),
                     };
-                }
+                },
                 Some((i, '+')) => {
                     return match self.chars.peek() {
                         Some((_, '=')) => {
                             self.chars.next();
                             Some((i, Token::AddAssign, i + 2))
-                        }
+                        },
                         Some((_, '+')) => {
                             self.chars.next();
                             Some((i, Token::Increment, i + 2))
-                        }
+                        },
                         _ => Some((i, Token::Add, i + 1)),
                     };
-                }
+                },
                 Some((i, '-')) => {
                     return match self.chars.peek() {
                         Some((_, '=')) => {
                             self.chars.next();
                             Some((i, Token::SubtractAssign, i + 2))
-                        }
+                        },
                         Some((_, '-')) => {
                             self.chars.next();
                             Some((i, Token::Decrement, i + 2))
-                        }
+                        },
                         Some((_, '>')) => {
                             self.chars.next();
                             Some((i, Token::YulArrow, i + 2))
-                        }
+                        },
                         _ => Some((i, Token::Subtract, i + 1)),
                     };
-                }
+                },
                 Some((i, '*')) => {
                     return match self.chars.peek() {
                         Some((_, '=')) => {
                             self.chars.next();
                             Some((i, Token::MulAssign, i + 2))
-                        }
+                        },
                         Some((_, '*')) => {
                             self.chars.next();
                             Some((i, Token::Power, i + 2))
-                        }
+                        },
                         _ => Some((i, Token::Mul, i + 1)),
                     };
-                }
+                },
                 Some((i, '%')) => {
                     return match self.chars.peek() {
                         Some((_, '=')) => {
                             self.chars.next();
                             Some((i, Token::ModuloAssign, i + 2))
-                        }
+                        },
                         _ => Some((i, Token::Modulo, i + 1)),
                     };
-                }
+                },
                 Some((i, '<')) => {
                     return match self.chars.peek() {
                         Some((_, '<')) => {
@@ -1110,14 +1086,14 @@ impl<'input> Lexer<'input> {
                             } else {
                                 Some((i, Token::ShiftLeft, i + 2))
                             }
-                        }
+                        },
                         Some((_, '=')) => {
                             self.chars.next();
                             Some((i, Token::LessEqual, i + 2))
-                        }
+                        },
                         _ => Some((i, Token::Less, i + 1)),
                     };
-                }
+                },
                 Some((i, '>')) => {
                     return match self.chars.peek() {
                         Some((_, '>')) => {
@@ -1128,14 +1104,14 @@ impl<'input> Lexer<'input> {
                             } else {
                                 Some((i, Token::ShiftRight, i + 2))
                             }
-                        }
+                        },
                         Some((_, '=')) => {
                             self.chars.next();
                             Some((i, Token::MoreEqual, i + 2))
-                        }
+                        },
                         _ => Some((i, Token::More, i + 1)),
                     };
-                }
+                },
                 Some((i, '.')) => {
                     if let Some((_, a)) = self.chars.peek() {
                         if a.is_ascii_digit() && !self.parse_semver {
@@ -1143,13 +1119,13 @@ impl<'input> Lexer<'input> {
                                 Err(lex_error) => {
                                     self.errors.push(lex_error);
                                     None
-                                }
+                                },
                                 Ok(parse_result) => Some(parse_result),
                             };
                         }
                     }
                     return Some((i, Token::Member, i + 1));
-                }
+                },
                 Some((i, '[')) => return Some((i, Token::OpenBracket, i + 1)),
                 Some((i, ']')) => return Some((i, Token::CloseBracket, i + 1)),
                 Some((i, ':')) => {
@@ -1157,10 +1133,10 @@ impl<'input> Lexer<'input> {
                         Some((_, '=')) => {
                             self.chars.next();
                             Some((i, Token::ColonAssign, i + 2))
-                        }
+                        },
                         _ => Some((i, Token::Colon, i + 1)),
                     };
-                }
+                },
                 Some((i, '?')) => return Some((i, Token::Question, i + 1)),
                 Some((_, ch)) if ch.is_whitespace() => (),
                 Some((start, _)) => {
@@ -1183,7 +1159,7 @@ impl<'input> Lexer<'input> {
                         Loc::File(self.file_no, start, end),
                         self.input[start..end].to_owned(),
                     ));
-                }
+                },
                 None => return None, // End of file
             }
         }
@@ -1279,23 +1255,12 @@ mod tests {
 
         assert_eq!(tokens, vec!((0, Token::Identifier("hex"), 3)));
 
-        let tokens = Lexer::new(
-            "hex\"cafe_dead\" /* adad*** */",
-            0,
-            &mut comments,
-            &mut errors,
-        )
-        .collect::<Vec<_>>();
+        let tokens = Lexer::new("hex\"cafe_dead\" /* adad*** */", 0, &mut comments, &mut errors).collect::<Vec<_>>();
 
         assert_eq!(tokens, vec!((0, Token::HexLiteral("hex\"cafe_dead\""), 14)));
 
-        let tokens = Lexer::new(
-            "// foo bar\n0x00fead0_12 00090 0_0",
-            0,
-            &mut comments,
-            &mut errors,
-        )
-        .collect::<Vec<_>>();
+        let tokens =
+            Lexer::new("// foo bar\n0x00fead0_12 00090 0_0", 0, &mut comments, &mut errors).collect::<Vec<_>>();
 
         assert_eq!(
             tokens,
@@ -1306,13 +1271,8 @@ mod tests {
             )
         );
 
-        let tokens = Lexer::new(
-            "// foo bar\n0x00fead0_12 9.0008 0_0",
-            0,
-            &mut comments,
-            &mut errors,
-        )
-        .collect::<Vec<_>>();
+        let tokens =
+            Lexer::new("// foo bar\n0x00fead0_12 9.0008 0_0", 0, &mut comments, &mut errors).collect::<Vec<_>>();
 
         assert_eq!(
             tokens,
@@ -1323,13 +1283,8 @@ mod tests {
             )
         );
 
-        let tokens = Lexer::new(
-            "// foo bar\n0x00fead0_12 .0008 0.9e2",
-            0,
-            &mut comments,
-            &mut errors,
-        )
-        .collect::<Vec<_>>();
+        let tokens =
+            Lexer::new("// foo bar\n0x00fead0_12 .0008 0.9e2", 0, &mut comments, &mut errors).collect::<Vec<_>>();
 
         assert_eq!(
             tokens,
@@ -1340,13 +1295,8 @@ mod tests {
             )
         );
 
-        let tokens = Lexer::new(
-            "// foo bar\n0x00fead0_12 .0008 0.9e-2-2",
-            0,
-            &mut comments,
-            &mut errors,
-        )
-        .collect::<Vec<_>>();
+        let tokens =
+            Lexer::new("// foo bar\n0x00fead0_12 .0008 0.9e-2-2", 0, &mut comments, &mut errors).collect::<Vec<_>>();
 
         assert_eq!(
             tokens,
@@ -1363,23 +1313,14 @@ mod tests {
 
         assert_eq!(
             tokens,
-            vec!(
-                (0, Token::RationalNumber("1", "2_3", "2"), 7),
-                (7, Token::Subtract, 8)
-            )
+            vec!((0, Token::RationalNumber("1", "2_3", "2"), 7), (7, Token::Subtract, 8))
         );
 
         let tokens = Lexer::new("\"foo\"", 0, &mut comments, &mut errors).collect::<Vec<_>>();
 
         assert_eq!(tokens, vec!((0, Token::StringLiteral(false, "foo"), 5)));
 
-        let tokens = Lexer::new(
-            "pragma solidity >=0.5.0 <0.7.0;",
-            0,
-            &mut comments,
-            &mut errors,
-        )
-        .collect::<Vec<_>>();
+        let tokens = Lexer::new("pragma solidity >=0.5.0 <0.7.0;", 0, &mut comments, &mut errors).collect::<Vec<_>>();
 
         assert_eq!(
             tokens,
@@ -1402,13 +1343,8 @@ mod tests {
             )
         );
 
-        let tokens = Lexer::new(
-            "pragma solidity \t>=0.5.0 <0.7.0 \n ;",
-            0,
-            &mut comments,
-            &mut errors,
-        )
-        .collect::<Vec<_>>();
+        let tokens =
+            Lexer::new("pragma solidity \t>=0.5.0 <0.7.0 \n ;", 0, &mut comments, &mut errors).collect::<Vec<_>>();
 
         assert_eq!(
             tokens,
@@ -1431,8 +1367,7 @@ mod tests {
             )
         );
 
-        let tokens =
-            Lexer::new("pragma solidity 赤;", 0, &mut comments, &mut errors).collect::<Vec<_>>();
+        let tokens = Lexer::new("pragma solidity 赤;", 0, &mut comments, &mut errors).collect::<Vec<_>>();
 
         assert_eq!(
             tokens,
@@ -1483,20 +1418,14 @@ mod tests {
 
         let tokens = Lexer::new("-4 ", 0, &mut comments, &mut errors).collect::<Vec<_>>();
 
-        assert_eq!(
-            tokens,
-            vec!((0, Token::Subtract, 1), (1, Token::Number("4", ""), 2),)
-        );
+        assert_eq!(tokens, vec!((0, Token::Subtract, 1), (1, Token::Number("4", ""), 2),));
 
         let mut errors = Vec::new();
         let _ = Lexer::new(r#"hex"abcdefg""#, 0, &mut comments, &mut errors).collect::<Vec<_>>();
 
         assert_eq!(
             errors,
-            vec![LexicalError::InvalidCharacterInHexLiteral(
-                Loc::File(0, 10, 11),
-                'g'
-            )]
+            vec![LexicalError::InvalidCharacterInHexLiteral(Loc::File(0, 10, 11), 'g')]
         );
 
         let mut errors = Vec::new();
@@ -1504,10 +1433,7 @@ mod tests {
 
         assert_eq!(
             errors,
-            vec!(LexicalError::UnrecognisedToken(
-                Loc::File(0, 1, 4),
-                "€".to_owned()
-            ))
+            vec!(LexicalError::UnrecognisedToken(Loc::File(0, 1, 4), "€".to_owned()))
         );
 
         let mut errors = Vec::new();
@@ -1515,14 +1441,10 @@ mod tests {
 
         assert_eq!(
             errors,
-            vec!(LexicalError::UnrecognisedToken(
-                Loc::File(0, 0, 3),
-                "€".to_owned()
-            ))
+            vec!(LexicalError::UnrecognisedToken(Loc::File(0, 0, 3), "€".to_owned()))
         );
 
-        let tokens =
-            Lexer::new(r#"pragma foo bar"#, 0, &mut comments, &mut errors).collect::<Vec<_>>();
+        let tokens = Lexer::new(r#"pragma foo bar"#, 0, &mut comments, &mut errors).collect::<Vec<_>>();
 
         assert_eq!(
             tokens,
@@ -1561,10 +1483,7 @@ mod tests {
         let tokens = Lexer::new("/**/", 0, &mut comments, &mut errors).count();
 
         assert_eq!(tokens, 0);
-        assert_eq!(
-            comments,
-            vec!(Comment::Block(Loc::File(0, 0, 4), "/**/".to_owned()))
-        );
+        assert_eq!(comments, vec!(Comment::Block(Loc::File(0, 0, 4), "/**/".to_owned())));
 
         comments.truncate(0);
 
@@ -1573,21 +1492,12 @@ mod tests {
         assert_eq!(tokens, 0);
         assert_eq!(
             comments,
-            vec!(Comment::DocBlock(
-                Loc::File(0, 0, 10),
-                "/** foo */".to_owned()
-            ))
+            vec!(Comment::DocBlock(Loc::File(0, 0, 10), "/** foo */".to_owned()))
         );
 
         comments.truncate(0);
 
-        let tokens = Lexer::new(
-            "/** jadajadadjada */\n/* bar */",
-            0,
-            &mut comments,
-            &mut errors,
-        )
-        .count();
+        let tokens = Lexer::new("/** jadajadadjada */\n/* bar */", 0, &mut comments, &mut errors).count();
 
         assert_eq!(tokens, 0);
         assert_eq!(
@@ -1603,10 +1513,7 @@ mod tests {
 
         let mut errors = Vec::new();
         let _ = Lexer::new("/**", 0, &mut comments, &mut errors).next();
-        assert_eq!(
-            errors,
-            vec!(LexicalError::EndOfFileInComment(Loc::File(0, 0, 3)))
-        );
+        assert_eq!(errors, vec!(LexicalError::EndOfFileInComment(Loc::File(0, 0, 3))));
 
         let mut errors = Vec::new();
         let tokens = Lexer::new("//////////////", 0, &mut comments, &mut errors).next();
@@ -1636,8 +1543,7 @@ mod tests {
 
         assert_eq!(tokens, vec!((0, Token::StringLiteral(true, "€"), 12)));
 
-        let tokens =
-            Lexer::new(r#"unicode "€""#, 0, &mut comments, &mut errors).collect::<Vec<_>>();
+        let tokens = Lexer::new(r#"unicode "€""#, 0, &mut comments, &mut errors).collect::<Vec<_>>();
 
         assert_eq!(
             tokens,
@@ -1663,19 +1569,13 @@ mod tests {
         let tokens = Lexer::new(r#" -9e"#, 0, &mut comments, &mut errors).collect::<Vec<_>>();
 
         assert_eq!(tokens, vec!((1, Token::Subtract, 2)));
-        assert_eq!(
-            errors,
-            vec!(LexicalError::MissingExponent(Loc::File(0, 2, 4)))
-        );
+        assert_eq!(errors, vec!(LexicalError::MissingExponent(Loc::File(0, 2, 4))));
 
         let mut errors = Vec::new();
         let tokens = Lexer::new(r#"9ea"#, 0, &mut comments, &mut errors).collect::<Vec<_>>();
 
         assert_eq!(tokens, vec!((2, Token::Identifier("a"), 3)));
-        assert_eq!(
-            errors,
-            vec!(LexicalError::MissingExponent(Loc::File(0, 0, 3)))
-        );
+        assert_eq!(errors, vec!(LexicalError::MissingExponent(Loc::File(0, 0, 3))));
 
         let mut errors = Vec::new();
         let tokens = Lexer::new(r#"42.a"#, 0, &mut comments, &mut errors).collect::<Vec<_>>();
@@ -1719,10 +1619,7 @@ mod tests {
         let tokens = Lexer::new("/**/", 0, &mut comments, &mut errors).count();
 
         assert_eq!(tokens, 0);
-        assert_eq!(
-            comments,
-            vec!(Comment::Block(Loc::File(0, 0, 4), "/**/".to_owned()))
-        );
+        assert_eq!(comments, vec!(Comment::Block(Loc::File(0, 0, 4), "/**/".to_owned())));
 
         comments.truncate(0);
 
@@ -1731,21 +1628,12 @@ mod tests {
         assert_eq!(tokens, 0);
         assert_eq!(
             comments,
-            vec!(Comment::DocBlock(
-                Loc::File(0, 0, 10),
-                "/** foo */".to_owned()
-            ))
+            vec!(Comment::DocBlock(Loc::File(0, 0, 10), "/** foo */".to_owned()))
         );
 
         comments.truncate(0);
 
-        let tokens = Lexer::new(
-            "/** jadajadadjada */\n/* bar */",
-            0,
-            &mut comments,
-            &mut errors,
-        )
-        .count();
+        let tokens = Lexer::new("/** jadajadadjada */\n/* bar */", 0, &mut comments, &mut errors).count();
 
         assert_eq!(tokens, 0);
         assert_eq!(
@@ -1761,10 +1649,7 @@ mod tests {
 
         let mut errors = Vec::new();
         let _ = Lexer::new("/**", 0, &mut comments, &mut errors).next();
-        assert_eq!(
-            errors,
-            vec!(LexicalError::EndOfFileInComment(Loc::File(0, 0, 3)))
-        );
+        assert_eq!(errors, vec!(LexicalError::EndOfFileInComment(Loc::File(0, 0, 3))));
 
         let mut errors = Vec::new();
         let tokens = Lexer::new("//////////////", 0, &mut comments, &mut errors).next();
@@ -1790,15 +1675,12 @@ mod tests {
             )
         );
 
-        let tokens =
-            Lexer::new(r#"unicode"€""#, 0, &mut comments, &mut errors)
-                .collect::<Vec<(usize, Token, usize)>>();
+        let tokens = Lexer::new(r#"unicode"€""#, 0, &mut comments, &mut errors).collect::<Vec<(usize, Token, usize)>>();
 
         assert_eq!(tokens, vec!((0, Token::StringLiteral(true, "€"), 12)));
 
         let tokens =
-            Lexer::new(r#"unicode "€""#, 0, &mut comments, &mut errors)
-                .collect::<Vec<(usize, Token, usize)>>();
+            Lexer::new(r#"unicode "€""#, 0, &mut comments, &mut errors).collect::<Vec<(usize, Token, usize)>>();
 
         assert_eq!(
             tokens,
@@ -1809,15 +1691,11 @@ mod tests {
         );
 
         // scientific notation
-        let tokens =
-            Lexer::new(r#" 1e0 "#, 0, &mut comments, &mut errors)
-                .collect::<Vec<(usize, Token, usize)>>();
+        let tokens = Lexer::new(r#" 1e0 "#, 0, &mut comments, &mut errors).collect::<Vec<(usize, Token, usize)>>();
 
         assert_eq!(tokens, vec!((1, Token::Number("1", "0"), 4)));
 
-        let tokens =
-            Lexer::new(r#" -9e0123"#, 0, &mut comments, &mut errors)
-                .collect::<Vec<(usize, Token, usize)>>();
+        let tokens = Lexer::new(r#" -9e0123"#, 0, &mut comments, &mut errors).collect::<Vec<(usize, Token, usize)>>();
 
         assert_eq!(
             tokens,
@@ -1825,28 +1703,19 @@ mod tests {
         );
 
         let mut errors = Vec::new();
-        let tokens = Lexer::new(r#" -9e"#, 0, &mut comments, &mut errors)
-            .collect::<Vec<(usize, Token, usize)>>();
+        let tokens = Lexer::new(r#" -9e"#, 0, &mut comments, &mut errors).collect::<Vec<(usize, Token, usize)>>();
 
         assert_eq!(tokens, vec!((1, Token::Subtract, 2)));
-        assert_eq!(
-            errors,
-            vec!(LexicalError::MissingExponent(Loc::File(0, 2, 4)))
-        );
+        assert_eq!(errors, vec!(LexicalError::MissingExponent(Loc::File(0, 2, 4))));
 
         let mut errors = Vec::new();
-        let tokens = Lexer::new(r#"9ea"#, 0, &mut comments, &mut errors)
-            .collect::<Vec<(usize, Token, usize)>>();
+        let tokens = Lexer::new(r#"9ea"#, 0, &mut comments, &mut errors).collect::<Vec<(usize, Token, usize)>>();
 
         assert_eq!(tokens, vec!((2, Token::Identifier("a"), 3)));
-        assert_eq!(
-            errors,
-            vec!(LexicalError::MissingExponent(Loc::File(0, 0, 3)))
-        );
+        assert_eq!(errors, vec!(LexicalError::MissingExponent(Loc::File(0, 0, 3))));
 
         let mut errors = Vec::new();
-        let tokens = Lexer::new(r#"42.a"#, 0, &mut comments, &mut errors)
-            .collect::<Vec<(usize, Token, usize)>>();
+        let tokens = Lexer::new(r#"42.a"#, 0, &mut comments, &mut errors).collect::<Vec<(usize, Token, usize)>>();
 
         assert_eq!(
             tokens,
@@ -1857,9 +1726,7 @@ mod tests {
             )
         );
 
-        let tokens =
-            Lexer::new(r#"42..a"#, 0, &mut comments, &mut errors)
-                .collect::<Vec<(usize, Token, usize)>>();
+        let tokens = Lexer::new(r#"42..a"#, 0, &mut comments, &mut errors).collect::<Vec<(usize, Token, usize)>>();
 
         assert_eq!(
             tokens,
@@ -1872,25 +1739,19 @@ mod tests {
         );
 
         let mut errors = Vec::new();
-        let _ = Lexer::new(r#"hex"g""#, 0, &mut comments, &mut errors)
-            .collect::<Vec<(usize, Token, usize)>>();
+        let _ = Lexer::new(r#"hex"g""#, 0, &mut comments, &mut errors).collect::<Vec<(usize, Token, usize)>>();
         assert_eq!(
             errors,
-            vec!(LexicalError::InvalidCharacterInHexLiteral(
-                Loc::File(0, 4, 5),
-                'g'
-            ),)
+            vec!(LexicalError::InvalidCharacterInHexLiteral(Loc::File(0, 4, 5), 'g'),)
         );
 
         let mut errors = Vec::new();
-        let tokens =
-            Lexer::new(".9", 0, &mut comments, &mut errors).collect::<Vec<(usize, Token, usize)>>();
+        let tokens = Lexer::new(".9", 0, &mut comments, &mut errors).collect::<Vec<(usize, Token, usize)>>();
 
         assert_eq!(tokens, vec!((0, Token::RationalNumber("", "9", ""), 2)));
 
         let mut errors = Vec::new();
-        let tokens = Lexer::new(".9e10", 0, &mut comments, &mut errors)
-            .collect::<Vec<(usize, Token, usize)>>();
+        let tokens = Lexer::new(".9e10", 0, &mut comments, &mut errors).collect::<Vec<(usize, Token, usize)>>();
 
         assert_eq!(tokens, vec!((0, Token::RationalNumber("", "9", "10"), 5)));
 
@@ -1906,23 +1767,18 @@ mod tests {
 
         errors.clear();
         comments.clear();
-        let tokens =
-            Lexer::new("@my_annotation", 0, &mut comments, &mut errors).collect::<Vec<_>>();
+        let tokens = Lexer::new("@my_annotation", 0, &mut comments, &mut errors).collect::<Vec<_>>();
         assert_eq!(tokens, vec![(0, Token::Annotation("my_annotation"), 14)]);
         assert!(errors.is_empty());
         assert!(comments.is_empty());
 
         errors.clear();
         comments.clear();
-        let tokens =
-            Lexer::new("@ my_annotation", 0, &mut comments, &mut errors).collect::<Vec<_>>();
+        let tokens = Lexer::new("@ my_annotation", 0, &mut comments, &mut errors).collect::<Vec<_>>();
         assert_eq!(tokens, vec![(2, Token::Identifier("my_annotation"), 15)]);
         assert_eq!(
             errors,
-            vec![LexicalError::UnrecognisedToken(
-                Loc::File(0, 0, 1),
-                "@".to_string()
-            )]
+            vec![LexicalError::UnrecognisedToken(Loc::File(0, 0, 1), "@".to_string())]
         );
         assert!(comments.is_empty());
     }

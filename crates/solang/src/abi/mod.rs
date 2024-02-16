@@ -28,7 +28,7 @@ pub fn generate_abi(
             let metadata = polkadot::metadata(contract_no, code, ns, default_authors, version);
 
             (serde_json::to_string_pretty(&metadata).unwrap(), "contract")
-        }
+        },
         Target::Solana => {
             if verbose {
                 eprintln!(
@@ -40,7 +40,7 @@ pub fn generate_abi(
             let idl = anchor::generate_anchor_idl(contract_no, ns, version);
 
             (serde_json::to_string_pretty(&idl).unwrap(), "json")
-        }
+        },
         _ => {
             if verbose {
                 eprintln!(
@@ -52,6 +52,6 @@ pub fn generate_abi(
             let abi = ethereum::gen_abi(contract_no, ns);
 
             (serde_json::to_string(&abi).unwrap(), "abi")
-        }
+        },
     }
 }

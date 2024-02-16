@@ -2,16 +2,16 @@
 
 use crate::sema::expression::{
     arithmetic::{
-        addition, bitwise_and, bitwise_or, bitwise_xor, divide, equal, incr_decr, modulo, multiply,
-        not_equal, power, shift_left, shift_right, subtract,
+        addition, bitwise_and, bitwise_or, bitwise_xor, divide, equal, incr_decr, modulo, multiply, not_equal, power,
+        shift_left, shift_right, subtract,
     },
     assign::{assign_expr, assign_single},
     constructor::{constructor_named_args, new},
     function_call::{call_expr, named_call_expr},
     integers::{bigint_to_expression, coerce, coerce_number, type_bits_and_sign},
     literals::{
-        address_literal, array_literal, hex_literal, hex_number_literal, number_literal,
-        rational_number_literal, string_literal, unit_literal,
+        address_literal, array_literal, hex_literal, hex_number_literal, number_literal, rational_number_literal,
+        string_literal, unit_literal,
     },
     member_access::member_access,
     subscript::array_subscript,
@@ -41,9 +41,7 @@ pub fn expression(
     resolve_to: ResolveTo,
 ) -> Result<Expression, ()> {
     match expr {
-        pt::Expression::Parenthesis(_, expr) => {
-            expression(expr, context, ns, symtable, diagnostics, resolve_to)
-        }
+        pt::Expression::Parenthesis(_, expr) => expression(expr, context, ns, symtable, diagnostics, resolve_to),
         pt::Expression::ArrayLiteral(loc, exprs) => {
             let res = array_literal(loc, exprs, context, ns, symtable, diagnostics, resolve_to);
 
@@ -52,34 +50,20 @@ pub fn expression(
             }
 
             res
-        }
-        pt::Expression::BoolLiteral(loc, v) => Ok(Expression::BoolLiteral {
-            loc: *loc,
-            value: *v,
-        }),
-        pt::Expression::StringLiteral(v) => {
-            Ok(string_literal(v, context.file_no, diagnostics, resolve_to))
-        }
+        },
+        pt::Expression::BoolLiteral(loc, v) => Ok(Expression::BoolLiteral { loc: *loc, value: *v }),
+        pt::Expression::StringLiteral(v) => Ok(string_literal(v, context.file_no, diagnostics, resolve_to)),
         pt::Expression::HexLiteral(v) => hex_literal(v, diagnostics, resolve_to),
         pt::Expression::NumberLiteral(loc, integer, exp, unit) => {
             let unit = unit_literal(loc, unit, ns, diagnostics);
 
             number_literal(loc, integer, exp, ns, &unit, diagnostics, resolve_to)
-        }
+        },
         pt::Expression::RationalNumberLiteral(loc, integer, fraction, exp, unit) => {
             let unit = unit_literal(loc, unit, ns, diagnostics);
 
-            rational_number_literal(
-                loc,
-                integer,
-                fraction,
-                exp,
-                &unit,
-                ns,
-                diagnostics,
-                resolve_to,
-            )
-        }
+            rational_number_literal(loc, integer, fraction, exp, &unit, ns, diagnostics, resolve_to)
+        },
         pt::Expression::HexNumberLiteral(loc, n, unit) => {
             if unit.is_some() {
                 diagnostics.push(Diagnostic::error(
@@ -88,64 +72,28 @@ pub fn expression(
                 ));
             }
             hex_number_literal(loc, n, ns, diagnostics, resolve_to)
-        }
-        pt::Expression::AddressLiteral(loc, address) => {
-            address_literal(loc, address, ns, diagnostics)
-        }
-        pt::Expression::Variable(id) => {
-            variable(id, context, ns, symtable, diagnostics, resolve_to)
-        }
-        pt::Expression::Add(loc, l, r) => {
-            addition(loc, l, r, context, ns, symtable, diagnostics, resolve_to)
-        }
-        pt::Expression::Subtract(loc, l, r) => {
-            subtract(loc, l, r, context, ns, symtable, diagnostics, resolve_to)
-        }
-        pt::Expression::BitwiseOr(loc, l, r) => {
-            bitwise_or(loc, l, r, context, ns, symtable, diagnostics, resolve_to)
-        }
-        pt::Expression::BitwiseAnd(loc, l, r) => {
-            bitwise_and(loc, l, r, context, ns, symtable, diagnostics, resolve_to)
-        }
-        pt::Expression::BitwiseXor(loc, l, r) => {
-            bitwise_xor(loc, l, r, context, ns, symtable, diagnostics, resolve_to)
-        }
-        pt::Expression::ShiftLeft(loc, l, r) => {
-            shift_left(loc, l, r, context, ns, symtable, diagnostics, resolve_to)
-        }
-        pt::Expression::ShiftRight(loc, l, r) => {
-            shift_right(loc, l, r, context, ns, symtable, diagnostics, resolve_to)
-        }
-        pt::Expression::Multiply(loc, l, r) => {
-            multiply(loc, l, r, context, ns, symtable, diagnostics, resolve_to)
-        }
-        pt::Expression::Divide(loc, l, r) => {
-            divide(loc, l, r, context, ns, symtable, diagnostics, resolve_to)
-        }
-        pt::Expression::Modulo(loc, l, r) => {
-            modulo(loc, l, r, context, ns, symtable, diagnostics, resolve_to)
-        }
-        pt::Expression::Power(loc, b, e) => {
-            power(loc, b, e, context, ns, symtable, diagnostics, resolve_to)
-        }
+        },
+        pt::Expression::AddressLiteral(loc, address) => address_literal(loc, address, ns, diagnostics),
+        pt::Expression::Variable(id) => variable(id, context, ns, symtable, diagnostics, resolve_to),
+        pt::Expression::Add(loc, l, r) => addition(loc, l, r, context, ns, symtable, diagnostics, resolve_to),
+        pt::Expression::Subtract(loc, l, r) => subtract(loc, l, r, context, ns, symtable, diagnostics, resolve_to),
+        pt::Expression::BitwiseOr(loc, l, r) => bitwise_or(loc, l, r, context, ns, symtable, diagnostics, resolve_to),
+        pt::Expression::BitwiseAnd(loc, l, r) => bitwise_and(loc, l, r, context, ns, symtable, diagnostics, resolve_to),
+        pt::Expression::BitwiseXor(loc, l, r) => bitwise_xor(loc, l, r, context, ns, symtable, diagnostics, resolve_to),
+        pt::Expression::ShiftLeft(loc, l, r) => shift_left(loc, l, r, context, ns, symtable, diagnostics, resolve_to),
+        pt::Expression::ShiftRight(loc, l, r) => shift_right(loc, l, r, context, ns, symtable, diagnostics, resolve_to),
+        pt::Expression::Multiply(loc, l, r) => multiply(loc, l, r, context, ns, symtable, diagnostics, resolve_to),
+        pt::Expression::Divide(loc, l, r) => divide(loc, l, r, context, ns, symtable, diagnostics, resolve_to),
+        pt::Expression::Modulo(loc, l, r) => modulo(loc, l, r, context, ns, symtable, diagnostics, resolve_to),
+        pt::Expression::Power(loc, b, e) => power(loc, b, e, context, ns, symtable, diagnostics, resolve_to),
         // compare
-        pt::Expression::More(loc, left, right) => {
-            more(left, right, context, ns, symtable, diagnostics, loc)
-        }
-        pt::Expression::Less(loc, left, right) => {
-            less(left, right, context, ns, symtable, diagnostics, loc)
-        }
-        pt::Expression::MoreEqual(loc, left, right) => {
-            more_equal(left, right, context, ns, symtable, diagnostics, loc)
-        }
-        pt::Expression::LessEqual(loc, left, right) => {
-            less_equal(left, right, context, ns, symtable, diagnostics, loc)
-        }
+        pt::Expression::More(loc, left, right) => more(left, right, context, ns, symtable, diagnostics, loc),
+        pt::Expression::Less(loc, left, right) => less(left, right, context, ns, symtable, diagnostics, loc),
+        pt::Expression::MoreEqual(loc, left, right) => more_equal(left, right, context, ns, symtable, diagnostics, loc),
+        pt::Expression::LessEqual(loc, left, right) => less_equal(left, right, context, ns, symtable, diagnostics, loc),
         pt::Expression::Equal(loc, l, r) => equal(loc, l, r, context, ns, symtable, diagnostics),
 
-        pt::Expression::NotEqual(loc, l, r) => {
-            not_equal(loc, l, r, context, ns, symtable, diagnostics)
-        }
+        pt::Expression::NotEqual(loc, l, r) => not_equal(loc, l, r, context, ns, symtable, diagnostics),
         // unary expressions
         pt::Expression::Not(loc, e) => {
             let expr = expression(e, context, ns, symtable, diagnostics, resolve_to)?;
@@ -155,13 +103,9 @@ pub fn expression(
                 loc: *loc,
                 expr: Box::new(expr.cast(loc, &Type::Bool, true, ns, diagnostics)?),
             })
-        }
-        pt::Expression::BitwiseNot(loc, e) => {
-            bitwise_not(e, context, ns, symtable, diagnostics, resolve_to, loc)
-        }
-        pt::Expression::Negate(loc, e) => {
-            negate(e, loc, ns, diagnostics, resolve_to, context, symtable)
-        }
+        },
+        pt::Expression::BitwiseNot(loc, e) => bitwise_not(e, context, ns, symtable, diagnostics, resolve_to, loc),
+        pt::Expression::Negate(loc, e) => negate(e, loc, ns, diagnostics, resolve_to, context, symtable),
         pt::Expression::UnaryPlus(loc, e) => {
             let expr = expression(e, context, ns, symtable, diagnostics, resolve_to)?;
             used_variable(ns, &expr, symtable);
@@ -169,13 +113,10 @@ pub fn expression(
 
             type_bits_and_sign(&expr_type, loc, false, ns, diagnostics)?;
 
-            diagnostics.push(Diagnostic::error(
-                *loc,
-                "unary plus not permitted".to_string(),
-            ));
+            diagnostics.push(Diagnostic::error(*loc, "unary plus not permitted".to_string()));
 
             Ok(expr)
-        }
+        },
 
         pt::Expression::ConditionalOperator(loc, c, l, r) => {
             let left = expression(l, context, ns, symtable, diagnostics, resolve_to)?;
@@ -197,7 +138,7 @@ pub fn expression(
                 true_option: Box::new(left),
                 false_option: Box::new(right),
             })
-        }
+        },
 
         // pre/post decrement/increment
         pt::Expression::PostIncrement(loc, var)
@@ -213,7 +154,7 @@ pub fn expression(
             };
 
             incr_decr(var, expr, context, ns, symtable, diagnostics)
-        }
+        },
 
         // assignment
         pt::Expression::Assign(loc, var, e) => {
@@ -226,7 +167,7 @@ pub fn expression(
             };
 
             assign_single(loc, var, e, context, ns, symtable, diagnostics)
-        }
+        },
 
         pt::Expression::AssignAdd(loc, var, e)
         | pt::Expression::AssignSubtract(loc, var, e)
@@ -250,18 +191,10 @@ pub fn expression(
                 expression.check_constant_overflow(diagnostics);
             }
             expr
-        }
-        pt::Expression::NamedFunctionCall(loc, ty, args) => named_call_expr(
-            loc,
-            ty,
-            args,
-            false,
-            context,
-            ns,
-            symtable,
-            diagnostics,
-            resolve_to,
-        ),
+        },
+        pt::Expression::NamedFunctionCall(loc, ty, args) => {
+            named_call_expr(loc, ty, args, false, context, ns, symtable, diagnostics, resolve_to)
+        },
         pt::Expression::New(loc, call) => {
             if context.constant {
                 diagnostics.push(Diagnostic::error(
@@ -279,51 +212,36 @@ pub fn expression(
                         check_function_call(ns, exp, symtable);
                     }
                     res
-                }
+                },
                 pt::Expression::NamedFunctionCall(_, ty, args) => {
-                    let res =
-                        constructor_named_args(loc, ty, args, context, ns, symtable, diagnostics);
+                    let res = constructor_named_args(loc, ty, args, context, ns, symtable, diagnostics);
 
                     if let Ok(exp) = &res {
                         check_function_call(ns, exp, symtable);
                     }
 
                     res
-                }
+                },
                 pt::Expression::Variable(id) => {
                     diagnostics.push(Diagnostic::error(
                         *loc,
                         format!("missing constructor arguments to {}", id.name),
                     ));
                     Err(())
-                }
+                },
                 expr => {
-                    diagnostics.push(Diagnostic::error(
-                        expr.loc(),
-                        "type with arguments expected".into(),
-                    ));
+                    diagnostics.push(Diagnostic::error(expr.loc(), "type with arguments expected".into()));
                     Err(())
-                }
+                },
             }
-        }
+        },
         pt::Expression::Delete(loc, _) => {
-            diagnostics.push(Diagnostic::error(
-                *loc,
-                "delete not allowed in expression".to_string(),
-            ));
+            diagnostics.push(Diagnostic::error(*loc, "delete not allowed in expression".to_string()));
             Err(())
-        }
-        pt::Expression::FunctionCall(loc, ty, args) => call_expr(
-            loc,
-            ty,
-            args,
-            false,
-            context,
-            ns,
-            symtable,
-            diagnostics,
-            resolve_to,
-        ),
+        },
+        pt::Expression::FunctionCall(loc, ty, args) => {
+            call_expr(loc, ty, args, false, context, ns, symtable, diagnostics, resolve_to)
+        },
         pt::Expression::ArraySubscript(loc, _, None) => {
             diagnostics.push(Diagnostic::error(
                 *loc,
@@ -331,18 +249,15 @@ pub fn expression(
             ));
 
             Err(())
-        }
+        },
         pt::Expression::ArraySlice(loc, ..) => {
-            diagnostics.push(Diagnostic::error(
-                *loc,
-                "slice not supported yet".to_string(),
-            ));
+            diagnostics.push(Diagnostic::error(*loc, "slice not supported yet".to_string()));
 
             Err(())
-        }
+        },
         pt::Expression::ArraySubscript(loc, array, Some(index)) => {
             array_subscript(loc, array, index, context, ns, symtable, diagnostics)
-        }
+        },
         pt::Expression::MemberAccess(loc, e, id) => member_access(
             loc,
             e.remove_parenthesis(),
@@ -355,24 +270,20 @@ pub fn expression(
         ),
         pt::Expression::Or(loc, left, right) => {
             let boolty = Type::Bool;
-            let l = expression(
-                left,
-                context,
+            let l = expression(left, context, ns, symtable, diagnostics, ResolveTo::Type(&boolty))?.cast(
+                loc,
+                &boolty,
+                true,
                 ns,
-                symtable,
                 diagnostics,
-                ResolveTo::Type(&boolty),
-            )?
-            .cast(loc, &boolty, true, ns, diagnostics)?;
-            let r = expression(
-                right,
-                context,
+            )?;
+            let r = expression(right, context, ns, symtable, diagnostics, ResolveTo::Type(&boolty))?.cast(
+                loc,
+                &boolty,
+                true,
                 ns,
-                symtable,
                 diagnostics,
-                ResolveTo::Type(&boolty),
-            )?
-            .cast(loc, &boolty, true, ns, diagnostics)?;
+            )?;
 
             check_var_usage_expression(ns, &l, &r, symtable);
 
@@ -381,27 +292,23 @@ pub fn expression(
                 left: Box::new(l),
                 right: Box::new(r),
             })
-        }
+        },
         pt::Expression::And(loc, left, right) => {
             let boolty = Type::Bool;
-            let l = expression(
-                left,
-                context,
+            let l = expression(left, context, ns, symtable, diagnostics, ResolveTo::Type(&boolty))?.cast(
+                loc,
+                &boolty,
+                true,
                 ns,
-                symtable,
                 diagnostics,
-                ResolveTo::Type(&boolty),
-            )?
-            .cast(loc, &boolty, true, ns, diagnostics)?;
-            let r = expression(
-                right,
-                context,
+            )?;
+            let r = expression(right, context, ns, symtable, diagnostics, ResolveTo::Type(&boolty))?.cast(
+                loc,
+                &boolty,
+                true,
                 ns,
-                symtable,
                 diagnostics,
-                ResolveTo::Type(&boolty),
-            )?
-            .cast(loc, &boolty, true, ns, diagnostics)?;
+            )?;
             check_var_usage_expression(ns, &l, &r, symtable);
 
             Ok(Expression::And {
@@ -409,25 +316,22 @@ pub fn expression(
                 left: Box::new(l),
                 right: Box::new(r),
             })
-        }
+        },
         pt::Expression::Type(loc, _) => {
             diagnostics.push(Diagnostic::error(*loc, "type not expected".to_owned()));
             Err(())
-        }
+        },
         pt::Expression::List(loc, _) => {
             diagnostics.push(Diagnostic::error(
                 *loc,
                 "lists only permitted in destructure statements".to_owned(),
             ));
             Err(())
-        }
+        },
         pt::Expression::FunctionCallBlock(loc, ..) => {
-            diagnostics.push(Diagnostic::error(
-                *loc,
-                "unexpect block encountered".to_owned(),
-            ));
+            diagnostics.push(Diagnostic::error(*loc, "unexpect block encountered".to_owned()));
             Err(())
-        }
+        },
     }
 }
 
@@ -444,13 +348,7 @@ fn bitwise_not(
 
     used_variable(ns, &expr, symtable);
 
-    if let Some(expr) = user_defined_operator(
-        loc,
-        &[&expr],
-        pt::UserDefinedOperator::BitwiseNot,
-        diagnostics,
-        ns,
-    ) {
+    if let Some(expr) = user_defined_operator(loc, &[&expr], pt::UserDefinedOperator::BitwiseNot, diagnostics, ns) {
         return Ok(expr);
     }
 
@@ -480,7 +378,7 @@ fn negate(
             let unit = unit_literal(loc, unit, ns, diagnostics);
 
             number_literal(loc, integer, exp, ns, &-unit, diagnostics, resolve_to)
-        }
+        },
         pt::Expression::HexNumberLiteral(_, v, unit) => {
             if unit.is_some() {
                 diagnostics.push(Diagnostic::error(
@@ -495,33 +393,18 @@ fn negate(
             let n = BigInt::from_str_radix(&s, 16).unwrap();
 
             bigint_to_expression(loc, &-n, ns, diagnostics, resolve_to, Some(s.len()))
-        }
+        },
         pt::Expression::RationalNumberLiteral(loc, integer, fraction, exp, unit) => {
             let unit = unit_literal(loc, unit, ns, diagnostics);
 
-            rational_number_literal(
-                loc,
-                integer,
-                fraction,
-                exp,
-                &-unit,
-                ns,
-                diagnostics,
-                resolve_to,
-            )
-        }
+            rational_number_literal(loc, integer, fraction, exp, &-unit, ns, diagnostics, resolve_to)
+        },
         e => {
             let expr = expression(e, context, ns, symtable, diagnostics, resolve_to)?;
 
             used_variable(ns, &expr, symtable);
 
-            if let Some(expr) = user_defined_operator(
-                loc,
-                &[&expr],
-                pt::UserDefinedOperator::Negate,
-                diagnostics,
-                ns,
-            ) {
+            if let Some(expr) = user_defined_operator(loc, &[&expr], pt::UserDefinedOperator::Negate, diagnostics, ns) {
                 return Ok(expr);
             }
 
@@ -539,10 +422,7 @@ fn negate(
                 type_bits_and_sign(&expr_type, loc, false, ns, diagnostics)?;
 
                 if !expr_type.is_signed_int(ns) {
-                    diagnostics.push(Diagnostic::error(
-                        *loc,
-                        "negate not allowed on unsigned".to_string(),
-                    ));
+                    diagnostics.push(Diagnostic::error(*loc, "negate not allowed on unsigned".to_string()));
                 }
 
                 Ok(Expression::Negate {
@@ -552,7 +432,7 @@ fn negate(
                     expr: Box::new(expr),
                 })
             }
-        }
+        },
     }
 }
 
@@ -579,16 +459,7 @@ fn less_equal(
         return Ok(expr);
     }
 
-    let ty = coerce_number(
-        &left.ty(),
-        &l.loc(),
-        &right.ty(),
-        &r.loc(),
-        true,
-        true,
-        ns,
-        diagnostics,
-    )?;
+    let ty = coerce_number(&left.ty(), &l.loc(), &right.ty(), &r.loc(), true, true, ns, diagnostics)?;
 
     if ty.is_rational() {
         diagnostics.push(Diagnostic::error(
@@ -633,16 +504,7 @@ fn more_equal(
         return Ok(expr);
     }
 
-    let ty = coerce_number(
-        &left.ty(),
-        &l.loc(),
-        &right.ty(),
-        &r.loc(),
-        true,
-        true,
-        ns,
-        diagnostics,
-    )?;
+    let ty = coerce_number(&left.ty(), &l.loc(), &right.ty(), &r.loc(), true, true, ns, diagnostics)?;
 
     if ty.is_rational() {
         diagnostics.push(Diagnostic::error(
@@ -678,26 +540,11 @@ fn less(
 
     check_var_usage_expression(ns, &left, &right, symtable);
 
-    if let Some(expr) = user_defined_operator(
-        loc,
-        &[&left, &right],
-        pt::UserDefinedOperator::Less,
-        diagnostics,
-        ns,
-    ) {
+    if let Some(expr) = user_defined_operator(loc, &[&left, &right], pt::UserDefinedOperator::Less, diagnostics, ns) {
         return Ok(expr);
     }
 
-    let ty = coerce_number(
-        &left.ty(),
-        &l.loc(),
-        &right.ty(),
-        &r.loc(),
-        true,
-        true,
-        ns,
-        diagnostics,
-    )?;
+    let ty = coerce_number(&left.ty(), &l.loc(), &right.ty(), &r.loc(), true, true, ns, diagnostics)?;
 
     if ty.is_rational() {
         diagnostics.push(Diagnostic::error(
@@ -733,26 +580,11 @@ fn more(
 
     check_var_usage_expression(ns, &left, &right, symtable);
 
-    if let Some(expr) = user_defined_operator(
-        loc,
-        &[&left, &right],
-        pt::UserDefinedOperator::More,
-        diagnostics,
-        ns,
-    ) {
+    if let Some(expr) = user_defined_operator(loc, &[&left, &right], pt::UserDefinedOperator::More, diagnostics, ns) {
         return Ok(expr);
     }
 
-    let ty = coerce_number(
-        &left.ty(),
-        &l.loc(),
-        &right.ty(),
-        &r.loc(),
-        true,
-        true,
-        ns,
-        diagnostics,
-    )?;
+    let ty = coerce_number(&left.ty(), &l.loc(), &right.ty(), &r.loc(), true, true, ns, diagnostics)?;
 
     if ty.is_rational() {
         diagnostics.push(Diagnostic::error(

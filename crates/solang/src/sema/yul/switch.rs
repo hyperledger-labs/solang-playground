@@ -25,8 +25,7 @@ pub(crate) fn resolve_switch(
     symtable: &mut Symtable,
     ns: &mut Namespace,
 ) -> Result<(YulStatement, bool), ()> {
-    let resolved_condition =
-        resolve_condition(&yul_switch.condition, context, symtable, function_table, ns)?;
+    let resolved_condition = resolve_condition(&yul_switch.condition, context, symtable, function_table, ns)?;
     let mut default_block: Option<YulBlock> = None;
     let mut case_blocks: Vec<CaseBlock> = Vec::with_capacity(yul_switch.cases.len());
     let mut next_reachable = reachable;
@@ -54,7 +53,7 @@ pub(crate) fn resolve_switch(
                 } else {
                     BigInt::zero()
                 }
-            }
+            },
             YulExpression::NumberLiteral(_, value, _) => value.clone(),
             YulExpression::StringLiteral(_, value, _) => BigInt::from_bytes_be(Sign::Plus, value),
             _ => unreachable!("Switch condition should be a literal"),
@@ -117,8 +116,7 @@ pub(crate) fn resolve_condition(
     function_table: &mut FunctionsTable,
     ns: &mut Namespace,
 ) -> Result<YulExpression, ()> {
-    let resolved_condition =
-        resolve_yul_expression(condition, context, symtable, function_table, ns)?;
+    let resolved_condition = resolve_yul_expression(condition, context, symtable, function_table, ns)?;
     if let Err(diagnostic) = verify_type_from_expression(&resolved_condition, function_table) {
         ns.diagnostics.push(diagnostic);
         return Err(());
@@ -158,7 +156,7 @@ fn resolve_case_or_default(
             )?;
             case_blocks.push(resolved_case.0);
             Ok(resolved_case.1)
-        }
+        },
 
         YulSwitchOptions::Default(loc, block) => {
             let resolved_default = resolve_yul_block(
@@ -173,7 +171,7 @@ fn resolve_case_or_default(
             );
             *default_block = Some(resolved_default.0);
             Ok(resolved_default.1)
-        }
+        },
     }
 }
 
@@ -197,12 +195,9 @@ fn resolve_case_block(
         ));
         return Err(());
     }
-    let resolved_condition =
-        resolve_yul_expression(condition, context, symtable, function_table, ns)?;
+    let resolved_condition = resolve_yul_expression(condition, context, symtable, function_table, ns)?;
     match resolved_condition {
-        YulExpression::NumberLiteral(..)
-        | YulExpression::StringLiteral(..)
-        | YulExpression::BoolLiteral { .. } => (),
+        YulExpression::NumberLiteral(..) | YulExpression::StringLiteral(..) | YulExpression::BoolLiteral { .. } => (),
 
         _ => {
             ns.diagnostics.push(Diagnostic::error(
@@ -210,19 +205,10 @@ fn resolve_case_block(
                 "'case' can only be followed by a literal".to_string(),
             ));
             return Err(());
-        }
+        },
     }
 
-    let case_block = resolve_yul_block(
-        loc,
-        block,
-        context,
-        reachable,
-        loop_scope,
-        function_table,
-        symtable,
-        ns,
-    );
+    let case_block = resolve_yul_block(loc, block, context, reachable, loop_scope, function_table, symtable, ns);
 
     Ok((
         CaseBlock {

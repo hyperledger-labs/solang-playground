@@ -70,7 +70,7 @@ impl RetrieveType for YulExpression {
                 } else {
                     unreachable!("Expression does not have a type");
                 }
-            }
+            },
 
             YulExpression::FunctionCall(_, _, _, returns) => {
                 if returns.len() == 1 {
@@ -78,7 +78,7 @@ impl RetrieveType for YulExpression {
                 } else {
                     unreachable!("Expression does not have a type");
                 }
-            }
+            },
         }
     }
 }
@@ -218,10 +218,10 @@ impl Recurse for YulExpression {
                 for arg in args {
                     arg.recurse(cx, f);
                 }
-            }
+            },
             YulExpression::SuffixAccess(_, expr, _) => {
                 expr.recurse(cx, f);
-            }
+            },
 
             _ => (),
         }

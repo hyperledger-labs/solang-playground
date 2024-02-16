@@ -12,8 +12,7 @@ use crate::codegen::{
     Expression,
 };
 use crate::sema::ast::{
-    self, CallTy, ExternalCallAccounts, Function, Namespace, RetrieveType, TryCatch, Type,
-    Type::Uint,
+    self, CallTy, ExternalCallAccounts, Function, Namespace, RetrieveType, TryCatch, Type, Type::Uint,
 };
 use num_bigint::{BigInt, Sign};
 use num_traits::Zero;
@@ -87,11 +86,7 @@ pub(super) fn try_catch(
 
     //  Remove the variables only in scope inside the catch clauses block from the phi set for the finally block
     let mut set = vartab.pop_dirty_tracker();
-    if let Some(pos) = try_stmt
-        .catch_all
-        .as_ref()
-        .and_then(|clause| clause.param_pos)
-    {
+    if let Some(pos) = try_stmt.catch_all.as_ref().and_then(|clause| clause.param_pos) {
         set.remove(&pos);
     }
     for clause in &try_stmt.errors {
@@ -211,8 +206,7 @@ fn exec_try(
             ..
         } => {
             if let Type::ExternalFunction {
-                returns: func_returns,
-                ..
+                returns: func_returns, ..
             } = function.ty()
             {
                 let value = if let Some(value) = &call_args.value {
@@ -229,15 +223,7 @@ fn exec_try(
                 } else {
                     default_gas(ns)
                 };
-                let function = expression(
-                    function,
-                    cfg,
-                    callee_contract_no,
-                    Some(func),
-                    ns,
-                    vartab,
-                    opt,
-                );
+                let function = expression(function, cfg, callee_contract_no, Some(func), ns, vartab, opt);
 
                 let mut args = args
                     .iter()
@@ -251,9 +237,10 @@ fn exec_try(
                 args.insert(0, selector);
                 let (payload, _) = abi_encode(loc, args, ns, vartab, cfg, false);
 
-                let flags = call_args.flags.as_ref().map(|expr| {
-                    expression(expr, cfg, callee_contract_no, Some(func), ns, vartab, opt)
-                });
+                let flags = call_args
+                    .flags
+                    .as_ref()
+                    .map(|expr| expression(expr, cfg, callee_contract_no, Some(func), ns, vartab, opt));
 
                 cfg.add(
                     vartab,
@@ -281,7 +268,7 @@ fn exec_try(
                 // dynamic dispatch
                 unimplemented!();
             }
-        }
+        },
         ast::Expression::Constructor {
             loc,
             contract_no,
@@ -316,7 +303,7 @@ fn exec_try(
                 .success_var(success)
                 .insert(cfg, vartab);
             (cases, vec![])
-        }
+        },
         _ => unreachable!(),
     }
 }
@@ -358,12 +345,7 @@ fn insert_success_code_block(
     }
 
     if finally_reachable {
-        cfg.add(
-            vartab,
-            Instr::Branch {
-                block: finally_block,
-            },
-        );
+        cfg.add(vartab, Instr::Branch { block: finally_block });
     }
 }
 
@@ -477,12 +459,7 @@ fn insert_catch_clauses(
                 reachable = stmt.reachable();
             }
             if reachable {
-                cfg.add(
-                    vartab,
-                    Instr::Branch {
-                        block: finally_block,
-                    },
-                );
+                cfg.add(vartab, Instr::Branch { block: finally_block });
             }
 
             let error_selector = match clause.param.as_ref().unwrap().ty {
@@ -586,11 +563,6 @@ fn insert_catchall_clause_code_block(
     }
 
     if reachable {
-        cfg.add(
-            vartab,
-            Instr::Branch {
-                block: finally_block,
-            },
-        );
+        cfg.add(vartab, Instr::Branch { block: finally_block });
     }
 }

@@ -136,7 +136,7 @@ impl Loc {
         match (self, other) {
             (Loc::File(_, start, _), Loc::File(_, other_start, _)) => {
                 *start = *other_start;
-            }
+            },
             _ => not_a_file(),
         }
     }
@@ -152,7 +152,7 @@ impl Loc {
         match (self, other) {
             (Loc::File(_, _, end), Loc::File(_, _, other_end)) => {
                 *end = *other_end;
-            }
+            },
             _ => not_a_file(),
         }
     }
@@ -230,7 +230,7 @@ impl Loc {
                 assert_eq!(r_file, l_file, "cannot perform union in different files");
                 *r_start = std::cmp::min(*r_start, *l_start);
                 *r_end = std::cmp::max(*r_end, *l_end);
-            }
+            },
 
             _ => unimplemented!("cannot perform union in non File Loc"),
         }
@@ -769,12 +769,7 @@ impl UserDefinedOperator {
     pub const fn is_comparison(&self) -> bool {
         matches!(
             self,
-            Self::Equal
-                | Self::NotEqual
-                | Self::Less
-                | Self::LessEqual
-                | Self::More
-                | Self::MoreEqual
+            Self::Equal | Self::NotEqual | Self::Less | Self::LessEqual | Self::More | Self::MoreEqual
         )
     }
 }
@@ -1062,12 +1057,7 @@ pub enum Expression {
     /// `<1>\[ [2] \]`
     ArraySubscript(Loc, Box<Expression>, Option<Box<Expression>>),
     /// `<1>\[ [2] : [3] \]`
-    ArraySlice(
-        Loc,
-        Box<Expression>,
-        Option<Box<Expression>>,
-        Option<Box<Expression>>,
-    ),
+    ArraySlice(Loc, Box<Expression>, Option<Box<Expression>>, Option<Box<Expression>>),
     /// `(<1>)`
     Parenthesis(Loc, Box<Expression>),
     /// `<1>.<2>`

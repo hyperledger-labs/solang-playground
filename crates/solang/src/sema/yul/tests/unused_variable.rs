@@ -50,9 +50,7 @@ contract testTypes {
     "#;
 
     let ns = parse(file);
-    assert!(ns
-        .diagnostics
-        .contains_message("yul variable 'c' has never been read"));
+    assert!(ns.diagnostics.contains_message("yul variable 'c' has never been read"));
 }
 
 #[test]
@@ -114,7 +112,5 @@ fn correct_contracts() {
 
     let ns = parse(file);
     assert_eq!(ns.diagnostics.len(), 1);
-    assert!(ns
-        .diagnostics
-        .contains_message("found contract 'testTypes'"));
+    assert!(ns.diagnostics.contains_message("found contract 'testTypes'"));
 }

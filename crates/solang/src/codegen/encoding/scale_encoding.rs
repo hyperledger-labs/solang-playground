@@ -433,12 +433,7 @@ fn encode_compact(
 }
 
 impl AbiEncoding for ScaleEncoding {
-    fn size_width(
-        &self,
-        size: &Expression,
-        vartab: &mut Vartable,
-        cfg: &mut ControlFlowGraph,
-    ) -> Expression {
+    fn size_width(&self, size: &Expression, vartab: &mut Vartable, cfg: &mut ControlFlowGraph) -> Expression {
         // FIXME:
         // It should be possible to optimize this to estimate always 4 bytes.
         // `codegen::abi_encode()` also returns the actual encoded size,
@@ -606,13 +601,12 @@ impl AbiEncoding for ScaleEncoding {
                         result.extend_from_slice(&buf);
                     }
                     result.extend_from_slice(&bytes[..]);
-                }
+                },
                 Expression::NumberLiteral {
-                    ty: Type::Uint(256),
-                    ..
+                    ty: Type::Uint(256), ..
                 } => {
                     result.extend_from_slice(&[0]);
-                }
+                },
                 _ => return None,
             }
         }

@@ -480,7 +480,7 @@ impl Function {
                         &self.id.name
                     };
                     function_discriminator(discriminator_image.as_str())
-                }
+                },
             }
         } else {
             let mut res = [0u8; 32];
@@ -524,10 +524,7 @@ impl Function {
     /// externally callable in the final contract artifact; for that, use
     /// `Namespace::function_externally_callable()` instead.
     pub fn is_public(&self) -> bool {
-        matches!(
-            self.visibility,
-            pt::Visibility::Public(_) | pt::Visibility::External(_)
-        )
+        matches!(self.visibility, pt::Visibility::Public(_) | pt::Visibility::External(_))
     }
 
     /// Is this function accessable only from same contract
@@ -642,7 +639,7 @@ impl Symbol {
                 let visibility = &ns.contracts[*contract_no].variables[*var_no].visibility;
 
                 matches!(visibility, pt::Visibility::Private(_))
-            }
+            },
             _ => false,
         }
     }
@@ -1302,10 +1299,7 @@ impl<T> ExternalCallAccounts<T> {
 
     /// Returns if the accounts call argument was present in the call
     pub fn argument_provided(&self) -> bool {
-        matches!(
-            self,
-            ExternalCallAccounts::Present(_) | ExternalCallAccounts::NoAccount
-        )
+        matches!(self, ExternalCallAccounts::Present(_) | ExternalCallAccounts::NoAccount)
     }
 
     /// Applies a function on the nested objects
@@ -1368,14 +1362,13 @@ impl Recurse for Expression {
                     for (_, e) in values {
                         e.recurse(cx, f);
                     }
-                }
+                },
 
-                Expression::ArrayLiteral { values, .. }
-                | Expression::ConstArrayLiteral { values, .. } => {
+                Expression::ArrayLiteral { values, .. } | Expression::ConstArrayLiteral { values, .. } => {
                     for e in values {
                         e.recurse(cx, f);
                     }
-                }
+                },
 
                 Expression::Load { expr, .. }
                 | Expression::StorageLoad { expr, .. }
@@ -1402,9 +1395,7 @@ impl Recurse for Expression {
                 | Expression::Divide { left, right, .. }
                 | Expression::Modulo { left, right, .. }
                 | Expression::Power {
-                    base: left,
-                    exp: right,
-                    ..
+                    base: left, exp: right, ..
                 }
                 | Expression::BitwiseOr { left, right, .. }
                 | Expression::BitwiseAnd { left, right, .. }
@@ -1422,7 +1413,7 @@ impl Recurse for Expression {
                 | Expression::And { left, right, .. } => {
                     left.recurse(cx, f);
                     right.recurse(cx, f);
-                }
+                },
 
                 Expression::ConditionalOperator {
                     cond,
@@ -1433,7 +1424,7 @@ impl Recurse for Expression {
                     cond.recurse(cx, f);
                     left.recurse(cx, f);
                     right.recurse(cx, f);
-                }
+                },
                 Expression::Subscript {
                     array: left,
                     index: right,
@@ -1441,7 +1432,7 @@ impl Recurse for Expression {
                 } => {
                     left.recurse(cx, f);
                     right.recurse(cx, f);
-                }
+                },
 
                 Expression::AllocDynamicBytes { length, .. } => length.recurse(cx, f),
                 Expression::StorageArrayLength { array, .. } => array.recurse(cx, f),
@@ -1452,17 +1443,17 @@ impl Recurse for Expression {
                     if let StringLocation::RunTime(expr) = right {
                         expr.recurse(cx, f);
                     }
-                }
+                },
                 Expression::InternalFunctionCall { function, args, .. } => {
                     function.recurse(cx, f);
 
                     for e in args {
                         e.recurse(cx, f);
                     }
-                }
+                },
                 Expression::ExternalFunction { address, .. } => {
                     address.recurse(cx, f);
-                }
+                },
                 Expression::ExternalFunctionCall {
                     function,
                     args,
@@ -1474,7 +1465,7 @@ impl Recurse for Expression {
                     }
                     function.recurse(cx, f);
                     call_args.recurse(cx, f);
-                }
+                },
                 Expression::ExternalFunctionCallRaw {
                     address,
                     args,
@@ -1484,28 +1475,26 @@ impl Recurse for Expression {
                     args.recurse(cx, f);
                     address.recurse(cx, f);
                     call_args.recurse(cx, f);
-                }
-                Expression::Constructor {
-                    args, call_args, ..
-                } => {
+                },
+                Expression::Constructor { args, call_args, .. } => {
                     for e in args {
                         e.recurse(cx, f);
                     }
                     call_args.recurse(cx, f);
-                }
+                },
                 Expression::UserDefinedOperator { args: exprs, .. }
                 | Expression::Builtin { args: exprs, .. }
                 | Expression::List { list: exprs, .. } => {
                     for e in exprs {
                         e.recurse(cx, f);
                     }
-                }
+                },
 
                 Expression::FormatString { format, .. } => {
                     for (_, arg) in format {
                         arg.recurse(cx, f);
                     }
-                }
+                },
 
                 Expression::NumberLiteral { .. }
                 | Expression::InterfaceId { .. }
@@ -1651,9 +1640,7 @@ impl CodeLocation for Instr {
             Instr::PushMemory { value: expr, .. } => expr.loc(),
 
             Instr::MemCopy {
-                source,
-                destination,
-                ..
+                source, destination, ..
             } => match source.loc() {
                 pt::Loc::File(_, _, _) => source.loc(),
                 _ => destination.loc(),
@@ -1881,7 +1868,7 @@ impl Recurse for Statement {
                     for stmt in statements {
                         stmt.recurse(cx, f);
                     }
-                }
+                },
                 Statement::If(_, _, _, then_stmt, else_stmt) => {
                     for stmt in then_stmt {
                         stmt.recurse(cx, f);
@@ -1890,7 +1877,7 @@ impl Recurse for Statement {
                     for stmt in else_stmt {
                         stmt.recurse(cx, f);
                     }
-                }
+                },
                 Statement::For { init, body, .. } => {
                     for stmt in init {
                         stmt.recurse(cx, f);
@@ -1899,17 +1886,17 @@ impl Recurse for Statement {
                     for stmt in body {
                         stmt.recurse(cx, f);
                     }
-                }
+                },
                 Statement::While(_, _, _, body) => {
                     for stmt in body {
                         stmt.recurse(cx, f);
                     }
-                }
+                },
                 Statement::DoWhile(_, _, body, _) => {
                     for stmt in body {
                         stmt.recurse(cx, f);
                     }
-                }
+                },
                 Statement::TryCatch(_, _, try_catch) => {
                     for stmt in &try_catch.ok_stmt {
                         stmt.recurse(cx, f);
@@ -1926,7 +1913,7 @@ impl Recurse for Statement {
                             stmt.recurse(cx, f);
                         }
                     }
-                }
+                },
                 _ => (),
             }
         }
@@ -1948,10 +1935,7 @@ impl Statement {
             | Statement::Emit { .. }
             | Statement::Delete(..) => true,
 
-            Statement::Continue(_)
-            | Statement::Break(_)
-            | Statement::Return(..)
-            | Statement::Revert { .. } => false,
+            Statement::Continue(_) | Statement::Break(_) | Statement::Return(..) | Statement::Revert { .. } => false,
 
             Statement::If(_, reachable, ..)
             | Statement::While(_, reachable, ..)

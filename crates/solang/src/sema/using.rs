@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use super::{
-    ast::{
-        Diagnostic, Expression, Mutability, Namespace, Note, Type, Using, UsingFunction, UsingList,
-    },
+    ast::{Diagnostic, Expression, Mutability, Namespace, Note, Type, Using, UsingFunction, UsingList},
     diagnostics::Diagnostics,
     expression::{ExprContext, ResolveTo},
     symtable::Symtable,
@@ -35,32 +33,25 @@ pub(crate) fn using_decl(
     }
 
     let ty = if let Some(expr) = &using.ty {
-        match ns.resolve_type(
-            file_no,
-            contract_no,
-            ResolveTypeContext::None,
-            expr,
-            &mut diagnostics,
-        ) {
+        match ns.resolve_type(file_no, contract_no, ResolveTypeContext::None, expr, &mut diagnostics) {
             Ok(Type::Contract(contract_no)) if ns.contracts[contract_no].is_library() => {
                 ns.diagnostics.push(Diagnostic::error(
                     expr.loc(),
                     format!("using for library '{expr}' type not permitted"),
                 ));
                 return Err(());
-            }
+            },
             Ok(ty) => Some(ty),
             Err(_) => {
                 ns.diagnostics.extend(diagnostics);
                 return Err(());
-            }
+            },
         }
     } else {
         if contract_no.is_none() {
             ns.diagnostics.push(Diagnostic::error(
                 using.loc,
-                "using must be bound to specific type, '*' cannot be used on file scope"
-                    .to_string(),
+                "using must be bound to specific type, '*' cannot be used on file scope".to_string(),
             ));
             return Err(());
         }
@@ -69,9 +60,7 @@ pub(crate) fn using_decl(
 
     let list = match &using.list {
         pt::UsingList::Library(library) => {
-            if let Ok(library_no) =
-                ns.resolve_contract_with_namespace(file_no, library, &mut diagnostics)
-            {
+            if let Ok(library_no) = ns.resolve_contract_with_namespace(file_no, library, &mut diagnostics) {
                 if ns.contracts[library_no].is_library() {
                     UsingList::Library(library_no)
                 } else {
@@ -88,18 +77,15 @@ pub(crate) fn using_decl(
                 ns.diagnostics.extend(diagnostics);
                 return Err(());
             }
-        }
+        },
         pt::UsingList::Functions(functions) => {
             let mut res = Vec::new();
 
             for using_function in functions {
                 let function_name = &using_function.path;
-                if let Ok(list) = ns.resolve_function_with_namespace(
-                    file_no,
-                    contract_no,
-                    &using_function.path,
-                    &mut diagnostics,
-                ) {
+                if let Ok(list) =
+                    ns.resolve_function_with_namespace(file_no, contract_no, &using_function.path, &mut diagnostics)
+                {
                     if list.len() > 1 {
                         let notes = list
                             .iter()
@@ -136,10 +122,7 @@ pub(crate) fn using_decl(
                     if func.params.is_empty() {
                         diagnostics.push(Diagnostic::error_with_note(
                             function_name.loc,
-                            format!(
-                                "'{function_name}' has no arguments. At least one argument required"
-
-                            ),
+                            format!("'{function_name}' has no arguments. At least one argument required"),
                             loc,
                             format!("definition of '{function_name}'"),
                         ));
@@ -166,9 +149,7 @@ pub(crate) fn using_decl(
                         }
 
                         // The '-' operator may be for subtract or negation, the parser cannot know which one it was
-                        if oper == pt::UserDefinedOperator::Subtract
-                            || oper == pt::UserDefinedOperator::Negate
-                        {
+                        if oper == pt::UserDefinedOperator::Subtract || oper == pt::UserDefinedOperator::Negate {
                             oper = match func.params.len() {
                                 1 => pt::UserDefinedOperator::Negate,
                                 2 => pt::UserDefinedOperator::Subtract,
@@ -180,18 +161,18 @@ pub(crate) fn using_decl(
                                         format!("definition of '{function_name}'"),
                                     ));
                                     continue;
-                                }
+                                },
                             }
                         };
 
-                        if func.params.len() != oper.args()
-                            || func.params.iter().any(|param| param.ty != *ty)
-                        {
+                        if func.params.len() != oper.args() || func.params.iter().any(|param| param.ty != *ty) {
                             diagnostics.push(Diagnostic::error_with_note(
                                 using_function.loc,
                                 format!(
                                     "user defined operator function for '{}' must have {} arguments of type {}",
-                                    oper, oper.args(), ty.to_string(ns)
+                                    oper,
+                                    oper.args(),
+                                    ty.to_string(ns)
                                 ),
                                 loc,
                                 format!("definition of '{function_name}'"),
@@ -214,22 +195,21 @@ pub(crate) fn using_decl(
                         } else if func.returns.len() != 1 || func.returns[0].ty != *ty {
                             diagnostics.push(Diagnostic::error_with_note(
                                 using_function.loc,
-                                    format!(
-                                        "user defined operator function for '{}' must have single return type {}",
-                                        oper, ty.to_string(ns)
-                                    ),
-                                    loc,
-                                    format!("definition of '{function_name}'"),
-                                ));
+                                format!(
+                                    "user defined operator function for '{}' must have single return type {}",
+                                    oper,
+                                    ty.to_string(ns)
+                                ),
+                                loc,
+                                format!("definition of '{function_name}'"),
+                            ));
                             continue;
                         }
 
                         if !matches!(func.mutability, Mutability::Pure(_)) {
                             diagnostics.push(Diagnostic::error_with_note(
                                 using_function.loc,
-                                format!(
-                                    "user defined operator function for '{oper}' must have pure mutability",
-                                ),
+                                format!("user defined operator function for '{oper}' must have pure mutability",),
                                 loc,
                                 format!("definition of '{function_name}'"),
                             ));
@@ -271,13 +251,7 @@ pub(crate) fn using_decl(
                             };
 
                             if dummy
-                                .cast(
-                                    &loc,
-                                    &func.params[0].ty,
-                                    true,
-                                    ns,
-                                    &mut Diagnostics::default(),
-                                )
+                                .cast(&loc, &func.params[0].ty, true, ns, &mut Diagnostics::default())
                                 .is_err()
                             {
                                 diagnostics.push(Diagnostic::error_with_note(
@@ -302,7 +276,7 @@ pub(crate) fn using_decl(
             }
 
             UsingList::Functions(res)
-        }
+        },
 
         pt::UsingList::Error => unimplemented!(),
     };
@@ -320,13 +294,13 @@ pub(crate) fn using_decl(
                 match &ty {
                     Some(Type::Struct(_)) | Some(Type::UserType(_)) | Some(Type::Enum(_)) => {
                         file_no = None;
-                    }
+                    },
                     _ => {
                         ns.diagnostics.push(Diagnostic::error(
                             global.loc,
                             format!("'{}' only permitted on user defined types", global.name),
                         ));
-                    }
+                    },
                 }
             }
         } else {
@@ -356,9 +330,7 @@ fn possible_functions(
         .iter()
         .filter(|using| {
             if let Some(ty) = &using.ty {
-                self_expr
-                    .cast(&self_expr.loc(), ty, true, ns, &mut diagnostics)
-                    .is_ok()
+                self_expr.cast(&self_expr.loc(), ty, true, ns, &mut diagnostics).is_ok()
             } else {
                 true
             }
@@ -372,18 +344,14 @@ fn possible_functions(
         })
         .flat_map(|using| {
             let iterator: Box<dyn Iterator<Item = _>> = match &using.list {
-                UsingList::Library(library_no) => {
-                    Box::new(ns.contracts[*library_no].functions.iter())
-                }
-                UsingList::Functions(functions) => {
-                    Box::new(functions.iter().filter_map(move |using| {
-                        if using.oper.is_none() {
-                            Some(&using.function_no)
-                        } else {
-                            None
-                        }
-                    }))
-                }
+                UsingList::Library(library_no) => Box::new(ns.contracts[*library_no].functions.iter()),
+                UsingList::Functions(functions) => Box::new(functions.iter().filter_map(move |using| {
+                    if using.oper.is_none() {
+                        Some(&using.function_no)
+                    } else {
+                        None
+                    }
+                })),
             };
 
             iterator
@@ -471,13 +439,7 @@ pub(super) fn try_resolve_using_call(
         let mut matches = true;
         let mut cast_args = Vec::new();
 
-        match self_expr.cast(
-            &self_expr.loc(),
-            &libfunc.params[0].ty,
-            true,
-            ns,
-            &mut errors,
-        ) {
+        match self_expr.cast(&self_expr.loc(), &libfunc.params[0].ty, true, ns, &mut errors) {
             Ok(e) => cast_args.push(e),
             Err(()) => continue,
         }
@@ -486,19 +448,12 @@ pub(super) fn try_resolve_using_call(
         for (i, arg) in args.iter().enumerate() {
             let ty = ns.functions[function_no].params[i + 1].ty.clone();
 
-            let arg = match expression(
-                arg,
-                context,
-                ns,
-                symtable,
-                &mut errors,
-                ResolveTo::Type(&ty),
-            ) {
+            let arg = match expression(arg, context, ns, symtable, &mut errors, ResolveTo::Type(&ty)) {
                 Ok(e) => e,
                 Err(()) => {
                     matches = false;
                     continue;
-                }
+                },
             };
 
             match arg.cast(&arg.loc(), &ty, true, ns, &mut errors) {
@@ -506,7 +461,7 @@ pub(super) fn try_resolve_using_call(
                 Err(_) => {
                     matches = false;
                     break;
-                }
+                },
             }
         }
         if !matches {
@@ -554,13 +509,13 @@ pub(super) fn try_resolve_using_call(
             diagnostics.extend(errors);
 
             Err(())
-        }
+        },
         _ => {
             diagnostics.push(Diagnostic::error(
                 *loc,
                 "cannot find overloaded function which matches signature".to_string(),
             ));
             Err(())
-        }
+        },
     }
 }

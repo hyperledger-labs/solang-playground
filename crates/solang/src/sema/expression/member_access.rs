@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::sema::ast::{
-    ArrayLength, Builtin, Expression, Namespace, RetrieveType, StructType, Symbol, Type,
-};
+use crate::sema::ast::{ArrayLength, Builtin, Expression, Namespace, RetrieveType, StructType, Symbol, Type};
 use crate::sema::builtin;
 use crate::sema::diagnostics::Diagnostics;
 use crate::sema::expression::constructor::circular_reference;
@@ -35,9 +33,7 @@ pub(super) fn member_access(
 ) -> Result<Expression, ()> {
     // is it a builtin special variable like "block.timestamp"
     if let pt::Expression::Variable(namespace) = e {
-        if let Some((builtin, ty)) =
-            builtin::builtin_var(loc, Some(&namespace.name), &id.name, ns, diagnostics)
-        {
+        if let Some((builtin, ty)) = builtin::builtin_var(loc, Some(&namespace.name), &id.name, ns, diagnostics) {
             return Ok(Expression::Builtin {
                 loc: *loc,
                 tys: vec![ty],
@@ -57,35 +53,17 @@ pub(super) fn member_access(
     }
 
     // is it an enum value
-    if let Some(expr) = enum_value(
-        loc,
-        e,
-        id,
-        context.file_no,
-        context.contract_no,
-        ns,
-        diagnostics,
-    )? {
+    if let Some(expr) = enum_value(loc, e, id, context.file_no, context.contract_no, ns, diagnostics)? {
         return Ok(expr);
     }
 
     // is it an event selector
-    if let Some(expr) = event_selector(
-        loc,
-        e,
-        id,
-        context.file_no,
-        context.contract_no,
-        ns,
-        diagnostics,
-    )? {
+    if let Some(expr) = event_selector(loc, e, id, context.file_no, context.contract_no, ns, diagnostics)? {
         return Ok(expr);
     }
 
     // is it a constant (unless basecontract is a local variable)
-    if let Some(expr) =
-        contract_constant(loc, e, id, ns, symtable, context, diagnostics, resolve_to)?
-    {
+    if let Some(expr) = contract_constant(loc, e, id, ns, symtable, context, diagnostics, resolve_to)? {
         return Ok(expr);
     }
 
@@ -129,7 +107,7 @@ pub(super) fn member_access(
                             ),
                         ));
                         Err(())
-                    }
+                    },
                     1 => expr,
                     _ => {
                         diagnostics.push(Diagnostic::error(
@@ -140,7 +118,7 @@ pub(super) fn member_access(
                             ),
                         ));
                         Err(())
-                    }
+                    },
                 };
             }
         }
@@ -169,11 +147,7 @@ pub(super) fn member_access(
             return if context.lvalue && f.readonly {
                 diagnostics.push(Diagnostic::error(
                     id.loc,
-                    format!(
-                        "struct '{}' field '{}' is readonly",
-                        struct_ty.definition(ns),
-                        id.name
-                    ),
+                    format!("struct '{}' field '{}' is readonly", struct_ty.definition(ns), id.name),
                 ));
                 Err(())
             } else if f.readonly {
@@ -232,7 +206,7 @@ pub(super) fn member_access(
                     value: BigInt::from_u8(n).unwrap(),
                 });
             }
-        }
+        },
         Type::Array(elem_ty, dim) => {
             if id.name == "length" {
                 return match dim.last().unwrap() {
@@ -247,15 +221,8 @@ pub(super) fn member_access(
                         //So the variable is also assigned a value to be read from 'length'
                         assigned_variable(ns, &expr, symtable);
                         used_variable(ns, &expr, symtable);
-                        bigint_to_expression(
-                            loc,
-                            d,
-                            ns,
-                            diagnostics,
-                            ResolveTo::Type(&Type::Uint(32)),
-                            None,
-                        )
-                    }
+                        bigint_to_expression(loc, d, ns, diagnostics, ResolveTo::Type(&Type::Uint(32)), None)
+                    },
                     ArrayLength::AnyFixed => unreachable!(),
                 };
             } else if matches!(*elem_ty, Type::Struct(StructType::AccountInfo))
@@ -275,14 +242,11 @@ pub(super) fn member_access(
                         name: id.name.clone(),
                     })
                 } else {
-                    diagnostics.push(Diagnostic::error(
-                        id.loc,
-                        "unrecognized account".to_string(),
-                    ));
+                    diagnostics.push(Diagnostic::error(id.loc, "unrecognized account".to_string()));
                     Err(())
                 };
             }
-        }
+        },
         Type::String | Type::DynamicBytes | Type::Slice(_) => {
             if id.name == "length" {
                 return Ok(Expression::Builtin {
@@ -292,7 +256,7 @@ pub(super) fn member_access(
                     args: vec![expr],
                 });
             }
-        }
+        },
         Type::StorageRef(immutable, r) => match *r {
             Type::Struct(str_ty) => {
                 return if let Some((field_no, field)) = str_ty
@@ -319,7 +283,7 @@ pub(super) fn member_access(
                     ));
                     Err(())
                 }
-            }
+            },
             Type::Array(_, dim) => {
                 if id.name == "length" {
                     let elem_ty = expr.ty().storage_array_elem().deref_into();
@@ -343,7 +307,7 @@ pub(super) fn member_access(
                         elem_ty,
                     });
                 }
-            }
+            },
             Type::Bytes(_) | Type::DynamicBytes | Type::String => {
                 if id.name == "length" {
                     let elem_ty = expr.ty().storage_array_elem().deref_into();
@@ -355,8 +319,8 @@ pub(super) fn member_access(
                         elem_ty,
                     });
                 }
-            }
-            _ => {}
+            },
+            _ => {},
         },
         Type::Address(_) if id.name == "balance" => {
             if ns.target.is_polkadot() {
@@ -375,8 +339,7 @@ pub(super) fn member_access(
                 if !is_this {
                     diagnostics.push(Diagnostic::error(
                         expr.loc(),
-                        "polkadot can only retrieve balance of 'this', like 'address(this).balance'"
-                            .to_string(),
+                        "polkadot can only retrieve balance of 'this', like 'address(this).balance'".to_string(),
                     ));
                     return Err(());
                 }
@@ -396,7 +359,7 @@ pub(super) fn member_access(
                 kind: Builtin::Balance,
                 args: vec![expr],
             });
-        }
+        },
         Type::Address(_) if id.name == "code" => {
             if ns.target != Target::EVM {
                 diagnostics.push(Diagnostic::error(
@@ -412,7 +375,7 @@ pub(super) fn member_access(
                 kind: Builtin::ContractCode,
                 args: vec![expr],
             });
-        }
+        },
         Type::Contract(ref_contract_no) => {
             let mut name_matches = 0;
             let mut ext_expr = Err(());
@@ -420,10 +383,7 @@ pub(super) fn member_access(
             for function_no in ns.contracts[ref_contract_no].all_functions.keys() {
                 let func = &ns.functions[*function_no];
 
-                if func.id.name != id.name
-                    || func.ty != pt::FunctionTy::Function
-                    || !func.is_public()
-                {
+                if func.id.name != id.name || func.ty != pt::FunctionTy::Function || !func.is_public() {
                     continue;
                 }
 
@@ -448,28 +408,24 @@ pub(super) fn member_access(
                         id.loc,
                         format!(
                             "{} '{}' has no public function '{}'",
-                            ns.contracts[ref_contract_no].ty,
-                            ns.contracts[ref_contract_no].id,
-                            id.name
+                            ns.contracts[ref_contract_no].ty, ns.contracts[ref_contract_no].id, id.name
                         ),
                     ));
                     Err(())
-                }
+                },
                 1 => ext_expr,
                 _ => {
                     diagnostics.push(Diagnostic::error(
                         id.loc,
                         format!(
                             "function '{}' of {} '{}' is overloaded",
-                            id.name,
-                            ns.contracts[ref_contract_no].ty,
-                            ns.contracts[ref_contract_no].id
+                            id.name, ns.contracts[ref_contract_no].ty, ns.contracts[ref_contract_no].id
                         ),
                     ));
                     Err(())
-                }
+                },
             };
-        }
+        },
         Type::ExternalFunction { .. } => {
             if id.name == "address" {
                 used_variable(ns, &expr, symtable);
@@ -489,7 +445,7 @@ pub(super) fn member_access(
                     args: vec![expr],
                 });
             }
-        }
+        },
         Type::InternalFunction { .. } => {
             if let Expression::InternalFunction { .. } = expr {
                 if id.name == "selector" {
@@ -502,7 +458,7 @@ pub(super) fn member_access(
                     });
                 }
             }
-        }
+        },
         _ => (),
     }
 
@@ -539,10 +495,7 @@ fn contract_constant(
         {
             if !var.constant {
                 let resolve_function = if let ResolveTo::Type(ty) = resolve_to {
-                    matches!(
-                        ty,
-                        Type::InternalFunction { .. } | Type::ExternalFunction { .. }
-                    )
+                    matches!(ty, Type::InternalFunction { .. } | Type::ExternalFunction { .. })
                 } else {
                     false
                 };
@@ -555,8 +508,7 @@ fn contract_constant(
                         *loc,
                         format!(
                             "need instance of contract '{}' to get variable value '{}'",
-                            ns.contracts[contract_no].id,
-                            ns.contracts[contract_no].variables[var_no].name,
+                            ns.contracts[contract_no].id, ns.contracts[contract_no].variables[var_no].name,
                         ),
                     ));
                     return Err(());
@@ -611,9 +563,7 @@ fn enum_value(
 
     // last element in our namespace vector is first element
     while let Some(name) = namespace.last().map(|f| f.name.clone()) {
-        if let Some(Symbol::Import(_, import_file_no)) =
-            ns.variable_symbols.get(&(file_no, None, name))
-        {
+        if let Some(Symbol::Import(_, import_file_no)) = ns.variable_symbols.get(&(file_no, None, name)) {
             file_no = *import_file_no;
             namespace.pop();
         } else {
@@ -649,7 +599,7 @@ fn enum_value(
                     format!("enum {} does not have value {}", ns.enums[e], id.name),
                 ));
                 Err(())
-            }
+            },
         }
     } else {
         Ok(None)
@@ -674,10 +624,7 @@ fn event_selector(
             let event_no = events[0];
 
             if ns.events[event_no].anonymous {
-                diagnostics.push(Diagnostic::error(
-                    *loc,
-                    "anonymous event has no selector".into(),
-                ));
+                diagnostics.push(Diagnostic::error(*loc, "anonymous event has no selector".into()));
                 Err(())
             } else {
                 Ok(Some(Expression::EventSelector {
@@ -725,10 +672,7 @@ fn type_name_expr(
     resolve_to: ResolveTo,
 ) -> Result<Expression, ()> {
     if args.is_empty() {
-        diagnostics.push(Diagnostic::error(
-            *loc,
-            "missing argument to type()".to_string(),
-        ));
+        diagnostics.push(Diagnostic::error(*loc, "missing argument to type()".to_string()));
         return Err(());
     }
 
@@ -749,21 +693,19 @@ fn type_name_expr(
     )?;
 
     match (&ty, field.name.as_str()) {
-        (Type::Uint(_), "min") => {
-            bigint_to_expression(loc, &BigInt::zero(), ns, diagnostics, resolve_to, None)
-        }
+        (Type::Uint(_), "min") => bigint_to_expression(loc, &BigInt::zero(), ns, diagnostics, resolve_to, None),
         (Type::Uint(bits), "max") => {
             let max = BigInt::one().shl(*bits as usize).sub(1);
             bigint_to_expression(loc, &max, ns, diagnostics, resolve_to, None)
-        }
+        },
         (Type::Int(bits), "min") => {
             let min = BigInt::zero().sub(BigInt::one().shl(*bits as usize - 1));
             bigint_to_expression(loc, &min, ns, diagnostics, resolve_to, None)
-        }
+        },
         (Type::Int(bits), "max") => {
             let max = BigInt::one().shl(*bits as usize - 1).sub(1);
             bigint_to_expression(loc, &max, ns, diagnostics, resolve_to, None)
-        }
+        },
         (Type::Contract(n), "name") => Ok(Expression::BytesLiteral {
             loc: *loc,
             ty: Type::String,
@@ -787,7 +729,7 @@ fn type_name_expr(
                     contract_no: *n,
                 })
             }
-        }
+        },
         (Type::Contract(no), "program_id") => {
             let contract = &ns.contracts[*no];
 
@@ -800,27 +742,21 @@ fn type_name_expr(
             } else {
                 diagnostics.push(Diagnostic::error(
                     *loc,
-                    format!(
-                        "{} '{}' has no declared program_id",
-                        contract.ty, contract.id
-                    ),
+                    format!("{} '{}' has no declared program_id", contract.ty, contract.id),
                 ));
                 Err(())
             }
-        }
+        },
         (Type::Contract(no), "creationCode") | (Type::Contract(no), "runtimeCode") => {
             let contract_no = match context.contract_no {
                 Some(contract_no) => contract_no,
                 None => {
                     diagnostics.push(Diagnostic::error(
                         *loc,
-                        format!(
-                            "type().{} not permitted outside of contract code",
-                            field.name
-                        ),
+                        format!("type().{} not permitted outside of contract code", field.name),
                     ));
                     return Err(());
-                }
+                },
             };
 
             // check for circular references
@@ -855,17 +791,13 @@ fn type_name_expr(
                 contract_no: *no,
                 runtime: field.name == "runtimeCode",
             })
-        }
+        },
         _ => {
             diagnostics.push(Diagnostic::error(
                 *loc,
-                format!(
-                    "type '{}' does not have type function {}",
-                    ty.to_string(ns),
-                    field.name
-                ),
+                format!("type '{}' does not have type function {}", ty.to_string(ns), field.name),
             ));
             Err(())
-        }
+        },
     }
 }

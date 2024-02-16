@@ -26,10 +26,7 @@ pub(crate) fn get_type_from_string(text: &str) -> Option<Type> {
 }
 
 /// Given a parse tree identifier, retrieve its type or return the default for YUL
-pub(crate) fn get_default_type_from_identifier(
-    ty: &Option<Identifier>,
-    ns: &mut Namespace,
-) -> Result<Type, ()> {
+pub(crate) fn get_default_type_from_identifier(ty: &Option<Identifier>, ns: &mut Namespace) -> Result<Type, ()> {
     if let Some(type_id) = ty {
         if let Some(asm_type) = get_type_from_string(&type_id.name) {
             Ok(asm_type)
@@ -81,7 +78,7 @@ pub(crate) fn verify_type_from_expression(
             } else {
                 Ok(Type::Uint(256))
             }
-        }
+        },
 
         YulExpression::FunctionCall(_, function_no, _, returns) => {
             let func = function_table.get(*function_no).unwrap();
@@ -101,6 +98,6 @@ pub(crate) fn verify_type_from_expression(
             } else {
                 Ok(returns[0].ty.clone())
             }
-        }
+        },
     }
 }

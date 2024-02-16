@@ -21,23 +21,12 @@ pub struct FindUndefinedVariablesParams<'a> {
 
 /// This function traverses all the instructions of each block, apply transfers and
 /// look for undefined variables. Returns true if undefined variables have been detected
-pub fn find_undefined_variables(
-    cfg: &ControlFlowGraph,
-    ns: &mut Namespace,
-    func_no: ASTFunction,
-) -> bool {
+pub fn find_undefined_variables(cfg: &ControlFlowGraph, ns: &mut Namespace, func_no: ASTFunction) -> bool {
     let mut diagnostics: HashMap<usize, Diagnostic> = HashMap::new();
     for block in &cfg.blocks {
         let mut var_defs: VarDefs = block.defs.clone();
         for (instr_no, instruction) in block.instr.iter().enumerate() {
-            check_variables_in_expression(
-                func_no,
-                instruction,
-                &var_defs,
-                ns,
-                cfg,
-                &mut diagnostics,
-            );
+            check_variables_in_expression(func_no, instruction, &var_defs, ns, cfg, &mut diagnostics);
             apply_transfers(&block.transfers[instr_no], &mut var_defs);
         }
     }
@@ -73,29 +62,19 @@ pub fn check_variables_in_expression(
 }
 
 /// Auxiliar function for expression.recurse. It checks if a variable is read before being defined
-pub fn find_undefined_variables_in_expression(
-    exp: &Expression,
-    ctx: &mut FindUndefinedVariablesParams,
-) -> bool {
+pub fn find_undefined_variables_in_expression(exp: &Expression, ctx: &mut FindUndefinedVariablesParams) -> bool {
     match &exp {
         Expression::Variable { var_no, .. } => {
             let variable = match ctx.func_no {
-                ASTFunction::YulFunction(func_no) => {
-                    ctx.ns.yul_functions[func_no].symtable.vars.get(var_no)
-                }
-                ASTFunction::SolidityFunction(func_no) => {
-                    ctx.ns.functions[func_no].symtable.vars.get(var_no)
-                }
+                ASTFunction::YulFunction(func_no) => ctx.ns.yul_functions[func_no].symtable.vars.get(var_no),
+                ASTFunction::SolidityFunction(func_no) => ctx.ns.functions[func_no].symtable.vars.get(var_no),
 
                 ASTFunction::None => None,
             };
 
             if let (Some(def_map), Some(var)) = (ctx.defs.get(var_no), variable) {
                 for (def, modified) in def_map {
-                    if let Instr::Set {
-                        expr: instr_expr, ..
-                    } = &ctx.cfg.blocks[def.block_no].instr[def.instr_no]
-                    {
+                    if let Instr::Set { expr: instr_expr, .. } = &ctx.cfg.blocks[def.block_no].instr[def.instr_no] {
                         // If an undefined definition reaches this read and the variable
                         // has not been modified since its definition, it is undefined
                         if matches!(instr_expr, Expression::Undefined { .. })
@@ -108,7 +87,7 @@ pub fn find_undefined_variables_in_expression(
                 }
             }
             false
-        }
+        },
 
         // This is a method call whose array will never be undefined
         Expression::Builtin {

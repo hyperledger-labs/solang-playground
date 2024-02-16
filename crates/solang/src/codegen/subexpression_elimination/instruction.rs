@@ -26,7 +26,7 @@ impl<'a, 'b: 'a> AvailableExpressionSet<'a> {
             | Instr::PopStorage { storage: expr, .. }
             | Instr::SelfDestruct { recipient: expr } => {
                 let _ = self.gen_expression(expr, ave, cst);
-            }
+            },
 
             Instr::Set { res, expr, loc } => {
                 if cst.is_none() {
@@ -58,11 +58,11 @@ impl<'a, 'b: 'a> AvailableExpressionSet<'a> {
                     self.kill(*res);
                     tracker.invalidate_mapped_variable(*res);
                 }
-            }
+            },
 
             Instr::PushMemory { value: expr, .. } => {
                 let _ = self.gen_expression(expr, ave, cst);
-            }
+            },
 
             Instr::SetStorage {
                 value: item_1,
@@ -79,29 +79,25 @@ impl<'a, 'b: 'a> AvailableExpressionSet<'a> {
             } => {
                 let _ = self.gen_expression(item_1, ave, cst);
                 let _ = self.gen_expression(item_2, ave, cst);
-            }
+            },
             Instr::PushStorage { value, storage, .. } => {
                 if let Some(value) = value {
                     let _ = self.gen_expression(value, ave, cst);
                 }
                 let _ = self.gen_expression(storage, ave, cst);
-            }
+            },
 
-            Instr::SetStorageBytes {
-                value,
-                storage,
-                offset,
-            } => {
+            Instr::SetStorageBytes { value, storage, offset } => {
                 let _ = self.gen_expression(value, ave, cst);
                 let _ = self.gen_expression(storage, ave, cst);
                 let _ = self.gen_expression(offset, ave, cst);
-            }
+            },
 
             Instr::Return { value: exprs } | Instr::Call { args: exprs, .. } => {
                 for expr in exprs {
                     let _ = self.gen_expression(expr, ave, cst);
                 }
-            }
+            },
 
             Instr::Constructor {
                 encoded_args,
@@ -130,7 +126,7 @@ impl<'a, 'b: 'a> AvailableExpressionSet<'a> {
                 if let ExternalCallAccounts::Present(expr) = accounts {
                     let _ = self.gen_expression(expr, ave, cst);
                 }
-            }
+            },
 
             Instr::ExternalCall {
                 address,
@@ -153,27 +149,25 @@ impl<'a, 'b: 'a> AvailableExpressionSet<'a> {
                 let _ = self.gen_expression(payload, ave, cst);
                 let _ = self.gen_expression(value, ave, cst);
                 let _ = self.gen_expression(gas, ave, cst);
-            }
+            },
 
             Instr::ValueTransfer { address, value, .. } => {
                 let _ = self.gen_expression(address, ave, cst);
                 let _ = self.gen_expression(value, ave, cst);
-            }
+            },
 
             Instr::EmitEvent { data, topics, .. } => {
                 let _ = self.gen_expression(data, ave, cst);
                 for expr in topics {
                     let _ = self.gen_expression(expr, ave, cst);
                 }
-            }
+            },
 
-            Instr::WriteBuffer {
-                buf, offset, value, ..
-            } => {
+            Instr::WriteBuffer { buf, offset, value, .. } => {
                 let _ = self.gen_expression(buf, ave, cst);
                 let _ = self.gen_expression(offset, ave, cst);
                 let _ = self.gen_expression(value, ave, cst);
-            }
+            },
 
             Instr::MemCopy {
                 source: from,
@@ -183,14 +177,14 @@ impl<'a, 'b: 'a> AvailableExpressionSet<'a> {
                 let _ = self.gen_expression(from, ave, cst);
                 let _ = self.gen_expression(to, ave, cst);
                 let _ = self.gen_expression(bytes, ave, cst);
-            }
+            },
 
             Instr::Switch { cond, cases, .. } => {
                 let _ = self.gen_expression(cond, ave, cst);
                 for (case, _) in cases {
                     let _ = self.gen_expression(case, ave, cst);
                 }
-            }
+            },
 
             Instr::AssertFailure { encoded_args: None }
             | Instr::Nop
@@ -198,7 +192,7 @@ impl<'a, 'b: 'a> AvailableExpressionSet<'a> {
             | Instr::Branch { .. }
             | Instr::PopMemory { .. }
             | Instr::AccountAccess { .. }
-            | Instr::Unimplemented { .. } => {}
+            | Instr::Unimplemented { .. } => {},
         }
     }
 
@@ -218,7 +212,7 @@ impl<'a, 'b: 'a> AvailableExpressionSet<'a> {
                 };
                 self.kill(*res);
                 new_instr
-            }
+            },
 
             Instr::Call {
                 res,
@@ -284,11 +278,7 @@ impl<'a, 'b: 'a> AvailableExpressionSet<'a> {
                 storage: self.regenerate_expression(storage, ave, cst).1,
             },
 
-            Instr::SetStorageBytes {
-                value,
-                storage,
-                offset,
-            } => Instr::SetStorageBytes {
+            Instr::SetStorageBytes { value, storage, offset } => Instr::SetStorageBytes {
                 value: self.regenerate_expression(value, ave, cst).1,
                 storage: self.regenerate_expression(storage, ave, cst).1,
                 offset: self.regenerate_expression(offset, ave, cst).1,
@@ -302,9 +292,7 @@ impl<'a, 'b: 'a> AvailableExpressionSet<'a> {
             } => Instr::PushStorage {
                 res: *res,
                 ty: ty.clone(),
-                value: value
-                    .as_ref()
-                    .map(|expr| self.regenerate_expression(expr, ave, cst).1),
+                value: value.as_ref().map(|expr| self.regenerate_expression(expr, ave, cst).1),
                 storage: self.regenerate_expression(storage, ave, cst).1,
             },
 
@@ -314,12 +302,7 @@ impl<'a, 'b: 'a> AvailableExpressionSet<'a> {
                 storage: self.regenerate_expression(storage, ave, cst).1,
             },
 
-            Instr::PushMemory {
-                res,
-                ty,
-                array,
-                value,
-            } => Instr::PushMemory {
+            Instr::PushMemory { res, ty, array, value } => Instr::PushMemory {
                 res: *res,
                 ty: ty.clone(),
                 array: *array,
@@ -340,21 +323,15 @@ impl<'a, 'b: 'a> AvailableExpressionSet<'a> {
                 accounts,
                 constructor_no,
             } => {
-                let new_value = value
-                    .as_ref()
-                    .map(|expr| self.regenerate_expression(expr, ave, cst).1);
+                let new_value = value.as_ref().map(|expr| self.regenerate_expression(expr, ave, cst).1);
 
-                let new_salt = salt
-                    .as_ref()
-                    .map(|expr| self.regenerate_expression(expr, ave, cst).1);
+                let new_salt = salt.as_ref().map(|expr| self.regenerate_expression(expr, ave, cst).1);
 
                 let new_address = address
                     .as_ref()
                     .map(|expr| self.regenerate_expression(expr, ave, cst).1);
 
-                let new_seeds = seeds
-                    .as_ref()
-                    .map(|expr| self.regenerate_expression(expr, ave, cst).1);
+                let new_seeds = seeds.as_ref().map(|expr| self.regenerate_expression(expr, ave, cst).1);
 
                 let new_accounts = accounts
                     .as_ref()
@@ -374,7 +351,7 @@ impl<'a, 'b: 'a> AvailableExpressionSet<'a> {
                     loc: *loc,
                     accounts: new_accounts,
                 }
-            }
+            },
 
             Instr::ExternalCall {
                 loc,
@@ -397,13 +374,9 @@ impl<'a, 'b: 'a> AvailableExpressionSet<'a> {
                     .as_ref()
                     .map(|expr| self.regenerate_expression(expr, ave, cst).1);
 
-                let new_seeds = seeds
-                    .as_ref()
-                    .map(|expr| self.regenerate_expression(expr, ave, cst).1);
+                let new_seeds = seeds.as_ref().map(|expr| self.regenerate_expression(expr, ave, cst).1);
 
-                let flags = flags
-                    .as_ref()
-                    .map(|expr| self.regenerate_expression(expr, ave, cst).1);
+                let flags = flags.as_ref().map(|expr| self.regenerate_expression(expr, ave, cst).1);
 
                 Instr::ExternalCall {
                     loc: *loc,
@@ -418,7 +391,7 @@ impl<'a, 'b: 'a> AvailableExpressionSet<'a> {
                     contract_function_no: *contract_function_no,
                     flags,
                 }
-            }
+            },
 
             Instr::ValueTransfer {
                 success,
@@ -433,11 +406,7 @@ impl<'a, 'b: 'a> AvailableExpressionSet<'a> {
                 recipient: self.regenerate_expression(recipient, ave, cst).1,
             },
 
-            Instr::EmitEvent {
-                event_no,
-                data,
-                topics,
-            } => Instr::EmitEvent {
+            Instr::EmitEvent { event_no, data, topics } => Instr::EmitEvent {
                 event_no: *event_no,
                 data: self.regenerate_expression(data, ave, cst).1,
                 topics: topics
@@ -456,11 +425,7 @@ impl<'a, 'b: 'a> AvailableExpressionSet<'a> {
                 bytes: self.regenerate_expression(bytes, ave, cst).1,
             },
 
-            Instr::Switch {
-                cond,
-                cases,
-                default,
-            } => Instr::Switch {
+            Instr::Switch { cond, cases, default } => Instr::Switch {
                 cond: self.regenerate_expression(cond, ave, cst).1,
                 cases: cases
                     .iter()

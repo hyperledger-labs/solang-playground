@@ -59,26 +59,19 @@ pub fn add_external_functions(contract_no: usize, ns: &mut Namespace) {
                     );
                 }
 
-                ns.contracts[contract_no]
-                    .all_functions
-                    .insert(*function_no, usize::MAX);
+                ns.contracts[contract_no].all_functions.insert(*function_no, usize::MAX);
             }
         }
 
         for yul_function_no in &call_list.yul {
-            ns.contracts[contract_no]
-                .yul_functions
-                .push(*yul_function_no);
+            ns.contracts[contract_no].yul_functions.push(*yul_function_no);
         }
 
         call_list.solidity.clear();
         call_list.yul.clear();
 
         for function_no in &new_call_list.solidity {
-            if !ns.contracts[contract_no]
-                .all_functions
-                .contains_key(function_no)
-            {
+            if !ns.contracts[contract_no].all_functions.contains_key(function_no) {
                 call_list.solidity.insert(*function_no);
             }
         }
@@ -107,10 +100,9 @@ pub fn add_external_functions(contract_no: usize, ns: &mut Namespace) {
 
 fn check_expression(expr: &Expression, call_list: &mut CallList) -> bool {
     match expr {
-        Expression::UserDefinedOperator { function_no, .. }
-        | Expression::InternalFunction { function_no, .. } => {
+        Expression::UserDefinedOperator { function_no, .. } | Expression::InternalFunction { function_no, .. } => {
             call_list.solidity.insert(*function_no);
-        }
+        },
         Expression::Builtin {
             kind: Builtin::AbiEncodeCall,
             args,
@@ -120,7 +112,7 @@ fn check_expression(expr: &Expression, call_list: &mut CallList) -> bool {
                 check_expression(expr, call_list);
             }
             return false;
-        }
+        },
         Expression::Builtin {
             kind: Builtin::FunctionSelector,
             ..
@@ -135,26 +127,24 @@ fn check_statement(stmt: &Statement, call_list: &mut CallList) -> bool {
     match stmt {
         Statement::VariableDecl(_, _, _, Some(expr)) => {
             expr.recurse(call_list, check_expression);
-        }
+        },
         Statement::VariableDecl(_, _, _, None) => (),
         Statement::If(_, _, cond, _, _) => {
             cond.recurse(call_list, check_expression);
-        }
-        Statement::For {
-            cond: Some(cond), ..
-        } => {
+        },
+        Statement::For { cond: Some(cond), .. } => {
             cond.recurse(call_list, check_expression);
-        }
+        },
         Statement::For { cond: None, .. } => (),
         Statement::DoWhile(_, _, _, cond) | Statement::While(_, _, cond, _) => {
             cond.recurse(call_list, check_expression);
-        }
+        },
         Statement::Expression(_, _, expr) => {
             expr.recurse(call_list, check_expression);
-        }
+        },
         Statement::Delete(_, _, expr) => {
             expr.recurse(call_list, check_expression);
-        }
+        },
         Statement::Destructure(_, fields, expr) => {
             // This is either a list or internal/external function call
             expr.recurse(call_list, check_expression);
@@ -164,29 +154,26 @@ fn check_statement(stmt: &Statement, call_list: &mut CallList) -> bool {
                     expr.recurse(call_list, check_expression);
                 }
             }
-        }
+        },
         Statement::Return(_, exprs) => {
             for e in exprs {
                 e.recurse(call_list, check_expression);
             }
-        }
+        },
         Statement::TryCatch(_, _, try_catch) => {
             try_catch.expr.recurse(call_list, check_expression);
-        }
+        },
         Statement::Revert { args, .. } | Statement::Emit { args, .. } => {
             for e in args {
                 e.recurse(call_list, check_expression);
             }
-        }
-        Statement::Block { .. }
-        | Statement::Break(_)
-        | Statement::Continue(_)
-        | Statement::Underscore(_) => (),
+        },
+        Statement::Block { .. } | Statement::Break(_) | Statement::Continue(_) | Statement::Underscore(_) => (),
         Statement::Assembly(inline_assembly, _) => {
             for func_no in inline_assembly.functions.start..inline_assembly.functions.end {
                 call_list.yul.insert(func_no);
             }
-        }
+        },
     }
 
     true

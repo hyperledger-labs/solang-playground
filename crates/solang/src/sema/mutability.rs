@@ -2,8 +2,8 @@
 
 use super::{
     ast::{
-        Builtin, CallTy, DestructureField, Diagnostic, Expression, Function, Mutability, Namespace,
-        RetrieveType, Statement, Type,
+        Builtin, CallTy, DestructureField, Diagnostic, Expression, Function, Mutability, Namespace, RetrieveType,
+        Statement, Type,
     },
     diagnostics::Diagnostics,
     yul::ast::{YulExpression, YulStatement},
@@ -46,9 +46,7 @@ impl Access {
 pub fn mutability(file_no: usize, ns: &mut Namespace) {
     if !ns.diagnostics.any_errors() {
         for func in &ns.functions {
-            if func.loc_prototype.try_file_no() != Some(file_no)
-                || func.ty == pt::FunctionTy::Modifier
-            {
+            if func.loc_prototype.try_file_no() != Some(file_no) || func.ty == pt::FunctionTy::Modifier {
                 continue;
             }
 
@@ -106,10 +104,7 @@ impl<'a> StateCheck<'a> {
         let diagnostic = self
             .modifier
             .map(|modifier_loc| {
-                let message = format!(
-                    "function declared '{}' but modifier {}",
-                    self.func.mutability, message
-                );
+                let message = format!("function declared '{}' but modifier {}", self.func.mutability, message);
                 Diagnostic::error_with_note(modifier_loc, message, *loc, note.into())
             })
             .unwrap_or_else(|| {
@@ -151,15 +146,11 @@ fn check_mutability(func: &Function, ns: &Namespace) -> Diagnostics {
                 arg.recurse(&mut state, read_expression);
             }
 
-            let contract_no = func
-                .contract_no
-                .expect("only functions in contracts have modifiers");
+            let contract_no = func.contract_no.expect("only functions in contracts have modifiers");
 
             // check the modifier itself
             if let Expression::InternalFunction {
-                function_no,
-                signature,
-                ..
+                function_no, signature, ..
             } = function.as_ref()
             {
                 let function_no = if let Some(signature) = signature {
@@ -194,16 +185,13 @@ fn check_mutability(func: &Function, ns: &Namespace) -> Diagnostics {
                         func.loc_prototype,
                         "function can be declared 'pure'".to_string(),
                     ));
-                }
+                },
                 _ => {
                     state.diagnostic.push(Diagnostic::warning(
                         func.loc_prototype,
-                        format!(
-                            "function declared '{}' can be declared 'pure'",
-                            func.mutability
-                        ),
+                        format!("function declared '{}' can be declared 'pure'", func.mutability),
                     ));
-                }
+                },
             }
         }
 
@@ -222,8 +210,7 @@ fn check_mutability(func: &Function, ns: &Namespace) -> Diagnostics {
             SolanaAccount {
                 loc: Loc::Codegen,
                 is_signer: false,
-                is_writer: (state.data_account & DataAccountUsage::WRITE)
-                    == DataAccountUsage::WRITE,
+                is_writer: (state.data_account & DataAccountUsage::WRITE) == DataAccountUsage::WRITE,
                 generated: true,
             },
         );
@@ -256,26 +243,22 @@ fn recurse_statements(stmts: &[Statement], ns: &Namespace, state: &mut StateChec
         match stmt {
             Statement::Block { statements, .. } => {
                 recurse_statements(statements, ns, state);
-            }
+            },
             Statement::VariableDecl(_, _, _, Some(expr)) => {
                 expr.recurse(state, read_expression);
-            }
+            },
             Statement::VariableDecl(_, _, _, None) => (),
             Statement::If(_, _, expr, then_, else_) => {
                 expr.recurse(state, read_expression);
                 recurse_statements(then_, ns, state);
                 recurse_statements(else_, ns, state);
-            }
+            },
             Statement::DoWhile(_, _, body, expr) | Statement::While(_, _, expr, body) => {
                 expr.recurse(state, read_expression);
                 recurse_statements(body, ns, state);
-            }
+            },
             Statement::For {
-                init,
-                cond,
-                next,
-                body,
-                ..
+                init, cond, next, body, ..
             } => {
                 recurse_statements(init, ns, state);
                 if let Some(cond) = cond {
@@ -285,14 +268,14 @@ fn recurse_statements(stmts: &[Statement], ns: &Namespace, state: &mut StateChec
                     next.recurse(state, read_expression);
                 }
                 recurse_statements(body, ns, state);
-            }
+            },
             Statement::Expression(_, _, expr) => {
                 expr.recurse(state, read_expression);
-            }
+            },
             Statement::Delete(loc, _, _) => {
                 state.data_account |= DataAccountUsage::WRITE;
                 state.write(loc)
-            }
+            },
             Statement::Destructure(_, fields, expr) => {
                 // This is either a list or internal/external function call
                 expr.recurse(state, read_expression);
@@ -302,11 +285,11 @@ fn recurse_statements(stmts: &[Statement], ns: &Namespace, state: &mut StateChec
                         expr.recurse(state, write_expression);
                     }
                 }
-            }
-            Statement::Return(_, None) => {}
+            },
+            Statement::Return(_, None) => {},
             Statement::Return(_, Some(expr)) => {
                 expr.recurse(state, read_expression);
-            }
+            },
             Statement::TryCatch(_, _, try_catch) => {
                 try_catch.expr.recurse(state, read_expression);
                 recurse_statements(&try_catch.ok_stmt, ns, state);
@@ -316,20 +299,20 @@ fn recurse_statements(stmts: &[Statement], ns: &Namespace, state: &mut StateChec
                 if let Some(clause) = try_catch.catch_all.as_ref() {
                     recurse_statements(&clause.stmt, ns, state);
                 }
-            }
+            },
             Statement::Emit { loc, .. } => state.write(loc),
             Statement::Revert { args, .. } => {
                 for arg in args {
                     arg.recurse(state, read_expression);
                 }
-            }
+            },
             Statement::Break(_) | Statement::Continue(_) | Statement::Underscore(_) => (),
             Statement::Assembly(inline_assembly, _) => {
                 for function_no in inline_assembly.functions.start..inline_assembly.functions.end {
                     recurse_yul_statements(&ns.yul_functions[function_no].body.statements, state);
                 }
                 recurse_yul_statements(&inline_assembly.body, state);
-            }
+            },
         }
     }
 }
@@ -339,26 +322,26 @@ fn read_expression(expr: &Expression, state: &mut StateCheck) -> bool {
         Expression::StorageLoad { loc, .. } => {
             state.data_account |= DataAccountUsage::READ;
             state.read(loc)
-        }
+        },
         Expression::PreIncrement { expr, .. }
         | Expression::PreDecrement { expr, .. }
         | Expression::PostIncrement { expr, .. }
         | Expression::PostDecrement { expr, .. } => {
             expr.recurse(state, write_expression);
-        }
+        },
         Expression::Assign { left, right, .. } => {
             right.recurse(state, read_expression);
             left.recurse(state, write_expression);
             return false;
-        }
+        },
         Expression::StorageArrayLength { loc, .. } => {
             state.data_account |= DataAccountUsage::READ;
             state.read(loc);
-        }
+        },
         Expression::StorageVariable { loc, .. } => {
             state.data_account |= DataAccountUsage::READ;
             state.read(loc);
-        }
+        },
         Expression::Builtin {
             kind: Builtin::FunctionSelector,
             args,
@@ -370,7 +353,7 @@ fn read_expression(expr: &Expression, state: &mut StateCheck) -> bool {
                 // Expression::ExternalFunction
                 return false;
             }
-        }
+        },
         Expression::Builtin {
             loc,
             kind:
@@ -410,7 +393,7 @@ fn read_expression(expr: &Expression, state: &mut StateCheck) -> bool {
             } else {
                 state.read(loc)
             }
-        }
+        },
         Expression::Builtin {
             loc,
             kind: Builtin::ArrayPush | Builtin::ArrayPop,
@@ -419,21 +402,20 @@ fn read_expression(expr: &Expression, state: &mut StateCheck) -> bool {
         } if args[0].ty().is_contract_storage() => {
             state.data_account |= DataAccountUsage::WRITE;
             state.write(loc)
-        }
+        },
 
         Expression::Constructor { loc, .. } => {
             state.write(loc);
-        }
+        },
         Expression::ExternalFunctionCall { loc, function, .. }
         | Expression::InternalFunctionCall { loc, function, .. } => match function.ty() {
-            Type::ExternalFunction { mutability, .. }
-            | Type::InternalFunction { mutability, .. } => {
+            Type::ExternalFunction { mutability, .. } | Type::InternalFunction { mutability, .. } => {
                 match mutability {
                     Mutability::Nonpayable(_) | Mutability::Payable(_) => state.write(loc),
                     Mutability::View(_) => state.read(loc),
                     Mutability::Pure(_) => (),
                 };
-            }
+            },
             _ => unreachable!(),
         },
         Expression::ExternalFunctionCallRaw { loc, ty, .. } => match ty {
@@ -442,7 +424,7 @@ fn read_expression(expr: &Expression, state: &mut StateCheck) -> bool {
         },
         Expression::NamedMember { name, .. } if name == BuiltinAccounts::DataAccount => {
             state.data_account |= DataAccountUsage::READ;
-        }
+        },
         _ => (),
     }
     true
@@ -450,38 +432,35 @@ fn read_expression(expr: &Expression, state: &mut StateCheck) -> bool {
 
 fn write_expression(expr: &Expression, state: &mut StateCheck) -> bool {
     match expr {
-        Expression::StructMember {
-            loc, expr: array, ..
-        }
-        | Expression::Subscript { loc, array, .. } => {
+        Expression::StructMember { loc, expr: array, .. } | Expression::Subscript { loc, array, .. } => {
             if array.ty().is_contract_storage() {
                 state.data_account |= DataAccountUsage::WRITE;
                 state.write(loc);
                 return false;
             }
-        }
+        },
         Expression::Variable { loc, ty, var_no: _ } => {
             if ty.is_contract_storage() && !expr.ty().is_contract_storage() {
                 state.data_account |= DataAccountUsage::WRITE;
                 state.write(loc);
                 return false;
             }
-        }
+        },
         Expression::StorageVariable { loc, .. } => {
             state.data_account |= DataAccountUsage::WRITE;
             state.write(loc);
             return false;
-        }
+        },
         Expression::Builtin {
             loc,
             kind: Builtin::Accounts,
             ..
         } => {
             state.write(loc);
-        }
+        },
         Expression::NamedMember { name, .. } if name == BuiltinAccounts::DataAccount => {
             state.data_account |= DataAccountUsage::WRITE;
-        }
+        },
         _ => (),
     }
 
@@ -495,7 +474,7 @@ fn recurse_yul_statements(stmts: &[YulStatement], state: &mut StateCheck) {
                 for arg in args {
                     arg.recurse(state, check_expression_mutability_yul);
                 }
-            }
+            },
             YulStatement::BuiltInCall(loc, _, builtin_ty, args) => {
                 if builtin_ty.read_state() {
                     state.read(loc);
@@ -505,18 +484,17 @@ fn recurse_yul_statements(stmts: &[YulStatement], state: &mut StateCheck) {
                 for arg in args {
                     arg.recurse(state, check_expression_mutability_yul);
                 }
-            }
+            },
             YulStatement::Block(block) => {
                 recurse_yul_statements(&block.statements, state);
-            }
-            YulStatement::Assignment(_, _, _, value)
-            | YulStatement::VariableDeclaration(_, _, _, Some(value)) => {
+            },
+            YulStatement::Assignment(_, _, _, value) | YulStatement::VariableDeclaration(_, _, _, Some(value)) => {
                 value.recurse(state, check_expression_mutability_yul);
-            }
+            },
             YulStatement::IfBlock(_, _, condition, block) => {
                 condition.recurse(state, check_expression_mutability_yul);
                 recurse_yul_statements(&block.statements, state);
-            }
+            },
             YulStatement::Switch {
                 condition,
                 cases,
@@ -525,15 +503,14 @@ fn recurse_yul_statements(stmts: &[YulStatement], state: &mut StateCheck) {
             } => {
                 condition.recurse(state, check_expression_mutability_yul);
                 for item in cases {
-                    item.condition
-                        .recurse(state, check_expression_mutability_yul);
+                    item.condition.recurse(state, check_expression_mutability_yul);
                     recurse_yul_statements(&item.block.statements, state);
                 }
 
                 if let Some(block) = default {
                     recurse_yul_statements(&block.statements, state);
                 }
-            }
+            },
             YulStatement::For {
                 init_block,
                 condition,
@@ -545,7 +522,7 @@ fn recurse_yul_statements(stmts: &[YulStatement], state: &mut StateCheck) {
                 condition.recurse(state, check_expression_mutability_yul);
                 recurse_yul_statements(&post_block.statements, state);
                 recurse_yul_statements(&execution_block.statements, state);
-            }
+            },
 
             _ => (),
         }
@@ -564,15 +541,15 @@ fn check_expression_mutability_yul(expr: &YulExpression, state: &mut StateCheck)
             match builtin_ty {
                 YulBuiltInFunction::SStore => {
                     state.data_account |= DataAccountUsage::WRITE;
-                }
+                },
                 YulBuiltInFunction::SLoad => {
                     state.data_account |= DataAccountUsage::READ;
-                }
+                },
                 _ => (),
             }
 
             true
-        }
+        },
         YulExpression::FunctionCall(..) => true,
         _ => false,
     }

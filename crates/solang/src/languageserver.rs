@@ -3,10 +3,6 @@
 #![deny(clippy::all)]
 #![deny(unsafe_code)]
 
-use itertools::Itertools;
-use num_traits::ToPrimitive;
-use rust_lapper::{Interval, Lapper};
-use serde_json::Value;
 use crate::codegen::{self, codegen, Expression};
 use crate::file_resolver::FileResolver;
 use crate::parse_and_resolve;
@@ -18,6 +14,10 @@ use crate::sema::{
     tags::render,
 };
 use crate::Target;
+use itertools::Itertools;
+use num_traits::ToPrimitive;
+use rust_lapper::{Interval, Lapper};
+use serde_json::Value;
 
 use solang_parser::pt;
 use std::vec;
@@ -31,28 +31,23 @@ use tower_lsp::{
     jsonrpc::Result,
     lsp_types::{
         request::{
-            GotoDeclarationParams, GotoDeclarationResponse, GotoImplementationParams,
-            GotoImplementationResponse, GotoTypeDefinitionParams, GotoTypeDefinitionResponse,
+            GotoDeclarationParams, GotoDeclarationResponse, GotoImplementationParams, GotoImplementationResponse,
+            GotoTypeDefinitionParams, GotoTypeDefinitionResponse,
         },
         CompletionContext, CompletionItem, CompletionOptions, CompletionParams, CompletionResponse,
-        CompletionTriggerKind, DeclarationCapability, Diagnostic, DiagnosticRelatedInformation,
-        DiagnosticSeverity, DidChangeConfigurationParams, DidChangeTextDocumentParams,
-        DidChangeWatchedFilesParams, DidChangeWorkspaceFoldersParams, DidCloseTextDocumentParams,
-        DidOpenTextDocumentParams, DidSaveTextDocumentParams, 
-        ExecuteCommandOptions, ExecuteCommandParams, GotoDefinitionParams, GotoDefinitionResponse,
-        Hover, HoverContents, HoverParams, HoverProviderCapability,
-        ImplementationProviderCapability, InitializeParams, InitializeResult, InitializedParams,
-        Location, MarkedString, MessageType, OneOf, Position, Range, ReferenceParams, RenameParams,
-        ServerCapabilities, SignatureHelpOptions,
-        TextDocumentSyncCapability, TextDocumentSyncKind, TextEdit,
+        CompletionTriggerKind, DeclarationCapability, Diagnostic, DiagnosticRelatedInformation, DiagnosticSeverity,
+        DidChangeConfigurationParams, DidChangeTextDocumentParams, DidChangeWatchedFilesParams,
+        DidChangeWorkspaceFoldersParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
+        DidSaveTextDocumentParams, ExecuteCommandOptions, ExecuteCommandParams, GotoDefinitionParams,
+        GotoDefinitionResponse, Hover, HoverContents, HoverParams, HoverProviderCapability,
+        ImplementationProviderCapability, InitializeParams, InitializeResult, InitializedParams, Location,
+        MarkedString, MessageType, OneOf, Position, Range, ReferenceParams, RenameParams, ServerCapabilities,
+        SignatureHelpOptions, TextDocumentSyncCapability, TextDocumentSyncKind, TextEdit,
         TypeDefinitionProviderCapability, Url, WorkspaceEdit, WorkspaceFoldersServerCapabilities,
-        WorkspaceServerCapabilities, 
+        WorkspaceServerCapabilities,
     },
     Client, LanguageServer,
 };
-
-
-
 
 /// Represents the type of the code object that a reference points to
 /// Here "code object" refers to contracts, functions, structs, enums etc., that are defined and used within a namespace.
@@ -201,9 +196,7 @@ pub struct SolangServer {
     pub global_cache: Mutex<GlobalCache>,
 }
 
-
 impl SolangServer {
-
     fn url_to_file_path(&self, uri: &Url) -> Result<PathBuf> {
         let path = uri.to_string();
         let pathbuf = PathBuf::from(path);
@@ -216,10 +209,8 @@ impl SolangServer {
         Ok(uri)
     }
 
-
     /// Parse file
     async fn parse_file(&self, uri: Url) {
-        
         let mut resolver = FileResolver::default();
         for (path, contents) in &self.files.lock().await.text_buffers {
             resolver.set_file_contents(path.as_str(), contents.clone());
@@ -258,7 +249,7 @@ impl SolangServer {
                     ast::Level::Error => Some(DiagnosticSeverity::ERROR),
                     ast::Level::Debug => {
                         return None;
-                    }
+                    },
                 };
 
                 let related_information = if diag.notes.is_empty() {
@@ -270,8 +261,7 @@ impl SolangServer {
                             .map(|note| DiagnosticRelatedInformation {
                                 message: note.message.to_string(),
                                 location: Location {
-                                    uri: self.url_from_file_path(&ns.files[note.loc.file_no()].path)
-                                        .unwrap(),
+                                    uri: self.url_from_file_path(&ns.files[note.loc.file_no()].path).unwrap(),
                                     range: loc_to_range(&note.loc, &ns.files[ns.top_file_no()]),
                                 },
                             })
@@ -309,10 +299,7 @@ impl SolangServer {
     }
 
     /// Common code for goto_{definitions, implementations, declarations, type_definitions}
-    async fn get_reference_from_params(
-        &self,
-        params: GotoDefinitionParams,
-    ) -> Result<Option<DefinitionIndex>> {
+    async fn get_reference_from_params(&self, params: GotoDefinitionParams) -> Result<Option<DefinitionIndex>> {
         let uri = params.text_document_position_params.text_document.uri;
         let path = uri.to_string();
 
@@ -378,7 +365,7 @@ impl<'a> Builder<'a> {
                 for stmt in statements {
                     self.statement(stmt, symtab);
                 }
-            }
+            },
             ast::Statement::VariableDecl(loc, var_no, param, expr) => {
                 if let Some(exp) = expr {
                     self.expression(exp, symtab);
@@ -427,8 +414,7 @@ impl<'a> Builder<'a> {
                         def_path: file.path.clone(),
                         def_type: DefinitionType::Variable(*var_no),
                     };
-                    self.definitions
-                        .insert(di.clone(), loc_to_range(&id.loc, file));
+                    self.definitions.insert(di.clone(), loc_to_range(&id.loc, file));
                     if let Some(dt) = get_type_definition(&param.ty) {
                         self.types.insert(di, dt.into());
                     }
@@ -446,7 +432,7 @@ impl<'a> Builder<'a> {
                         ));
                     }
                 }
-            }
+            },
             ast::Statement::If(_, _, expr, stat1, stat2) => {
                 self.expression(expr, symtab);
                 for stmt in stat1 {
@@ -455,19 +441,15 @@ impl<'a> Builder<'a> {
                 for stmt in stat2 {
                     self.statement(stmt, symtab);
                 }
-            }
+            },
             ast::Statement::While(_, _, expr, block) => {
                 self.expression(expr, symtab);
                 for stmt in block {
                     self.statement(stmt, symtab);
                 }
-            }
+            },
             ast::Statement::For {
-                init,
-                cond,
-                next,
-                body,
-                ..
+                init, cond, next, body, ..
             } => {
                 if let Some(exp) = cond {
                     self.expression(exp, symtab);
@@ -481,26 +463,26 @@ impl<'a> Builder<'a> {
                 for stat in body {
                     self.statement(stat, symtab);
                 }
-            }
+            },
             ast::Statement::DoWhile(_, _, stat1, expr) => {
                 self.expression(expr, symtab);
                 for st1 in stat1 {
                     self.statement(st1, symtab);
                 }
-            }
+            },
             ast::Statement::Expression(_, _, expr) => {
                 self.expression(expr, symtab);
-            }
+            },
             ast::Statement::Delete(_, _, expr) => {
                 self.expression(expr, symtab);
-            }
+            },
             ast::Statement::Destructure(_, fields, expr) => {
                 self.expression(expr, symtab);
                 for field in fields {
                     match field {
                         ast::DestructureField::Expression(expr) => {
                             self.expression(expr, symtab);
-                        }
+                        },
                         ast::DestructureField::VariableDecl(var_no, param) => {
                             self.hovers.push((
                                 param.loc.file_no(),
@@ -517,28 +499,27 @@ impl<'a> Builder<'a> {
                                     def_path: file.path.clone(),
                                     def_type: DefinitionType::Variable(*var_no),
                                 };
-                                self.definitions
-                                    .insert(di.clone(), loc_to_range(&id.loc, file));
+                                self.definitions.insert(di.clone(), loc_to_range(&id.loc, file));
                                 if let Some(dt) = get_type_definition(&param.ty) {
                                     self.types.insert(di, dt.into());
                                 }
                             }
-                        }
+                        },
                         ast::DestructureField::None => (),
                     }
                 }
-            }
-            ast::Statement::Continue(_) => {}
-            ast::Statement::Break(_) => {}
-            ast::Statement::Return(_, None) => {}
+            },
+            ast::Statement::Continue(_) => {},
+            ast::Statement::Break(_) => {},
+            ast::Statement::Return(_, None) => {},
             ast::Statement::Return(_, Some(expr)) => {
                 self.expression(expr, symtab);
-            }
+            },
             ast::Statement::Revert { args, .. } => {
                 for arg in args {
                     self.expression(arg, symtab);
                 }
-            }
+            },
             ast::Statement::Emit {
                 event_no,
                 event_loc,
@@ -592,7 +573,7 @@ impl<'a> Builder<'a> {
                 for arg in args {
                     self.expression(arg, symtab);
                 }
-            }
+            },
             ast::Statement::TryCatch(_, _, try_stmt) => {
                 self.expression(&try_stmt.expr, symtab);
                 if let Some(clause) = try_stmt.catch_all.as_ref() {
@@ -608,11 +589,11 @@ impl<'a> Builder<'a> {
                         self.statement(stmts, symtab);
                     }
                 }
-            }
-            ast::Statement::Underscore(_loc) => {}
+            },
+            ast::Statement::Underscore(_loc) => {},
             ast::Statement::Assembly(..) => {
                 //unimplemented!("Assembly block not implemented in language server");
-            }
+            },
         }
     }
 
@@ -1276,11 +1257,7 @@ impl<'a> Builder<'a> {
         if !tags.is_empty() {
             tags.push_str("\n\n");
         }
-        let val = make_code_block(format!(
-            "{} {}",
-            variable.ty.to_string(self.ns),
-            variable.name
-        ));
+        let val = make_code_block(format!("{} {}", variable.ty.to_string(self.ns), variable.name));
 
         if let Some(expr) = &variable.initializer {
             self.expression(expr, symtab);
@@ -1301,8 +1278,7 @@ impl<'a> Builder<'a> {
             def_path: file.path.clone(),
             def_type: DefinitionType::NonLocalVariable(contract_no, var_no),
         };
-        self.definitions
-            .insert(di.clone(), loc_to_range(&variable.loc, file));
+        self.definitions.insert(di.clone(), loc_to_range(&variable.loc, file));
         if let Some(dt) = get_type_definition(&variable.ty) {
             self.types.insert(di, dt.into());
         }
@@ -1340,20 +1316,13 @@ impl<'a> Builder<'a> {
             HoverEntry {
                 start: loc.start(),
                 stop: loc.exclusive_end(),
-                val: make_code_block(format!(
-                    "{} {}",
-                    field.ty.to_string(self.ns),
-                    field.name_as_str()
-                )),
+                val: make_code_block(format!("{} {}", field.ty.to_string(self.ns), field.name_as_str())),
             },
         ));
 
         let di = DefinitionIndex {
             def_path: file.path.clone(),
-            def_type: DefinitionType::Field(
-                Type::Struct(ast::StructType::UserDefined(id)),
-                field_id,
-            ),
+            def_type: DefinitionType::Field(Type::Struct(ast::StructType::UserDefined(id)), field_id),
         };
         self.definitions.insert(di.clone(), loc_to_range(loc, file));
         if let Some(dt) = get_type_definition(&field.ty) {
@@ -1373,10 +1342,7 @@ impl<'a> Builder<'a> {
                     HoverEntry {
                         start: loc.start(),
                         stop: loc.exclusive_end(),
-                        val: make_code_block(format!(
-                            "enum {}.{} {}",
-                            enum_decl.id, nam, discriminant
-                        )),
+                        val: make_code_block(format!("enum {}.{} {}", enum_decl.id, nam, discriminant)),
                     },
                 ));
 
@@ -1410,11 +1376,7 @@ impl<'a> Builder<'a> {
 
             self.properties.insert(
                 def_index.clone(),
-                enum_decl
-                    .values
-                    .iter()
-                    .map(|(name, _)| (name.clone(), None))
-                    .collect(),
+                enum_decl.values.iter().map(|(name, _)| (name.clone(), None)).collect(),
             );
 
             if enum_decl.contract.is_none() {
@@ -1453,11 +1415,10 @@ impl<'a> Builder<'a> {
                         .fields
                         .iter()
                         .filter_map(|field| {
-                            let def_index =
-                                get_type_definition(&field.ty).map(|def_type| DefinitionIndex {
-                                    def_path: file.path.clone(),
-                                    def_type,
-                                });
+                            let def_index = get_type_definition(&field.ty).map(|def_type| DefinitionIndex {
+                                def_path: file.path.clone(),
+                                def_type,
+                            });
                             field.id.as_ref().map(|id| (id.name.clone(), def_index))
                         })
                         .collect(),
@@ -1518,8 +1479,7 @@ impl<'a> Builder<'a> {
                             def_path: file.path.clone(),
                             def_type: DefinitionType::Variable(*var_no),
                         };
-                        self.definitions
-                            .insert(di.clone(), loc_to_range(&id.loc, file));
+                        self.definitions.insert(di.clone(), loc_to_range(&id.loc, file));
                         if let Some(dt) = get_type_definition(&param.ty) {
                             self.types.insert(di, dt.into());
                         }
@@ -1559,8 +1519,7 @@ impl<'a> Builder<'a> {
                             def_path: file.path.clone(),
                             def_type: DefinitionType::Variable(*var_no),
                         };
-                        self.definitions
-                            .insert(di.clone(), loc_to_range(&id.loc, file));
+                        self.definitions.insert(di.clone(), loc_to_range(&id.loc, file));
                         if let Some(dt) = get_type_definition(&ret.ty) {
                             self.types.insert(di, dt.into());
                         }
@@ -1635,10 +1594,7 @@ impl<'a> Builder<'a> {
                     HoverEntry {
                         start: base.loc.start(),
                         stop: base.loc.exclusive_end(),
-                        val: make_code_block(format!(
-                            "contract {}",
-                            self.ns.contracts[base.contract_no].id
-                        )),
+                        val: make_code_block(format!("contract {}", self.ns.contracts[base.contract_no].id)),
                     },
                 ));
                 self.references.push((
@@ -1675,10 +1631,8 @@ impl<'a> Builder<'a> {
                 def_type: DefinitionType::Contract(ci),
             };
 
-            self.definitions.insert(
-                contract_def_index.clone(),
-                loc_to_range(&contract.id.loc, file),
-            );
+            self.definitions
+                .insert(contract_def_index.clone(), loc_to_range(&contract.id.loc, file));
 
             let impls = contract
                 .functions
@@ -1689,67 +1643,61 @@ impl<'a> Builder<'a> {
                 })
                 .collect();
 
-            self.implementations
-                .insert(contract_def_index.clone(), impls);
+            self.implementations.insert(contract_def_index.clone(), impls);
 
-            let decls = contract
-                .virtual_functions
-                .iter()
-                .filter_map(|(_, indices)| {
-                    // due to the way the `indices` vector is populated during namespace creation,
-                    // the last element in the vector contains the overriding function that belongs to the current contract.
-                    let func = DefinitionIndex {
-                        def_path: file.path.clone(),
-                        // `unwrap` is alright here as the `indices` vector is guaranteed to have at least 1 element
-                        // the vector is always initialised with one initial element
-                        // and the elements in the vector are never removed during namespace construction
-                        def_type: DefinitionType::Function(indices.last().copied().unwrap()),
-                    };
+            let decls = contract.virtual_functions.iter().filter_map(|(_, indices)| {
+                // due to the way the `indices` vector is populated during namespace creation,
+                // the last element in the vector contains the overriding function that belongs to the current contract.
+                let func = DefinitionIndex {
+                    def_path: file.path.clone(),
+                    // `unwrap` is alright here as the `indices` vector is guaranteed to have at least 1 element
+                    // the vector is always initialised with one initial element
+                    // and the elements in the vector are never removed during namespace construction
+                    def_type: DefinitionType::Function(indices.last().copied().unwrap()),
+                };
 
-                    // get all the functions overridden by the current function
-                    let all_decls: HashSet<usize> = HashSet::from_iter(indices.iter().copied());
+                // get all the functions overridden by the current function
+                let all_decls: HashSet<usize> = HashSet::from_iter(indices.iter().copied());
 
-                    // choose the overridden functions that belong to the parent contracts
-                    // due to multiple inheritance, a contract can have multiple parents
-                    let parent_decls = contract
-                        .bases
-                        .iter()
-                        .map(|b| {
-                            let p = &self.ns.contracts[b.contract_no];
-                            HashSet::from_iter(p.functions.iter().copied())
-                                .intersection(&all_decls)
-                                .copied()
-                                .collect::<HashSet<usize>>()
-                        })
-                        .reduce(|acc, e| acc.union(&e).copied().collect());
-
-                    // get the `DefinitionIndex`s of the overridden functions
-                    parent_decls.map(|parent_decls| {
-                        let decls = parent_decls
-                            .iter()
-                            .map(|&i| {
-                                let loc = self.ns.functions[i].loc;
-                                DefinitionIndex {
-                                    def_path: self.ns.files[loc.file_no()].path.clone(),
-                                    def_type: DefinitionType::Function(i),
-                                }
-                            })
-                            .collect::<Vec<_>>();
-
-                        (func, decls)
+                // choose the overridden functions that belong to the parent contracts
+                // due to multiple inheritance, a contract can have multiple parents
+                let parent_decls = contract
+                    .bases
+                    .iter()
+                    .map(|b| {
+                        let p = &self.ns.contracts[b.contract_no];
+                        HashSet::from_iter(p.functions.iter().copied())
+                            .intersection(&all_decls)
+                            .copied()
+                            .collect::<HashSet<usize>>()
                     })
-                });
+                    .reduce(|acc, e| acc.union(&e).copied().collect());
+
+                // get the `DefinitionIndex`s of the overridden functions
+                parent_decls.map(|parent_decls| {
+                    let decls = parent_decls
+                        .iter()
+                        .map(|&i| {
+                            let loc = self.ns.functions[i].loc;
+                            DefinitionIndex {
+                                def_path: self.ns.files[loc.file_no()].path.clone(),
+                                def_type: DefinitionType::Function(i),
+                            }
+                        })
+                        .collect::<Vec<_>>();
+
+                    (func, decls)
+                })
+            });
 
             self.declarations.extend(decls);
 
             // Code objects defined within the contract
 
-            let functions = contract.functions.iter().filter_map(|&fno| {
-                self.ns
-                    .functions
-                    .get(fno)
-                    .map(|func| (func.id.name.clone(), None))
-            });
+            let functions = contract
+                .functions
+                .iter()
+                .filter_map(|&fno| self.ns.functions.get(fno).map(|func| (func.id.name.clone(), None)));
 
             let structs = self
                 .ns
@@ -1764,29 +1712,29 @@ impl<'a> Builder<'a> {
                     _ => None,
                 });
 
-            let enums =
-                self.ns
-                    .enums
-                    .iter()
-                    .enumerate()
-                    .filter_map(|(i, r#enum)| match &r#enum.contract {
-                        Some(contract_name) if contract_name == &contract.id.name => {
-                            Some((r#enum.id.name.clone(), Some(DefinitionType::Enum(i))))
-                        }
-                        _ => None,
-                    });
+            let enums = self
+                .ns
+                .enums
+                .iter()
+                .enumerate()
+                .filter_map(|(i, r#enum)| match &r#enum.contract {
+                    Some(contract_name) if contract_name == &contract.id.name => {
+                        Some((r#enum.id.name.clone(), Some(DefinitionType::Enum(i))))
+                    },
+                    _ => None,
+                });
 
-            let events =
-                self.ns
-                    .events
-                    .iter()
-                    .enumerate()
-                    .filter_map(|(i, event)| match &event.contract {
-                        Some(event_contract) if *event_contract == ci => {
-                            Some((event.id.name.clone(), Some(DefinitionType::Event(i))))
-                        }
-                        _ => None,
-                    });
+            let events = self
+                .ns
+                .events
+                .iter()
+                .enumerate()
+                .filter_map(|(i, event)| match &event.contract {
+                    Some(event_contract) if *event_contract == ci => {
+                        Some((event.id.name.clone(), Some(DefinitionType::Event(i))))
+                    },
+                    _ => None,
+                });
 
             let variables = contract.variables.iter().map(|var| {
                 (
@@ -1808,10 +1756,8 @@ impl<'a> Builder<'a> {
                 })
                 .chain(variables);
 
-            self.properties.insert(
-                contract_def_index.clone(),
-                contract_contents.clone().collect(),
-            );
+            self.properties
+                .insert(contract_def_index.clone(), contract_contents.clone().collect());
 
             self.scopes.push((
                 file_no,
@@ -1824,10 +1770,8 @@ impl<'a> Builder<'a> {
 
             // Contracts can't be defined within other contracts.
             // So all the contracts are top level objects in a file.
-            self.top_level_code_objects.push((
-                file_no,
-                (contract.id.name.clone(), Some(contract_def_index)),
-            ));
+            self.top_level_code_objects
+                .push((file_no, (contract.id.name.clone(), Some(contract_def_index))));
         }
 
         for (ei, event) in self.ns.events.iter().enumerate() {
@@ -1860,10 +1804,10 @@ impl<'a> Builder<'a> {
         }
 
         for lookup in &mut self.hovers {
-            if let Some(msg) =
-                self.ns
-                    .hover_overrides
-                    .get(&pt::Loc::File(lookup.0, lookup.1.start, lookup.1.stop))
+            if let Some(msg) = self
+                .ns
+                .hover_overrides
+                .get(&pt::Loc::File(lookup.0, lookup.1.start, lookup.1.stop))
             {
                 lookup.1.val = msg.clone();
             }
@@ -1965,8 +1909,7 @@ impl<'a> Builder<'a> {
                     .iter_mut()
                     .filter(|code_object| code_object.0 == i)
                     .map(|code_object| {
-                        if let Some(DefinitionIndex { def_path, def_type }) = &mut code_object.1 .1
-                        {
+                        if let Some(DefinitionIndex { def_path, def_type }) = &mut code_object.1 .1 {
                             if def_path.to_str().unwrap() == "" {
                                 if let Some(dp) = defs_to_files.get(def_type) {
                                     *def_path = dp.clone();
@@ -2015,50 +1958,40 @@ impl<'a> Builder<'a> {
                 let fields = strct
                     .fields
                     .iter()
-                    .map(|field| {
-                        format!("\t{} {}", field.ty.to_string(self.ns), field.name_as_str())
-                    })
+                    .map(|field| format!("\t{} {}", field.ty.to_string(self.ns), field.name_as_str()))
                     .join(",\n");
 
                 let val = make_code_block(format!("struct {strct} {{\n{fields}\n}}"));
                 format!("{tags}{val}")
-            }
+            },
             ast::Type::Enum(n) => {
                 let enm = &self.ns.enums[*n];
                 let mut tags = render(&enm.tags);
                 if !tags.is_empty() {
                     tags.push_str("\n\n")
                 }
-                let values = enm
-                    .values
-                    .iter()
-                    .map(|value| format!("\t{}", value.0))
-                    .join(",\n");
+                let values = enm.values.iter().map(|value| format!("\t{}", value.0)).join(",\n");
 
                 let val = make_code_block(format!("enum {enm} {{\n{values}\n}}"));
                 format!("{tags}{val}")
-            }
+            },
             _ => make_code_block(ty.to_string(self.ns)),
         }
     }
 }
 
-
-
 #[tower_lsp::async_trait]
 impl LanguageServer for SolangServer {
     async fn initialize(&self, _: InitializeParams) -> Result<InitializeResult> {
         //println!("SOLANG INIT CALLED");
-        
+
         Ok(InitializeResult {
             server_info: None,
             capabilities: ServerCapabilities {
-                text_document_sync: Some(TextDocumentSyncCapability::Kind(
-                    TextDocumentSyncKind::INCREMENTAL,
-                )),
+                text_document_sync: Some(TextDocumentSyncCapability::Kind(TextDocumentSyncKind::INCREMENTAL)),
                 hover_provider: Some(HoverProviderCapability::Simple(true)),
                 completion_provider: Some(CompletionOptions {
-                    completion_item:None,
+                    completion_item: None,
                     resolve_provider: Some(false),
                     trigger_characters: Some(vec![".".to_string()]),
                     all_commit_characters: None,
@@ -2098,10 +2031,7 @@ impl LanguageServer for SolangServer {
         self.client
             .log_message(
                 MessageType::INFO,
-                format!(
-                    "solang language server {} initialized",
-                    "solang"
-                ),
+                format!("solang language server {} initialized", "solang"),
             )
             .await;
     }
@@ -2129,9 +2059,7 @@ impl LanguageServer for SolangServer {
     }
 
     async fn execute_command(&self, _: ExecuteCommandParams) -> Result<Option<Value>> {
-        self.client
-            .log_message(MessageType::INFO, "command executed!")
-            .await;
+        self.client.log_message(MessageType::INFO, "command executed!").await;
         Ok(None)
     }
 
@@ -2146,12 +2074,12 @@ impl LanguageServer for SolangServer {
                     .text_buffers
                     .insert(uri_string, params.text_document.text);
                 self.parse_file(uri).await;
-            }
+            },
             Err(_) => {
                 self.client
                     .log_message(MessageType::ERROR, format!("received invalid URI: {uri}"))
                     .await;
-            }
+            },
         }
     }
 
@@ -2174,33 +2102,29 @@ impl LanguageServer for SolangServer {
                     .await;
             }
         }
-        
+
     }*/
 
-    async fn did_change(&self, params: DidChangeTextDocumentParams)  {
-
+    async fn did_change(&self, params: DidChangeTextDocumentParams) {
         let new_content = params.content_changes.first().unwrap().text.clone();
- 
+
         let uri = params.text_document.uri;
         let uri_string = uri.to_string();
-        
+
         match self.url_to_file_path(&uri) {
             Ok(_path) => {
                 if let Some(text_buf) = self.files.lock().await.text_buffers.get_mut(&uri_string) {
                     *text_buf = new_content.clone();
                 }
                 self.parse_file(uri).await;
-            }
+            },
             Err(_) => {
                 self.client
                     .log_message(MessageType::ERROR, format!("received invalid URI: {uri}"))
                     .await;
-            }
+            },
         }
-
-        
     }
-
 
     async fn did_save(&self, params: DidSaveTextDocumentParams) {
         let uri = params.text_document.uri;
@@ -2288,11 +2212,11 @@ impl LanguageServer for SolangServer {
                     return Ok(None);
                 };
 
-                let mut builtin_methods =
-                    HashMap::<DefinitionType, HashMap<String, Option<DefinitionIndex>>>::new();
-                for method in BUILTIN_METHODS.iter().filter(|method| {
-                    method.target.is_empty() || method.target.contains(&self.target)
-                }) {
+                let mut builtin_methods = HashMap::<DefinitionType, HashMap<String, Option<DefinitionIndex>>>::new();
+                for method in BUILTIN_METHODS
+                    .iter()
+                    .filter(|method| method.target.is_empty() || method.target.contains(&self.target))
+                {
                     if let Some(def_type) = get_type_definition(&method.method[0]) {
                         builtin_methods
                             .entry(def_type)
@@ -2322,10 +2246,7 @@ impl LanguageServer for SolangServer {
                 let code_object = {
                     let buffer = text_buf.chars().collect_vec();
                     let mut curr: isize = offset as isize - 2;
-                    while curr >= 0
-                        && (buffer[curr as usize].is_ascii_alphanumeric()
-                            || buffer[curr as usize] == '.')
-                    {
+                    while curr >= 0 && (buffer[curr as usize].is_ascii_alphanumeric() || buffer[curr as usize] == '.') {
                         curr -= 1;
                     }
                     curr = isize::max(curr, 0);
@@ -2376,7 +2297,7 @@ impl LanguageServer for SolangServer {
                         })
                         .collect_vec()
                 })
-            }
+            },
             Some(CompletionContext {
                 trigger_kind: CompletionTriggerKind::INVOKED,
                 ..
@@ -2389,7 +2310,7 @@ impl LanguageServer for SolangServer {
                     })
                     .collect_vec();
                 Some(suggestions)
-            }
+            },
             _ => None,
         };
 
@@ -2405,10 +2326,7 @@ impl LanguageServer for SolangServer {
         if let Ok(_path) = self.url_to_file_path(&uri) {
             let files = &self.files.lock().await;
             if let Some(cache) = files.caches.get(&uri_string) {
-                if let Some(offset) = cache
-                    .file
-                    .get_offset(pos.line as usize, pos.character as usize)
-                {
+                if let Some(offset) = cache.file.get_offset(pos.line as usize, pos.character as usize) {
                     // The shortest hover for the position will be most informative
                     if let Some(hover) = cache
                         .hovers
@@ -2418,9 +2336,7 @@ impl LanguageServer for SolangServer {
                         let range = get_range_exclusive(hover.start, hover.stop, &cache.file);
 
                         return Ok(Some(Hover {
-                            contents: HoverContents::Scalar(MarkedString::from_markdown(
-                                hover.val.to_string(),
-                            )),
+                            contents: HoverContents::Scalar(MarkedString::from_markdown(hover.val.to_string())),
                             range: Some(range),
                         }));
                     }
@@ -2441,10 +2357,7 @@ impl LanguageServer for SolangServer {
     /// ### Edge cases
     /// * Returns `Err` when an invalid file path is received.
     /// * Returns `Ok(None)` when the code object is not defined in user's source code. For example, built-in functions.
-    async fn goto_definition(
-        &self,
-        params: GotoDefinitionParams,
-    ) -> Result<Option<GotoDefinitionResponse>> {
+    async fn goto_definition(&self, params: GotoDefinitionParams) -> Result<Option<GotoDefinitionResponse>> {
         // fetch the `DefinitionIndex` of the code object
         let Some(reference) = self.get_reference_from_params(params).await? else {
             return Ok(None);
@@ -2497,7 +2410,7 @@ impl LanguageServer for SolangServer {
                 } else {
                     return Ok(None);
                 }
-            }
+            },
             // return `Ok(None)` if the code object is itself a type
             DefinitionType::Struct(_)
             | DefinitionType::Enum(_)
@@ -2544,15 +2457,15 @@ impl LanguageServer for SolangServer {
         // get the list of `DefinitionIndex` of all the methods defined in the given contract
         // `None` if the passed code-object is not of type `Contract`
         let impls = match &reference.def_type {
-            DefinitionType::Variable(_)
-            | DefinitionType::NonLocalVariable(_, _)
-            | DefinitionType::Field(_, _) => gc.types.get(&reference).and_then(|ty| {
-                if matches!(ty.def_type, DefinitionType::Contract(_)) {
-                    gc.implementations.get(ty)
-                } else {
-                    None
-                }
-            }),
+            DefinitionType::Variable(_) | DefinitionType::NonLocalVariable(_, _) | DefinitionType::Field(_, _) => {
+                gc.types.get(&reference).and_then(|ty| {
+                    if matches!(ty.def_type, DefinitionType::Contract(_)) {
+                        gc.implementations.get(ty)
+                    } else {
+                        None
+                    }
+                })
+            },
             DefinitionType::Contract(_) => gc.implementations.get(&reference),
             _ => None,
         };
@@ -2587,10 +2500,7 @@ impl LanguageServer for SolangServer {
     /// ### Edge cases
     /// * Returns `Err` when an invalid file path is received.
     /// * Returns `Ok(None)` when the location passed in the arguments doesn't belong to a contract method defined in user code.
-    async fn goto_declaration(
-        &self,
-        params: GotoDeclarationParams,
-    ) -> Result<Option<GotoDeclarationResponse>> {
+    async fn goto_declaration(&self, params: GotoDeclarationParams) -> Result<Option<GotoDeclarationResponse>> {
         // fetch the `DefinitionIndex` of the code object in question
         let Some(reference) = self.get_reference_from_params(params).await? else {
             return Ok(None);
@@ -2672,11 +2582,7 @@ impl LanguageServer for SolangServer {
         }
 
         // return `None` if the list of locations is empty
-        let locations = if locations.is_empty() {
-            None
-        } else {
-            Some(locations)
-        };
+        let locations = if locations.is_empty() { None } else { Some(locations) };
 
         Ok(locations)
     }
@@ -2705,8 +2611,7 @@ impl LanguageServer for SolangServer {
         };*/
 
         // instead of calling self.get_reference_from_params, we can inline the code here
-        
-        
+
         let uri = def_params.text_document_position_params.text_document.uri;
         let path = uri.to_string();
 
@@ -2724,15 +2629,13 @@ impl LanguageServer for SolangServer {
                     .find(offset, offset + 1)
                     .min_by(|a, b| (a.stop - a.start).cmp(&(b.stop - b.start)))
                 {
-                    references =  Ok(Some(reference.val.clone()));
+                    references = Ok(Some(reference.val.clone()));
                 }
             }
         }
         let Some(reference) = references? else {
             return Ok(None);
         };
-            
-        
 
         // the new name of the code object
         let new_text = params.new_name;
@@ -2747,7 +2650,7 @@ impl LanguageServer for SolangServer {
                 let text_edits: Vec<_> = cache
                     .references
                     .iter()
-                    .filter(|r| r.val == reference  )
+                    .filter(|r| r.val == reference)
                     .map(|r| TextEdit {
                         range: get_range_exclusive(r.start, r.stop, &cache.file),
                         new_text: new_text.clone(),
@@ -2760,7 +2663,6 @@ impl LanguageServer for SolangServer {
         Ok(Some(WorkspaceEdit::new(ws)))
     }
 
-     
     /*async fn formatting(&self, params: DocumentFormattingParams) -> Result<Option<Vec<TextEdit>>> {
         // get parse tree for the input file
         let uri = params.text_document.uri;
@@ -2864,21 +2766,21 @@ fn get_constants(expr: &Expression) -> Option<String> {
             ..
         } => {
             format!("hex\"{}\"", hex::encode(value))
-        }
+        },
         codegen::Expression::BytesLiteral {
             ty: ast::Type::String,
             value,
             ..
         } => {
             format!("\"{}\"", String::from_utf8_lossy(value))
-        }
+        },
         codegen::Expression::NumberLiteral {
             ty: ast::Type::Uint(_) | ast::Type::Int(_),
             value,
             ..
         } => {
             format!("{value}")
-        }
+        },
         _ => return None,
     };
     Some(val)

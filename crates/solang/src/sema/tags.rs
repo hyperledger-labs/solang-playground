@@ -27,7 +27,7 @@ pub fn resolve_tags(
         match c.tag.as_str() {
             "notice" | "author" | "title" | "dev" => {
                 add_tag(loc, &mut res, c);
-            }
+            },
             "param" if params.is_some() => {
                 let v: Vec<&str> = c.value.splitn(2, char::is_whitespace).collect();
                 if v.is_empty() || v[0].is_empty() {
@@ -57,8 +57,7 @@ pub fn resolve_tags(
                             value,
                         });
                     }
-                } else if let Some(Some(no)) =
-                    returns.map(|params| params.iter().position(|p| p.name_as_str() == name))
+                } else if let Some(Some(no)) = returns.map(|params| params.iter().position(|p| p.name_as_str() == name))
                 {
                     if let Some(other) = res.iter().find(|e| e.tag == "return" && e.no == no) {
                         // Note: solc does not detect this problem
@@ -87,7 +86,7 @@ pub fn resolve_tags(
                         format!("function parameter named '{name}' not found"),
                     ));
                 }
-            }
+            },
             "return" if returns.is_some() => {
                 let returns = returns.unwrap();
 
@@ -98,10 +97,8 @@ pub fn resolve_tags(
                     ));
                 } else if returns.len() == 1 {
                     if res.iter().any(|e| e.tag == "return") {
-                        ns.diagnostics.push(Diagnostic::error(
-                            tag_loc,
-                            "duplicate tag '@return'".to_string(),
-                        ));
+                        ns.diagnostics
+                            .push(Diagnostic::error(tag_loc, "duplicate tag '@return'".to_string()));
                     } else {
                         res.push(Tag {
                             loc,
@@ -140,9 +137,11 @@ pub fn resolve_tags(
                             });
                         }
                     // find next unnamed return parameter without documentation tag
-                    } else if let Some((no, _)) = returns.iter().enumerate().find(|(no, p)| {
-                        p.id.is_none() && !res.iter().any(|e| e.tag == "return" && e.no == *no)
-                    }) {
+                    } else if let Some((no, _)) = returns
+                        .iter()
+                        .enumerate()
+                        .find(|(no, p)| p.id.is_none() && !res.iter().any(|e| e.tag == "return" && e.no == *no))
+                    {
                         res.push(Tag {
                             loc,
                             tag: String::from("return"),
@@ -156,7 +155,7 @@ pub fn resolve_tags(
                         ));
                     }
                 }
-            }
+            },
             "inheritdoc" if bases.is_some() => {
                 if c.value.is_empty() {
                     ns.diagnostics.push(Diagnostic::error(
@@ -181,7 +180,7 @@ pub fn resolve_tags(
                         format!("base contract '{}' not found in tag '@inheritdoc'", c.value),
                     ));
                 }
-            }
+            },
             _ => {
                 if let Some(custom) = c.tag.strip_prefix("custom:") {
                     if custom.is_empty() {
@@ -198,7 +197,7 @@ pub fn resolve_tags(
                         format!("tag '@{}' is not valid for {}", c.tag, ty),
                     ));
                 }
-            }
+            },
         }
     }
 

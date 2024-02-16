@@ -3,8 +3,7 @@
 use super::{
     annotions_not_allowed,
     ast::{
-        Diagnostic, Expression, Function, Mapping, Namespace, Parameter, Statement, StructType,
-        Symbol, Type, Variable,
+        Diagnostic, Expression, Function, Mapping, Namespace, Parameter, Statement, StructType, Symbol, Type, Variable,
     },
     contracts::is_base,
     diagnostics::Diagnostics,
@@ -75,9 +74,7 @@ pub fn variable_decl<'a>(
     if let pt::Expression::Type(
         _,
         pt::Type::Function {
-            attributes,
-            returns,
-            ..
+            attributes, returns, ..
         },
     ) = &mut ty
     {
@@ -118,18 +115,12 @@ pub fn variable_decl<'a>(
 
     let mut diagnostics = Diagnostics::default();
 
-    let ty = match ns.resolve_type(
-        file_no,
-        contract_no,
-        ResolveTypeContext::None,
-        &ty,
-        &mut diagnostics,
-    ) {
+    let ty = match ns.resolve_type(file_no, contract_no, ResolveTypeContext::None, &ty, &mut diagnostics) {
         Ok(s) => s,
         Err(()) => {
             ns.diagnostics.extend(diagnostics);
             return None;
-        }
+        },
     };
 
     let mut constant = false;
@@ -141,13 +132,11 @@ pub fn variable_decl<'a>(
         match &attr {
             pt::VariableAttribute::Constant(loc) => {
                 if constant {
-                    ns.diagnostics.push(Diagnostic::error(
-                        *loc,
-                        "duplicate constant attribute".to_string(),
-                    ));
+                    ns.diagnostics
+                        .push(Diagnostic::error(*loc, "duplicate constant attribute".to_string()));
                 }
                 constant = true;
-            }
+            },
             pt::VariableAttribute::Immutable(loc) => {
                 if let Some(prev) = &has_immutable {
                     ns.diagnostics.push(Diagnostic::error_with_note(
@@ -158,7 +147,7 @@ pub fn variable_decl<'a>(
                     ));
                 }
                 has_immutable = Some(*loc);
-            }
+            },
             pt::VariableAttribute::Override(loc, bases) => {
                 if let Some((prev, _)) = &is_override {
                     ns.diagnostics.push(Diagnostic::error_with_note(
@@ -174,14 +163,9 @@ pub fn variable_decl<'a>(
 
                 if let Some(contract_no) = contract_no {
                     for name in bases {
-                        if let Ok(no) =
-                            ns.resolve_contract_with_namespace(file_no, name, &mut diagnostics)
-                        {
+                        if let Ok(no) = ns.resolve_contract_with_namespace(file_no, name, &mut diagnostics) {
                             if list.contains(&no) {
-                                diagnostics.push(Diagnostic::error(
-                                    name.loc,
-                                    format!("duplicate override '{name}'"),
-                                ));
+                                diagnostics.push(Diagnostic::error(name.loc, format!("duplicate override '{name}'")));
                             } else if !is_base(no, contract_no, ns) {
                                 diagnostics.push(Diagnostic::error(
                                     name.loc,
@@ -205,21 +189,21 @@ pub fn variable_decl<'a>(
                 }
 
                 ns.diagnostics.extend(diagnostics);
-            }
+            },
             pt::VariableAttribute::Visibility(v) if contract_no.is_none() => {
                 ns.diagnostics.push(Diagnostic::error(
                     v.loc_opt().unwrap(),
                     format!("'{v}': global variable cannot have visibility specifier"),
                 ));
                 return None;
-            }
+            },
             pt::VariableAttribute::Visibility(pt::Visibility::External(loc)) => {
                 ns.diagnostics.push(Diagnostic::error(
                     loc.unwrap(),
                     "variable cannot be declared external".to_string(),
                 ));
                 return None;
-            }
+            },
             pt::VariableAttribute::Visibility(v) => {
                 if let Some(e) = &visibility {
                     ns.diagnostics.push(Diagnostic::error_with_note(
@@ -232,7 +216,7 @@ pub fn variable_decl<'a>(
                 }
 
                 visibility = Some(v.clone());
-            }
+            },
         }
     }
 
@@ -297,10 +281,7 @@ pub fn variable_decl<'a>(
     }
 
     if ty.contains_internal_function(ns)
-        && matches!(
-            visibility,
-            pt::Visibility::Public(_) | pt::Visibility::External(_)
-        )
+        && matches!(visibility, pt::Visibility::Public(_) | pt::Visibility::External(_))
     {
         ns.diagnostics.push(Diagnostic::error(
             def.ty.loc(),
@@ -309,13 +290,11 @@ pub fn variable_decl<'a>(
         return None;
     } else if let Some(ty) = ty.contains_builtins(ns, &StructType::AccountInfo) {
         let message = format!("variable cannot be of builtin type '{}'", ty.to_string(ns));
-        ns.diagnostics
-            .push(Diagnostic::error(def.ty.loc(), message));
+        ns.diagnostics.push(Diagnostic::error(def.ty.loc(), message));
         return None;
     } else if let Some(ty) = ty.contains_builtins(ns, &StructType::AccountMeta) {
         let message = format!("variable cannot be of builtin type '{}'", ty.to_string(ns));
-        ns.diagnostics
-            .push(Diagnostic::error(def.ty.loc(), message));
+        ns.diagnostics.push(Diagnostic::error(def.ty.loc(), message));
         return None;
     }
 
@@ -345,10 +324,10 @@ pub fn variable_decl<'a>(
                         Ok(res) => {
                             res.check_constant_overflow(&mut diagnostics);
                             Some(res)
-                        }
+                        },
                         Err(_) => None,
                     }
-                }
+                },
                 Err(()) => None,
             }
         } else {
@@ -451,15 +430,7 @@ pub fn variable_decl<'a>(
             let mut context = ExprContext::default();
             context.enter_scope();
             let mut params = Vec::new();
-            let param = collect_parameters(
-                &ty,
-                &def.name,
-                &mut symtable,
-                &mut context,
-                &mut params,
-                &mut expr,
-                ns,
-            )?;
+            let param = collect_parameters(&ty, &def.name, &mut symtable, &mut context, &mut params, &mut expr, ns)?;
 
             if param.ty.contains_mapping(ns) {
                 // we can't return a mapping
@@ -469,8 +440,7 @@ pub fn variable_decl<'a>(
                 ));
             }
 
-            let (body, returns) =
-                accessor_body(expr, param, constant, &mut symtable, &mut context, ns);
+            let (body, returns) = accessor_body(expr, param, constant, &mut symtable, &mut context, ns);
 
             let mut func = Function::new(
                 def.name.as_ref().unwrap().loc,
@@ -583,7 +553,7 @@ fn collect_parameters(
             });
 
             collect_parameters(value, value_name, symtable, context, params, expr, ns)
-        }
+        },
         Type::Array(elem_ty, dims) => {
             let mut ty = Type::StorageRef(false, Box::new(ty.clone()));
             for _ in 0..dims.len() {
@@ -637,7 +607,7 @@ fn collect_parameters(
             }
 
             collect_parameters(elem_ty, &None, symtable, context, params, expr, ns)
-        }
+        },
         _ => Some(Parameter {
             id: name.clone(),
             loc: if let Some(name) = name {
@@ -779,11 +749,7 @@ fn accessor_body(
     }
 }
 
-pub fn resolve_initializers(
-    initializers: &[DelayedResolveInitializer],
-    file_no: usize,
-    ns: &mut Namespace,
-) {
+pub fn resolve_initializers(initializers: &[DelayedResolveInitializer], file_no: usize, ns: &mut Namespace) {
     let mut symtable = Symtable::default();
     let mut diagnostics = Diagnostics::default();
 

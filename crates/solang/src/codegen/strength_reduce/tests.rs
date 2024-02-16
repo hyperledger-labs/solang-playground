@@ -18,10 +18,7 @@ fn test_highest_bit() {
     assert_eq!(highest_set_bit(&[0, 0, 0, 1, 0]), 24);
     assert_eq!(highest_set_bit(&[0x80, 0xff, 0xff]), 23);
     assert_eq!(
-        highest_set_bit(
-            &hex::decode("fcff030000000000000000000000000000000000000000000000000000000000")
-                .unwrap()
-        ),
+        highest_set_bit(&hex::decode("fcff030000000000000000000000000000000000000000000000000000000000").unwrap()),
         17
     );
 }

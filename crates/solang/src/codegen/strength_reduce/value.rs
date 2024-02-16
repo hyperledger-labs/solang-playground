@@ -22,11 +22,7 @@ pub(super) struct Value {
 impl fmt::Display for Value {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if self.all_known() {
-            write!(
-                f,
-                "{}",
-                BigInt::from_signed_bytes_le(&self.value.into_inner())
-            )
+            write!(f, "{}", BigInt::from_signed_bytes_le(&self.value.into_inner()))
         } else if self.all_unknown() {
             write!(f, "unknown")
         } else {
@@ -45,10 +41,7 @@ fn dump_set(name: &str, set: &HashSet<Value>) {
     println!(
         "{}:{}",
         name,
-        set.iter()
-            .map(|v| format!("{v}"))
-            .collect::<Vec<String>>()
-            .join(",")
+        set.iter().map(|v| format!("{v}")).collect::<Vec<String>>().join(",")
     );
 }
 

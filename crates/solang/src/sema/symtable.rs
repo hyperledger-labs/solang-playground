@@ -168,15 +168,7 @@ impl Symtable {
             return None;
         }
 
-        self.add(
-            id,
-            ty,
-            ns,
-            initializer,
-            usage_type,
-            storage_location,
-            context,
-        )
+        self.add(id, ty, ns, initializer, usage_type, storage_location, context)
     }
 
     pub fn find(&self, context: &mut ExprContext, name: &str) -> Option<&Variable> {
@@ -228,7 +220,7 @@ impl LoopScopes {
             Some(scope) => {
                 scope.no_breaks += 1;
                 true
-            }
+            },
             None => false,
         }
     }
@@ -242,7 +234,7 @@ impl LoopScopes {
             Some(scope) => {
                 scope.no_continues += 1;
                 true
-            }
+            },
             None => false,
         }
     }

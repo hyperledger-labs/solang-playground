@@ -184,9 +184,7 @@ impl Expression {
 
         // Special case: when converting literal sign can change if it fits
         match (self, &from, to) {
-            (Expression::NumberLiteral { value, .. }, p, &Type::Uint(to_len))
-                if p.is_primitive() =>
-            {
+            (Expression::NumberLiteral { value, .. }, p, &Type::Uint(to_len)) if p.is_primitive() => {
                 return if value.sign() == Sign::Minus {
                     if implicit {
                         diagnostics.push(Diagnostic::cast_error(
@@ -226,10 +224,8 @@ impl Expression {
                         value: value.clone(),
                     })
                 };
-            }
-            (Expression::NumberLiteral { value, .. }, p, &Type::Int(to_len))
-                if p.is_primitive() =>
-            {
+            },
+            (Expression::NumberLiteral { value, .. }, p, &Type::Int(to_len)) if p.is_primitive() => {
                 return if value.bits() >= to_len as u64 {
                     diagnostics.push(Diagnostic::cast_error(
                         *loc,
@@ -247,17 +243,12 @@ impl Expression {
                         value: value.clone(),
                     })
                 };
-            }
-            (Expression::NumberLiteral { value, .. }, p, &Type::Bytes(to_len))
-                if p.is_primitive() =>
-            {
+            },
+            (Expression::NumberLiteral { value, .. }, p, &Type::Bytes(to_len)) if p.is_primitive() => {
                 return if value.sign() == Sign::Minus {
                     diagnostics.push(Diagnostic::cast_error(
                         *loc,
-                        format!(
-                            "negative number cannot be converted to type '{}'",
-                            to.to_string(ns)
-                        ),
+                        format!("negative number cannot be converted to type '{}'", to.to_string(ns)),
                     ));
                     Err(())
                 } else if value.sign() == Sign::Plus && from.bytes(ns) != to_len {
@@ -277,10 +268,8 @@ impl Expression {
                         value: value.clone(),
                     })
                 };
-            }
-            (Expression::NumberLiteral { value, .. }, p, &Type::Address(payable))
-                if p.is_primitive() =>
-            {
+            },
+            (Expression::NumberLiteral { value, .. }, p, &Type::Address(payable)) if p.is_primitive() => {
                 // note: negative values are allowed
                 return if implicit {
                     diagnostics.push(Diagnostic::cast_error(
@@ -291,10 +280,7 @@ impl Expression {
                 } else if value.bits() > ns.address_length as u64 * 8 {
                     diagnostics.push(Diagnostic::cast_error(
                         *loc,
-                        format!(
-                            "number larger than possible in {} byte address",
-                            ns.address_length,
-                        ),
+                        format!("number larger than possible in {} byte address", ns.address_length,),
                     ));
                     Err(())
                 } else {
@@ -304,11 +290,9 @@ impl Expression {
                         value: value.clone(),
                     })
                 };
-            }
+            },
             // Literal strings can be implicitly lengthened
-            (Expression::BytesLiteral { value, .. }, p, &Type::Bytes(to_len))
-                if p.is_primitive() =>
-            {
+            (Expression::BytesLiteral { value, .. }, p, &Type::Bytes(to_len)) if p.is_primitive() => {
                 return if value.len() > to_len as usize && implicit {
                     diagnostics.push(Diagnostic::cast_error(
                         *loc,
@@ -331,7 +315,7 @@ impl Expression {
                         value: bs,
                     })
                 };
-            }
+            },
             (Expression::BytesLiteral { loc, value, .. }, _, &Type::DynamicBytes)
             | (Expression::BytesLiteral { loc, value, .. }, _, &Type::String) => {
                 return Ok(Expression::AllocDynamicBytes {
@@ -344,20 +328,16 @@ impl Expression {
                     }),
                     init: Some(value.clone()),
                 });
-            }
+            },
             (Expression::NumberLiteral { value, .. }, _, &Type::Rational) => {
                 return Ok(Expression::RationalNumberLiteral {
                     loc: *loc,
                     ty: Type::Rational,
                     value: BigRational::from(value.clone()),
                 });
-            }
+            },
 
-            (
-                Expression::ArrayLiteral { .. },
-                Type::Array(from_ty, from_dims),
-                Type::Array(to_ty, to_dims),
-            ) => {
+            (Expression::ArrayLiteral { .. }, Type::Array(from_ty, from_dims), Type::Array(to_ty, to_dims)) => {
                 if from_ty == to_ty
                     && from_dims.len() == to_dims.len()
                     && from_dims.len() == 1
@@ -369,7 +349,7 @@ impl Expression {
                         expr: Box::new(self.clone()),
                     });
                 }
-            }
+            },
 
             _ => (),
         };
@@ -392,18 +372,15 @@ impl Expression {
             // Solana builtin AccountMeta struct wants a pointer to an address for the pubkey field,
             // not an address. For this specific field we have a special Expression::GetRef() which
             // gets the pointer to an address
-            (Type::Address(_), Type::Ref(to)) if matches!(to.as_ref(), Type::Address(..)) => {
-                Ok(Expression::GetRef {
-                    loc: *loc,
-                    ty: Type::Ref(Box::new(from.clone())),
-                    expr: Box::new(self.clone()),
-                })
-            }
+            (Type::Address(_), Type::Ref(to)) if matches!(to.as_ref(), Type::Address(..)) => Ok(Expression::GetRef {
+                loc: *loc,
+                ty: Type::Ref(Box::new(from.clone())),
+                expr: Box::new(self.clone()),
+            }),
             (Type::Bytes(1), Type::Enum(_)) if !implicit => {
                 self.cast_types(loc, &Type::Uint(8), to, implicit, ns, diagnostics)
-            }
-            (Type::Uint(from_width), Type::Enum(enum_no))
-            | (Type::Int(from_width), Type::Enum(enum_no)) => {
+            },
+            (Type::Uint(from_width), Type::Enum(enum_no)) | (Type::Int(from_width), Type::Enum(enum_no)) => {
                 if implicit {
                     diagnostics.push(Diagnostic::cast_error(
                         *loc,
@@ -434,11 +411,7 @@ impl Expression {
 
                     diagnostics.push(Diagnostic::cast_error(
                         *loc,
-                        format!(
-                            "enum {} has no value with ordinal {}",
-                            to.to_string(ns),
-                            big_number
-                        ),
+                        format!("enum {} has no value with ordinal {}", to.to_string(ns), big_number),
                     ));
                     return Err(());
                 }
@@ -463,9 +436,8 @@ impl Expression {
                         expr: Box::new(self.clone()),
                     }),
                 }
-            }
-            (Type::Enum(enum_no), Type::Uint(to_width))
-            | (Type::Enum(enum_no), Type::Int(to_width)) => {
+            },
+            (Type::Enum(enum_no), Type::Uint(to_width)) | (Type::Enum(enum_no), Type::Int(to_width)) => {
                 if implicit {
                     diagnostics.push(Diagnostic::cast_error(
                         *loc,
@@ -497,14 +469,12 @@ impl Expression {
                         expr: Box::new(self.clone()),
                     }),
                 }
-            }
-            (Type::Bytes(n), Type::FunctionSelector) if *n == ns.target.selector_length() => {
-                Ok(Expression::Cast {
-                    loc: *loc,
-                    to: to.clone(),
-                    expr: Box::new(self.clone()),
-                })
-            }
+            },
+            (Type::Bytes(n), Type::FunctionSelector) if *n == ns.target.selector_length() => Ok(Expression::Cast {
+                loc: *loc,
+                to: to.clone(),
+                expr: Box::new(self.clone()),
+            }),
 
             (Type::Bytes(1), Type::Uint(8)) | (Type::Uint(8), Type::Bytes(1)) => Ok(self.clone()),
             (Type::Uint(from_len), Type::Uint(to_len)) => match from_len.cmp(to_len) {
@@ -526,7 +496,7 @@ impl Expression {
                             expr: Box::new(self.clone()),
                         })
                     }
-                }
+                },
                 Ordering::Less => Ok(Expression::ZeroExt {
                     loc: *loc,
                     to: to.clone(),
@@ -557,7 +527,7 @@ impl Expression {
                             expr: Box::new(self.clone()),
                         })
                     }
-                }
+                },
                 Ordering::Less => Ok(Expression::SignExt {
                     loc: *loc,
                     to: to.clone(),
@@ -569,13 +539,11 @@ impl Expression {
                     expr: Box::new(self.clone()),
                 }),
             },
-            (Type::Uint(from_len), Type::Int(to_len)) if to_len > from_len => {
-                Ok(Expression::ZeroExt {
-                    loc: *loc,
-                    to: to.clone(),
-                    expr: Box::new(self.clone()),
-                })
-            }
+            (Type::Uint(from_len), Type::Int(to_len)) if to_len > from_len => Ok(Expression::ZeroExt {
+                loc: *loc,
+                to: to.clone(),
+                expr: Box::new(self.clone()),
+            }),
             (Type::Int(from_len), Type::Uint(to_len)) => {
                 if implicit {
                     diagnostics.push(Diagnostic::cast_error(
@@ -606,7 +574,7 @@ impl Expression {
                         expr: Box::new(self.clone()),
                     })
                 }
-            }
+            },
             (Type::Uint(from_len), Type::Int(to_len)) => {
                 if implicit {
                     diagnostics.push(Diagnostic::cast_error(
@@ -637,7 +605,7 @@ impl Expression {
                         expr: Box::new(self.clone()),
                     })
                 }
-            }
+            },
             // Casting value to uint
             (Type::Value, Type::Uint(to_len)) => {
                 let from_len = ns.value_length * 8;
@@ -662,7 +630,7 @@ impl Expression {
                                 expr: Box::new(self.clone()),
                             })
                         }
-                    }
+                    },
                     Ordering::Less => Ok(Expression::SignExt {
                         loc: *loc,
                         to: to.clone(),
@@ -674,7 +642,7 @@ impl Expression {
                         expr: Box::new(self.clone()),
                     }),
                 }
-            }
+            },
             (Type::Value, Type::Int(to_len)) => {
                 let from_len = ns.value_length * 8;
                 let to_len = *to_len as usize;
@@ -708,7 +676,7 @@ impl Expression {
                         expr: Box::new(self.clone()),
                     })
                 }
-            }
+            },
             // Casting value to uint
             (Type::Uint(from_len), Type::Value) => {
                 let from_len = *from_len as usize;
@@ -732,7 +700,7 @@ impl Expression {
                             to: to.clone(),
                             expr: Box::new(self.clone()),
                         })
-                    }
+                    },
                     Ordering::Less => Ok(Expression::SignExt {
                         loc: *loc,
                         to: to.clone(),
@@ -744,16 +712,13 @@ impl Expression {
                         expr: Box::new(self.clone()),
                     }),
                 }
-            }
+            },
             // Casting int to address
             (Type::Uint(from_len), Type::Address(_)) | (Type::Int(from_len), Type::Address(_)) => {
                 if implicit {
                     diagnostics.push(Diagnostic::cast_error(
                         *loc,
-                        format!(
-                            "implicit conversion from {} to address not allowed",
-                            from.to_string(ns)
-                        ),
+                        format!("implicit conversion from {} to address not allowed", from.to_string(ns)),
                     ));
 
                     Err(())
@@ -791,7 +756,7 @@ impl Expression {
                         expr: Box::new(expr),
                     })
                 }
-            }
+            },
             // Casting address to int
             (Type::Address(_), Type::Uint(to_len)) | (Type::Address(_), Type::Int(to_len)) => {
                 if implicit {
@@ -838,7 +803,7 @@ impl Expression {
                         Ordering::Equal => Ok(expr),
                     }
                 }
-            }
+            },
             // Lengthing or shorting a fixed bytes array
             (Type::Bytes(from_len), Type::Bytes(to_len)) => {
                 if implicit {
@@ -887,52 +852,47 @@ impl Expression {
                         }),
                     })
                 }
-            }
-            (Type::Rational, Type::Uint(_) | Type::Int(_) | Type::Value) => {
-                match eval_const_rational(self, ns) {
-                    Ok((_, big_number)) => {
-                        if big_number.is_integer() {
-                            return Ok(Expression::Cast {
-                                loc: *loc,
-                                to: to.clone(),
-                                expr: Box::new(self.clone()),
-                            });
-                        }
-
-                        diagnostics.push(Diagnostic::cast_error(
-                            *loc,
-                            format!(
-                                "conversion to {} from {} not allowed",
-                                to.to_string(ns),
-                                from.to_string(ns)
-                            ),
-                        ));
-
-                        Err(())
+            },
+            (Type::Rational, Type::Uint(_) | Type::Int(_) | Type::Value) => match eval_const_rational(self, ns) {
+                Ok((_, big_number)) => {
+                    if big_number.is_integer() {
+                        return Ok(Expression::Cast {
+                            loc: *loc,
+                            to: to.clone(),
+                            expr: Box::new(self.clone()),
+                        });
                     }
-                    Err(diag) => {
-                        diagnostics.push(diag);
-                        Err(())
-                    }
-                }
-            }
+
+                    diagnostics.push(Diagnostic::cast_error(
+                        *loc,
+                        format!(
+                            "conversion to {} from {} not allowed",
+                            to.to_string(ns),
+                            from.to_string(ns)
+                        ),
+                    ));
+
+                    Err(())
+                },
+                Err(diag) => {
+                    diagnostics.push(diag);
+                    Err(())
+                },
+            },
             (Type::Uint(_) | Type::Int(_) | Type::Value, Type::Rational) => Ok(Expression::Cast {
                 loc: *loc,
                 to: to.clone(),
                 expr: Box::new(self.clone()),
             }),
-            (Type::Bytes(_), Type::DynamicBytes) | (Type::DynamicBytes, Type::Bytes(_)) => {
-                Ok(Expression::BytesCast {
-                    loc: *loc,
-                    to: to.clone(),
-                    from: from.clone(),
-                    expr: Box::new(self.clone()),
-                })
-            }
+            (Type::Bytes(_), Type::DynamicBytes) | (Type::DynamicBytes, Type::Bytes(_)) => Ok(Expression::BytesCast {
+                loc: *loc,
+                to: to.clone(),
+                from: from.clone(),
+                expr: Box::new(self.clone()),
+            }),
             // Explicit conversion from bytesN to int/uint only allowed with expliciy
             // cast and if it is the same size (i.e. no conversion required)
-            (Type::Bytes(from_len), Type::Uint(to_len))
-            | (Type::Bytes(from_len), Type::Int(to_len)) => {
+            (Type::Bytes(from_len), Type::Uint(to_len)) | (Type::Bytes(from_len), Type::Int(to_len)) => {
                 if implicit {
                     diagnostics.push(Diagnostic::cast_error(
                         *loc,
@@ -960,11 +920,10 @@ impl Expression {
                         expr: Box::new(self.clone()),
                     })
                 }
-            }
+            },
             // Explicit conversion to bytesN from int/uint only allowed with expliciy
             // cast and if it is the same size (i.e. no conversion required)
-            (Type::Uint(from_len), Type::Bytes(to_len))
-            | (Type::Int(from_len), Type::Bytes(to_len)) => {
+            (Type::Uint(from_len), Type::Bytes(to_len)) | (Type::Int(from_len), Type::Bytes(to_len)) => {
                 if implicit {
                     diagnostics.push(Diagnostic::cast_error(
                         *loc,
@@ -992,7 +951,7 @@ impl Expression {
                         expr: Box::new(self.clone()),
                     })
                 }
-            }
+            },
             // Explicit conversion from bytesN to address only allowed with expliciy
             // cast and if it is the same size (i.e. no conversion required)
             (Type::Bytes(from_len), Type::Address(_)) => {
@@ -1023,7 +982,7 @@ impl Expression {
                         expr: Box::new(self.clone()),
                     })
                 }
-            }
+            },
             // Explicit conversion between contract and address is allowed
             (Type::Address(false), Type::Address(true))
             | (Type::Address(_), Type::Contract(_))
@@ -1045,7 +1004,7 @@ impl Expression {
                         expr: Box::new(self.clone()),
                     })
                 }
-            }
+            },
             // Conversion between contracts is allowed if it is a base
             (Type::Contract(contract_no_from), Type::Contract(contract_no_to)) => {
                 if implicit && !is_base(*contract_no_to, *contract_no_from, ns) {
@@ -1065,7 +1024,7 @@ impl Expression {
                         expr: Box::new(self.clone()),
                     })
                 }
-            }
+            },
             // conversion from address payable to address is implicitly allowed (not vice versa)
             (Type::Address(true), Type::Address(false)) => Ok(Expression::Cast {
                 loc: *loc,
@@ -1102,16 +1061,14 @@ impl Expression {
                         expr: Box::new(self.clone()),
                     })
                 }
-            }
-            (Type::String, Type::DynamicBytes) | (Type::DynamicBytes, Type::String)
-                if !implicit =>
-            {
+            },
+            (Type::String, Type::DynamicBytes) | (Type::DynamicBytes, Type::String) if !implicit => {
                 Ok(Expression::Cast {
                     loc: *loc,
                     to: to.clone(),
                     expr: Box::new(self.clone()),
                 })
-            }
+            },
             // string conversions
             // (Type::Bytes(_), Type::String) => Ok(Expression::Cast(self.loc(), to.clone(), Box::new(self.clone()))),
             /*
@@ -1138,7 +1095,7 @@ impl Expression {
                     "function or method does not return a value".to_string(),
                 ));
                 Err(())
-            }
+            },
             (
                 Type::ExternalFunction {
                     params: from_params,
@@ -1200,42 +1157,38 @@ impl Expression {
                         expr: Box::new(self.clone()),
                     })
                 }
-            }
+            },
             // Match any array with ArrayLength::AnyFixed if is it fixed for that dimension, and the
             // element type and other dimensions also match
             (Type::Array(from_elem, from_dim), Type::Array(to_elem, to_dim))
                 if from_elem == to_elem
                     && from_dim.len() == to_dim.len()
-                    && from_dim.iter().zip(to_dim.iter()).all(|(f, t)| {
-                        f == t || matches!((f, t), (ArrayLength::Fixed(_), ArrayLength::AnyFixed))
-                    }) =>
+                    && from_dim
+                        .iter()
+                        .zip(to_dim.iter())
+                        .all(|(f, t)| f == t || matches!((f, t), (ArrayLength::Fixed(_), ArrayLength::AnyFixed))) =>
             {
                 Ok(self.clone())
-            }
+            },
             // bytes/address/bytesN -> slice bytes1
-            (_, Type::Slice(ty)) if can_cast_to_slice(from) && ty.as_ref() == &Type::Bytes(1) => {
-                Ok(Expression::Cast {
-                    loc: *loc,
-                    to: to.clone(),
-                    expr: Box::new(self.clone()),
-                })
-            }
+            (_, Type::Slice(ty)) if can_cast_to_slice(from) && ty.as_ref() == &Type::Bytes(1) => Ok(Expression::Cast {
+                loc: *loc,
+                to: to.clone(),
+                expr: Box::new(self.clone()),
+            }),
             // bytes[] -> slice slice bytes1
             (Type::Array(from, dims), Type::Slice(to))
                 if dims.len() == 1
-                    && (from == to
-                        || (can_cast_to_slice(from)
-                            && to.slice_depth() == (1, &Type::Bytes(1)))) =>
+                    && (from == to || (can_cast_to_slice(from) && to.slice_depth() == (1, &Type::Bytes(1)))) =>
             {
                 Ok(self.clone())
-            }
+            },
             // bytes[][] -> slice slice slice bytes1
             (Type::Array(from, dims), Type::Slice(to))
-                if dims.len() == 2
-                    && (can_cast_to_slice(from) && to.slice_depth() == (2, &Type::Bytes(1))) =>
+                if dims.len() == 2 && (can_cast_to_slice(from) && to.slice_depth() == (2, &Type::Bytes(1))) =>
             {
                 Ok(self.clone())
-            }
+            },
             (Type::FunctionSelector, Type::Bytes(n)) => {
                 let selector_length = ns.target.selector_length();
                 if *n == selector_length {
@@ -1248,21 +1201,12 @@ impl Expression {
                     if *n < selector_length {
                         diagnostics.push(Diagnostic::warning(
                             *loc,
-                            format!(
-                                "function selector should only be casted to bytes{selector_length} or larger"
-                            ),
+                            format!("function selector should only be casted to bytes{selector_length} or larger"),
                         ));
                     }
-                    self.cast_types(
-                        loc,
-                        &Type::Bytes(selector_length),
-                        to,
-                        implicit,
-                        ns,
-                        diagnostics,
-                    )
+                    self.cast_types(loc, &Type::Bytes(selector_length), to, implicit, ns, diagnostics)
                 }
-            }
+            },
             (Type::FunctionSelector, Type::Uint(n) | Type::Int(n)) => {
                 let selector_width = ns.target.selector_length() * 8;
                 if *n < selector_width as u16 {
@@ -1281,7 +1225,7 @@ impl Expression {
                     ns,
                     diagnostics,
                 )
-            }
+            },
             _ => {
                 diagnostics.push(Diagnostic::cast_error(
                     *loc,
@@ -1292,7 +1236,7 @@ impl Expression {
                     ),
                 ));
                 Err(())
-            }
+            },
         }
     }
 }

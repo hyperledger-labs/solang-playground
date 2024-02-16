@@ -3,9 +3,7 @@
 use crate::codegen::cfg::Instr;
 use crate::codegen::dispatch::solana::SOLANA_DISPATCH_CFG_NAME;
 use crate::codegen::{Builtin, Expression};
-use crate::sema::ast::{
-    ArrayLength, Contract, ExternalCallAccounts, Function, Namespace, StructType, Type,
-};
+use crate::sema::ast::{ArrayLength, Contract, ExternalCallAccounts, Function, Namespace, StructType, Type};
 use crate::sema::solana_accounts::BuiltinAccounts;
 use num_bigint::BigInt;
 use solang_parser::pt::Loc;
@@ -26,13 +24,7 @@ pub(crate) fn manage_contract_accounts(contract_no: usize, ns: &mut Namespace) {
             .get(function_no)
             .copied()
             .unwrap();
-        traverse_cfg(
-            &mut ns.contracts,
-            contract_no,
-            &ns.functions,
-            cfg_no,
-            *function_no,
-        );
+        traverse_cfg(&mut ns.contracts, contract_no, &ns.functions, cfg_no, *function_no);
     }
 
     if let Some(constructor) = constructor_no {
@@ -41,24 +33,12 @@ pub(crate) fn manage_contract_accounts(contract_no: usize, ns: &mut Namespace) {
             .iter()
             .position(|cfg| cfg.name == SOLANA_DISPATCH_CFG_NAME)
             .expect("dispatch CFG is always generated");
-        traverse_cfg(
-            &mut ns.contracts,
-            contract_no,
-            &ns.functions,
-            dispatch,
-            constructor,
-        );
+        traverse_cfg(&mut ns.contracts, contract_no, &ns.functions, dispatch, constructor);
     }
 }
 
 /// This function walks over the CFG to process its instructions for the account management.
-fn traverse_cfg(
-    contracts: &mut [Contract],
-    contract_no: usize,
-    functions: &[Function],
-    cfg_no: usize,
-    ast_no: usize,
-) {
+fn traverse_cfg(contracts: &mut [Contract], contract_no: usize, functions: &[Function], cfg_no: usize, ast_no: usize) {
     if contracts[contract_no].cfg[cfg_no].blocks.is_empty() {
         return;
     }
@@ -69,19 +49,8 @@ fn traverse_cfg(
     visited.insert(0);
 
     while let Some(cur_block) = queue.pop_front() {
-        for instr_no in 0..contracts[contract_no].cfg[cfg_no].blocks[cur_block]
-            .instr
-            .len()
-        {
-            process_instruction(
-                cfg_no,
-                instr_no,
-                cur_block,
-                functions,
-                contracts,
-                ast_no,
-                contract_no,
-            );
+        for instr_no in 0..contracts[contract_no].cfg[cfg_no].blocks[cur_block].instr.len() {
+            process_instruction(cfg_no, instr_no, cur_block, functions, contracts, ast_no, contract_no);
         }
 
         for edge in contracts[contract_no].cfg[cfg_no].blocks[cur_block].successors() {
@@ -153,7 +122,7 @@ fn process_instruction(
                 values: account_metas,
             };
             *accounts = ExternalCallAccounts::Present(metas_vector);
-        }
+        },
         Instr::Constructor {
             contract_no,
             constructor_no: None,
@@ -178,7 +147,7 @@ fn process_instruction(
                 values: account_metas,
             };
             *accounts = ExternalCallAccounts::Present(metas_vector);
-        }
+        },
         Instr::AccountAccess { loc, name, var_no } => {
             // This could have been an Expression::AccountAccess if we had a three-address form.
             // The amount of code necessary to traverse all Instructions and all expressions recursively
@@ -186,11 +155,7 @@ fn process_instruction(
 
             // Alternatively, we can create a codegen::Expression::AccountAccess when we have the
             // new SSA IR complete.
-            let account_index = functions[ast_no]
-                .solana_accounts
-                .borrow()
-                .get_index_of(name)
-                .unwrap();
+            let account_index = functions[ast_no].solana_accounts.borrow().get_index_of(name).unwrap();
             let expr = index_accounts_vector(account_index);
 
             *instr = Instr::Set {
@@ -198,7 +163,7 @@ fn process_instruction(
                 res: *var_no,
                 expr,
             };
-        }
+        },
         _ => (),
     }
 }
@@ -256,11 +221,7 @@ fn index_accounts_vector(index: usize) -> Expression {
 }
 
 /// This function creates an AccountMeta struct literal.
-pub(crate) fn account_meta_literal(
-    address: Expression,
-    is_signer: bool,
-    is_writer: bool,
-) -> Expression {
+pub(crate) fn account_meta_literal(address: Expression, is_signer: bool, is_writer: bool) -> Expression {
     Expression::StructLiteral {
         loc: Loc::Codegen,
         ty: Type::Struct(StructType::AccountMeta),

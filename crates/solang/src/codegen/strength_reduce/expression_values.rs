@@ -10,11 +10,7 @@ use itertools::Itertools;
 use num_bigint::{BigInt, Sign};
 use std::collections::HashSet;
 
-pub(super) fn expression_values(
-    expr: &Expression,
-    vars: &Variables,
-    ns: &Namespace,
-) -> HashSet<Value> {
+pub(super) fn expression_values(expr: &Expression, vars: &Variables, ns: &Namespace) -> HashSet<Value> {
     match expr {
         Expression::NumberLiteral { ty, value, .. } => number_literal_values(ty, value, ns),
         Expression::BoolLiteral { value, .. } => bool_literal_values(*value),
@@ -24,38 +20,20 @@ pub(super) fn expression_values(
         Expression::BitwiseOr { left, right, .. } => bitwise_or_values(left, right, vars, ns),
         Expression::BitwiseAnd { left, right, .. } => bitwise_and_values(left, right, vars, ns),
         Expression::BitwiseXor { left, right, .. } => bitwise_xor_values(left, right, vars, ns),
-        Expression::Add {
-            ty, left, right, ..
-        } => add_values(ty, left, right, vars, ns),
-        Expression::Subtract {
-            ty, left, right, ..
-        } => subtract_values(ty, left, right, vars, ns),
-        Expression::Multiply {
-            ty, left, right, ..
-        } => multiply_values(ty, left, right, vars, ns),
+        Expression::Add { ty, left, right, .. } => add_values(ty, left, right, vars, ns),
+        Expression::Subtract { ty, left, right, .. } => subtract_values(ty, left, right, vars, ns),
+        Expression::Multiply { ty, left, right, .. } => multiply_values(ty, left, right, vars, ns),
         Expression::More {
-            left,
-            right,
-            signed,
-            ..
+            left, right, signed, ..
         } => more_values(left, right, *signed, vars, ns),
         Expression::MoreEqual {
-            left,
-            right,
-            signed,
-            ..
+            left, right, signed, ..
         } => more_equal_values(left, right, *signed, vars, ns),
         Expression::Less {
-            left,
-            right,
-            signed,
-            ..
+            left, right, signed, ..
         } => less_values(left, right, *signed, vars, ns),
         Expression::LessEqual {
-            left,
-            right,
-            signed,
-            ..
+            left, right, signed, ..
         } => less_equal_values(left, right, *signed, vars, ns),
         Expression::Equal {
             left: left_expr,
@@ -73,7 +51,7 @@ pub(super) fn expression_values(
         Expression::InternalFunctionCfg { .. } => {
             // reference to a function; ignore
             HashSet::new()
-        }
+        },
         Expression::Undefined { ty } => {
             // If the variable is undefined, we can return the default value to optimize operations
             if let Some(default_expr) = ty.default(ns) {
@@ -81,7 +59,7 @@ pub(super) fn expression_values(
             }
 
             HashSet::new()
-        }
+        },
         e => {
             let ty = e.ty();
             let mut set = HashSet::new();
@@ -103,7 +81,7 @@ pub(super) fn expression_values(
             }
 
             set
-        }
+        },
     }
 }
 
@@ -137,12 +115,7 @@ fn bool_literal_values(v: bool) -> HashSet<Value> {
     set
 }
 
-fn zero_ext_values(
-    ty: &Type,
-    expr: &Expression,
-    vars: &Variables,
-    ns: &Namespace,
-) -> HashSet<Value> {
+fn zero_ext_values(ty: &Type, expr: &Expression, vars: &Variables, ns: &Namespace) -> HashSet<Value> {
     let vals = expression_values(expr, vars, ns);
     let bits_after = ty.bits(ns) as usize;
 
@@ -156,12 +129,7 @@ fn zero_ext_values(
         .collect()
 }
 
-fn sign_ext_values(
-    ty: &Type,
-    expr: &Expression,
-    vars: &Variables,
-    ns: &Namespace,
-) -> HashSet<Value> {
+fn sign_ext_values(ty: &Type, expr: &Expression, vars: &Variables, ns: &Namespace) -> HashSet<Value> {
     let vals = expression_values(expr, vars, ns);
     let bits_after = ty.bits(ns) as usize;
 
@@ -197,12 +165,7 @@ fn trunc_values(ty: &Type, expr: &Expression, vars: &Variables, ns: &Namespace) 
         .collect()
 }
 
-fn bitwise_or_values(
-    left: &Expression,
-    right: &Expression,
-    vars: &Variables,
-    ns: &Namespace,
-) -> HashSet<Value> {
+fn bitwise_or_values(left: &Expression, right: &Expression, vars: &Variables, ns: &Namespace) -> HashSet<Value> {
     let left = expression_values(left, vars, ns);
     let right = expression_values(right, vars, ns);
 
@@ -216,12 +179,7 @@ fn bitwise_or_values(
         .collect()
 }
 
-fn bitwise_and_values(
-    left: &Expression,
-    right: &Expression,
-    vars: &Variables,
-    ns: &Namespace,
-) -> HashSet<Value> {
+fn bitwise_and_values(left: &Expression, right: &Expression, vars: &Variables, ns: &Namespace) -> HashSet<Value> {
     let left = expression_values(left, vars, ns);
     let right = expression_values(right, vars, ns);
 
@@ -238,12 +196,7 @@ fn bitwise_and_values(
         .collect()
 }
 
-fn bitwise_xor_values(
-    left: &Expression,
-    right: &Expression,
-    vars: &Variables,
-    ns: &Namespace,
-) -> HashSet<Value> {
+fn bitwise_xor_values(left: &Expression, right: &Expression, vars: &Variables, ns: &Namespace) -> HashSet<Value> {
     let left = expression_values(left, vars, ns);
     let right = expression_values(right, vars, ns);
 
@@ -264,23 +217,16 @@ fn bitwise_xor_values(
         .collect()
 }
 
-fn add_values(
-    ty: &Type,
-    left: &Expression,
-    right: &Expression,
-    vars: &Variables,
-    ns: &Namespace,
-) -> HashSet<Value> {
+fn add_values(ty: &Type, left: &Expression, right: &Expression, vars: &Variables, ns: &Namespace) -> HashSet<Value> {
     let left = expression_values(left, vars, ns);
     let right = expression_values(right, vars, ns);
 
     left.iter()
         .cartesian_product(right.iter())
         .map(|(l, r)| {
-            let mut min_possible =
-                (BigInt::from_signed_bytes_le(&l.get_unsigned_min_value().into_inner())
-                    + BigInt::from_signed_bytes_le(&r.get_unsigned_min_value().into_inner()))
-                .to_signed_bytes_le();
+            let mut min_possible = (BigInt::from_signed_bytes_le(&l.get_unsigned_min_value().into_inner())
+                + BigInt::from_signed_bytes_le(&r.get_unsigned_min_value().into_inner()))
+            .to_signed_bytes_le();
             let sign = if (min_possible.last().unwrap() & 0x80) != 0 {
                 u8::MAX
             } else {
@@ -291,10 +237,9 @@ fn add_values(
             let mut min_possible: Bits = BitArray::new(min_possible.try_into().unwrap());
             min_possible[ty.bits(ns) as usize..].fill(false);
 
-            let mut max_possible =
-                (BigInt::from_signed_bytes_le(&l.get_unsigned_max_value().into_inner())
-                    + BigInt::from_signed_bytes_le(&r.get_unsigned_max_value().into_inner()))
-                .to_signed_bytes_le();
+            let mut max_possible = (BigInt::from_signed_bytes_le(&l.get_unsigned_max_value().into_inner())
+                + BigInt::from_signed_bytes_le(&r.get_unsigned_max_value().into_inner()))
+            .to_signed_bytes_le();
             let sign = if (max_possible.last().unwrap() & 0x80) != 0 {
                 u8::MAX
             } else {
@@ -333,10 +278,9 @@ fn subtract_values(
     left.iter()
         .cartesian_product(right.iter())
         .map(|(l, r)| {
-            let mut min_possible =
-                (BigInt::from_signed_bytes_le(&l.get_unsigned_min_value().into_inner())
-                    - BigInt::from_signed_bytes_le(&r.get_unsigned_min_value().into_inner()))
-                .to_signed_bytes_le();
+            let mut min_possible = (BigInt::from_signed_bytes_le(&l.get_unsigned_min_value().into_inner())
+                - BigInt::from_signed_bytes_le(&r.get_unsigned_min_value().into_inner()))
+            .to_signed_bytes_le();
             let sign = if (min_possible.last().unwrap() & 0x80) != 0 {
                 u8::MAX
             } else {
@@ -347,10 +291,9 @@ fn subtract_values(
             let mut min_possible: Bits = BitArray::new(min_possible.try_into().unwrap());
             min_possible[ty.bits(ns) as usize..].fill(false);
 
-            let mut max_possible =
-                (BigInt::from_signed_bytes_le(&l.get_unsigned_max_value().into_inner())
-                    - BigInt::from_signed_bytes_le(&r.get_unsigned_max_value().into_inner()))
-                .to_signed_bytes_le();
+            let mut max_possible = (BigInt::from_signed_bytes_le(&l.get_unsigned_max_value().into_inner())
+                - BigInt::from_signed_bytes_le(&r.get_unsigned_max_value().into_inner()))
+            .to_signed_bytes_le();
             let sign = if (max_possible.last().unwrap() & 0x80) != 0 {
                 u8::MAX
             } else {
@@ -424,7 +367,7 @@ fn multiply_values(
                             known_bits,
                             bits: l.bits,
                         }
-                    }
+                    },
                     _ => {
                         // if we don't know either of the signs, we can't say anything about the result
                         Value {
@@ -432,16 +375,12 @@ fn multiply_values(
                             known_bits,
                             bits: l.bits,
                         }
-                    }
+                    },
                 }
             } else {
-                let mut max_possible =
-                    (BigInt::from_bytes_le(Sign::Plus, &l.get_unsigned_max_value().into_inner())
-                        * BigInt::from_bytes_le(
-                            Sign::Plus,
-                            &r.get_unsigned_max_value().into_inner(),
-                        ))
-                    .to_signed_bytes_le();
+                let mut max_possible = (BigInt::from_bytes_le(Sign::Plus, &l.get_unsigned_max_value().into_inner())
+                    * BigInt::from_bytes_le(Sign::Plus, &r.get_unsigned_max_value().into_inner()))
+                .to_signed_bytes_le();
 
                 if l.known_bits[0..l.bits].all() && r.known_bits[0..r.bits].all() {
                     // constants
@@ -511,10 +450,7 @@ fn more_values(
                         <= BigInt::from_signed_bytes_le(&r.get_signed_max_value().into_inner())
                 } else {
                     BigInt::from_bytes_le(Sign::Plus, &l.get_unsigned_min_value().into_inner())
-                        <= BigInt::from_bytes_le(
-                            Sign::Plus,
-                            &r.get_unsigned_max_value().into_inner(),
-                        )
+                        <= BigInt::from_bytes_le(Sign::Plus, &r.get_unsigned_max_value().into_inner())
                 };
 
                 if is_false {
@@ -568,10 +504,7 @@ fn more_equal_values(
                         < BigInt::from_signed_bytes_le(&r.get_signed_max_value().into_inner())
                 } else {
                     BigInt::from_bytes_le(Sign::Plus, &l.get_unsigned_min_value().into_inner())
-                        < BigInt::from_bytes_le(
-                            Sign::Plus,
-                            &r.get_unsigned_max_value().into_inner(),
-                        )
+                        < BigInt::from_bytes_le(Sign::Plus, &r.get_unsigned_max_value().into_inner())
                 };
 
                 if is_false {
@@ -625,10 +558,7 @@ fn less_values(
                         >= BigInt::from_signed_bytes_le(&r.get_signed_max_value().into_inner())
                 } else {
                     BigInt::from_bytes_le(Sign::Plus, &l.get_unsigned_min_value().into_inner())
-                        >= BigInt::from_bytes_le(
-                            Sign::Plus,
-                            &r.get_unsigned_max_value().into_inner(),
-                        )
+                        >= BigInt::from_bytes_le(Sign::Plus, &r.get_unsigned_max_value().into_inner())
                 };
 
                 if is_false {
@@ -682,10 +612,7 @@ fn less_equal_values(
                         > BigInt::from_signed_bytes_le(&r.get_signed_max_value().into_inner())
                 } else {
                     BigInt::from_bytes_le(Sign::Plus, &l.get_unsigned_min_value().into_inner())
-                        > BigInt::from_bytes_le(
-                            Sign::Plus,
-                            &r.get_unsigned_max_value().into_inner(),
-                        )
+                        > BigInt::from_bytes_le(Sign::Plus, &r.get_unsigned_max_value().into_inner())
                 };
 
                 if is_false {
@@ -703,12 +630,7 @@ fn less_equal_values(
         .collect()
 }
 
-fn equal_values(
-    left_expr: &Expression,
-    right_expr: &Expression,
-    vars: &Variables,
-    ns: &Namespace,
-) -> HashSet<Value> {
+fn equal_values(left_expr: &Expression, right_expr: &Expression, vars: &Variables, ns: &Namespace) -> HashSet<Value> {
     let left = expression_values(left_expr, vars, ns);
     let right = expression_values(right_expr, vars, ns);
 

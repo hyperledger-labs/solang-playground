@@ -192,9 +192,7 @@ contract testTypes {
 
     let ns = parse(file);
     assert_eq!(ns.diagnostics.len(), 1);
-    assert!(ns
-        .diagnostics
-        .contains_message("found contract 'testTypes'"));
+    assert!(ns.diagnostics.contains_message("found contract 'testTypes'"));
 }
 
 #[test]
@@ -235,9 +233,7 @@ contract testTypes {
 
     let ns = parse(file);
     assert_eq!(ns.diagnostics.len(), 1);
-    assert!(ns
-        .diagnostics
-        .contains_message("found contract 'testTypes'"));
+    assert!(ns.diagnostics.contains_message("found contract 'testTypes'"));
 }
 
 #[test]
@@ -258,9 +254,7 @@ contract testTypes {
     "#;
 
     let ns = parse(file);
-    assert!(ns
-        .diagnostics
-        .contains_message("continue statement outside a for loop"));
+    assert!(ns.diagnostics.contains_message("continue statement outside a for loop"));
 
     let file = r#"
 contract testTypes {
@@ -287,9 +281,7 @@ contract testTypes {
 
     let ns = parse(file);
     assert_eq!(ns.diagnostics.len(), 1);
-    assert!(ns
-        .diagnostics
-        .contains_message("found contract 'testTypes'"));
+    assert!(ns.diagnostics.contains_message("found contract 'testTypes'"));
 }
 
 #[test]
@@ -310,9 +302,7 @@ contract testTypes {
     "#;
 
     let ns = parse(file);
-    assert!(ns
-        .diagnostics
-        .contains_message("break statement outside a for loop"));
+    assert!(ns.diagnostics.contains_message("break statement outside a for loop"));
 
     let file = r#"
 contract testTypes {
@@ -339,7 +329,5 @@ contract testTypes {
 
     let ns = parse(file);
     assert_eq!(ns.diagnostics.len(), 1);
-    assert!(ns
-        .diagnostics
-        .contains_message("found contract 'testTypes'"));
+    assert!(ns.diagnostics.contains_message("found contract 'testTypes'"));
 }

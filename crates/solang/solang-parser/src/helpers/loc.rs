@@ -20,10 +20,7 @@ impl<T: CodeLocation> OptionalCodeLocation for Option<T> {
 impl OptionalCodeLocation for pt::Visibility {
     fn loc_opt(&self) -> Option<Loc> {
         match self {
-            Self::Internal(l, ..)
-            | Self::External(l, ..)
-            | Self::Private(l, ..)
-            | Self::Public(l, ..) => *l,
+            Self::Internal(l, ..) | Self::External(l, ..) | Self::Private(l, ..) | Self::Public(l, ..) => *l,
         }
     }
 }

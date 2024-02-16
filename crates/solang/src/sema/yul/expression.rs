@@ -7,9 +7,7 @@ use crate::sema::symtable::{Symtable, VariableUsage};
 use crate::sema::yul::ast::{YulExpression, YulSuffix};
 use crate::sema::yul::builtin::{parse_builtin_keyword, yul_unsupported_builtin};
 use crate::sema::yul::functions::FunctionsTable;
-use crate::sema::yul::types::{
-    get_default_type_from_identifier, get_type_from_string, verify_type_from_expression,
-};
+use crate::sema::yul::types::{get_default_type_from_identifier, get_type_from_string, verify_type_from_expression};
 use crate::sema::yul::unused_variable::{assigned_variable, used_variable};
 use num_bigint::{BigInt, Sign};
 use num_rational::BigRational;
@@ -42,13 +40,9 @@ pub(crate) fn resolve_yul_expression(
     match expr {
         pt::YulExpression::BoolLiteral(loc, value, ty) => resolve_bool_literal(loc, *value, ty, ns),
 
-        pt::YulExpression::NumberLiteral(loc, base, exp, ty) => {
-            resolve_number_literal(loc, base, exp, ty, ns)
-        }
+        pt::YulExpression::NumberLiteral(loc, base, exp, ty) => resolve_number_literal(loc, base, exp, ty, ns),
 
-        pt::YulExpression::HexNumberLiteral(loc, value, ty) => {
-            resolve_hex_literal(loc, value, ty, ns)
-        }
+        pt::YulExpression::HexNumberLiteral(loc, value, ty) => resolve_hex_literal(loc, value, ty, ns),
         pt::YulExpression::HexStringLiteral(value, ty) => {
             if (value.hex.len() % 2) != 0 {
                 ns.diagnostics.push(Diagnostic {
@@ -65,25 +59,24 @@ pub(crate) fn resolve_yul_expression(
             byte_array.extend_from_slice(&hex::decode(&value.hex).unwrap());
 
             resolve_string_literal(&value.loc, byte_array, ty, ns)
-        }
+        },
 
         pt::YulExpression::StringLiteral(value, ty) => {
             let mut diagnostics = Diagnostics::default();
-            let (_, unescaped_string) =
-                unescape(&value.string[..], 0, value.loc.file_no(), &mut diagnostics);
+            let (_, unescaped_string) = unescape(&value.string[..], 0, value.loc.file_no(), &mut diagnostics);
             ns.diagnostics.extend(diagnostics);
             resolve_string_literal(&value.loc, unescaped_string, ty, ns)
-        }
+        },
 
         pt::YulExpression::Variable(id) => resolve_variable_reference(id, ns, symtable, context),
 
         pt::YulExpression::FunctionCall(func_call) => {
             resolve_function_call(function_table, func_call, context, symtable, ns)
-        }
+        },
 
         pt::YulExpression::SuffixAccess(loc, expr, id) => {
             resolve_suffix_access(loc, expr, id, context, symtable, function_table, ns)
-        }
+        },
     }
 }
 
@@ -139,26 +132,20 @@ fn resolve_number_literal(
                 if res.is_integer() {
                     res.to_integer()
                 } else {
-                    ns.diagnostics.push(Diagnostic::error(
-                        *loc,
-                        "rational numbers not permitted".to_string(),
-                    ));
+                    ns.diagnostics
+                        .push(Diagnostic::error(*loc, "rational numbers not permitted".to_string()));
                     return Err(());
                 }
             } else {
-                ns.diagnostics.push(Diagnostic::error(
-                    *loc,
-                    format!("exponent '{exp}' too large"),
-                ));
+                ns.diagnostics
+                    .push(Diagnostic::error(*loc, format!("exponent '{exp}' too large")));
                 return Err(());
             }
         } else if let Ok(exp) = u8::from_str(exp) {
             integer.mul(base10.pow(exp))
         } else {
-            ns.diagnostics.push(Diagnostic::error(
-                *loc,
-                format!("exponent '{exp}' too large"),
-            ));
+            ns.diagnostics
+                .push(Diagnostic::error(*loc, format!("exponent '{exp}' too large")));
             return Err(());
         }
     };
@@ -271,12 +258,10 @@ fn resolve_variable_reference(
 ) -> Result<YulExpression, ()> {
     if let Some(v) = symtable.find(context, &id.name) {
         match &v.usage_type {
-            VariableUsage::YulLocalVariable => {
-                return Ok(YulExpression::YulLocalVariable(id.loc, v.ty.clone(), v.pos))
-            }
+            VariableUsage::YulLocalVariable => return Ok(YulExpression::YulLocalVariable(id.loc, v.ty.clone(), v.pos)),
             VariableUsage::AnonymousReturnVariable => {
                 unreachable!("Anonymous returns variables cannot be accessed from assembly blocks")
-            }
+            },
             _ => {
                 return Ok(YulExpression::SolidityLocalVariable(
                     id.loc,
@@ -284,7 +269,7 @@ fn resolve_variable_reference(
                     v.storage_location.clone(),
                     v.pos,
                 ))
-            }
+            },
         }
     }
 
@@ -316,23 +301,16 @@ fn resolve_variable_reference(
                         *var_no,
                     ))
                 }
-            }
+            },
             Some(Symbol::Variable(_, None, var_no)) => {
                 let var = &ns.constants[*var_no];
-                Ok(YulExpression::ConstantVariable(
-                    id.loc,
-                    var.ty.clone(),
-                    None,
-                    *var_no,
-                ))
-            }
+                Ok(YulExpression::ConstantVariable(id.loc, var.ty.clone(), None, *var_no))
+            },
             None => {
-                ns.diagnostics.push(Diagnostic::error(
-                    id.loc,
-                    format!("'{}' not found", id.name),
-                ));
+                ns.diagnostics
+                    .push(Diagnostic::error(id.loc, format!("'{}' not found", id.name)));
                 Err(())
-            }
+            },
 
             _ => {
                 ns.diagnostics.push(Diagnostic::error(
@@ -340,14 +318,12 @@ fn resolve_variable_reference(
                     "only variables can be accessed inside assembly blocks".to_string(),
                 ));
                 Err(())
-            }
+            },
         };
     }
 
-    ns.diagnostics.push(Diagnostic::error(
-        id.loc,
-        format!("'{}' not found", id.name),
-    ));
+    ns.diagnostics
+        .push(Diagnostic::error(id.loc, format!("'{}' not found", id.name)));
     Err(())
 }
 
@@ -367,10 +343,7 @@ pub(crate) fn resolve_function_call(
     } else if yul_unsupported_builtin(func_call.id.name.as_str()) {
         ns.diagnostics.push(Diagnostic::error(
             func_call.id.loc,
-            format!(
-                "the internal EVM built-in '{}' is not yet supported",
-                func_call.id.name
-            ),
+            format!("the internal EVM built-in '{}' is not yet supported", func_call.id.name),
         ));
         return Err(());
     }
@@ -432,11 +405,7 @@ pub(crate) fn resolve_function_call(
             check_function_argument(&default_builtin_parameter, item, function_table, ns);
         }
 
-        return Ok(YulExpression::BuiltInCall(
-            func_call.loc,
-            *built_in,
-            resolved_arguments,
-        ));
+        return Ok(YulExpression::BuiltInCall(func_call.loc, *built_in, resolved_arguments));
     }
 
     if let Some(func) = function_table.find(&func_call.id.name) {
@@ -488,7 +457,7 @@ fn check_function_argument(
         Err(diagnostic) => {
             ns.diagnostics.push(diagnostic);
             Type::Unreachable
-        }
+        },
     };
 
     if matches!(parameter.ty, Type::Bool) && !matches!(arg_type, Type::Bool) {
@@ -542,7 +511,7 @@ fn resolve_suffix_access(
                 "the provided suffix is not allowed in yul".to_string(),
             ));
             return Err(());
-        }
+        },
     };
 
     let resolved_expr = resolve_yul_expression(expr, context, symtable, function_table, ns)?;
@@ -550,22 +519,13 @@ fn resolve_suffix_access(
         YulExpression::ConstantVariable(_, _, Some(_), _) => {
             ns.diagnostics.push(Diagnostic::error(
                 resolved_expr.loc(),
-                "the suffixes .offset and .slot can only be used in non-constant storage variables"
-                    .to_string(),
+                "the suffixes .offset and .slot can only be used in non-constant storage variables".to_string(),
             ));
             return Err(());
-        }
+        },
 
-        YulExpression::SolidityLocalVariable(
-            _,
-            Type::Array(_, ref dims),
-            Some(StorageLocation::Calldata(_)),
-            _,
-        ) => {
-            if dims.last() == Some(&ArrayLength::Dynamic)
-                && id.name != "offset"
-                && id.name != "length"
-            {
+        YulExpression::SolidityLocalVariable(_, Type::Array(_, ref dims), Some(StorageLocation::Calldata(_)), _) => {
+            if dims.last() == Some(&ArrayLength::Dynamic) && id.name != "offset" && id.name != "length" {
                 ns.diagnostics.push(Diagnostic::error(
                     resolved_expr.loc(),
                     "calldata variables only support '.offset' and '.length'".to_string(),
@@ -580,7 +540,7 @@ fn resolve_suffix_access(
                     ),
                 ));
             }
-        }
+        },
 
         YulExpression::SolidityLocalVariable(_, Type::InternalFunction { .. }, ..)
         | YulExpression::ConstantVariable(_, Type::InternalFunction { .. }, ..)
@@ -590,17 +550,17 @@ fn resolve_suffix_access(
                 "only variables of type external function pointer support suffixes".to_string(),
             ));
             return Err(());
-        }
+        },
 
         YulExpression::SolidityLocalVariable(_, Type::ExternalFunction { .. }, ..) => {
             if id.name != "selector" && id.name != "address" {
                 ns.diagnostics.push(Diagnostic::error(
                     id.loc,
-                    "variables of type function pointer only support '.selector' and '.address' suffixes".to_string()
+                    "variables of type function pointer only support '.selector' and '.address' suffixes".to_string(),
                 ));
                 return Err(());
             }
-        }
+        },
 
         YulExpression::SolidityLocalVariable(_, _, Some(StorageLocation::Storage(_)), _)
         | YulExpression::StorageVariable(_, _, _, _) => {
@@ -611,7 +571,7 @@ fn resolve_suffix_access(
                 ));
                 return Err(());
             }
-        }
+        },
 
         YulExpression::SuffixAccess(..) => {
             ns.diagnostics.push(Diagnostic::error(
@@ -619,7 +579,7 @@ fn resolve_suffix_access(
                 "there cannot be multiple suffixes to a name".to_string(),
             ));
             return Err(());
-        }
+        },
 
         YulExpression::BoolLiteral { .. }
         | YulExpression::NumberLiteral(..)
@@ -639,14 +599,10 @@ fn resolve_suffix_access(
                 ),
             ));
             return Err(());
-        }
+        },
     }
 
-    Ok(YulExpression::SuffixAccess(
-        *loc,
-        Box::new(resolved_expr),
-        suffix_type,
-    ))
+    Ok(YulExpression::SuffixAccess(*loc, Box::new(resolved_expr), suffix_type))
 }
 
 /// Check if an yul expression has been used correctly in a assignment or if the member access
@@ -663,9 +619,9 @@ pub(crate) fn check_type(
             | YulExpression::StorageVariable(..) => {
                 return Some(Diagnostic::error(
                     expr.loc(),
-                    "storage variables cannot be assigned any value in assembly. You may use 'sstore()'".to_string()
+                    "storage variables cannot be assigned any value in assembly. You may use 'sstore()'".to_string(),
                 ));
-            }
+            },
 
             YulExpression::StringLiteral(..)
             | YulExpression::NumberLiteral(..)
@@ -675,24 +631,19 @@ pub(crate) fn check_type(
                     expr.loc(),
                     "cannot assigned a value to a constant".to_string(),
                 ));
-            }
+            },
 
             YulExpression::BuiltInCall(..) | YulExpression::FunctionCall(..) => {
                 return Some(Diagnostic::error(
                     expr.loc(),
                     "cannot assign a value to a function".to_string(),
                 ));
-            }
+            },
 
             YulExpression::SuffixAccess(_, member, YulSuffix::Length) => {
                 return if matches!(
                     **member,
-                    YulExpression::SolidityLocalVariable(
-                        _,
-                        _,
-                        Some(StorageLocation::Calldata(_)),
-                        _
-                    )
+                    YulExpression::SolidityLocalVariable(_, _, Some(StorageLocation::Calldata(_)), _)
                 ) {
                     Some(Diagnostic::error(
                         expr.loc(),
@@ -706,24 +657,19 @@ pub(crate) fn check_type(
                         "this expression does not support the '.length' suffix".to_string(),
                     ))
                 }
-            }
+            },
 
             YulExpression::SuffixAccess(_, member, YulSuffix::Offset) => {
                 if !matches!(
                     **member,
-                    YulExpression::SolidityLocalVariable(
-                        _,
-                        _,
-                        Some(StorageLocation::Calldata(_)),
-                        _
-                    )
+                    YulExpression::SolidityLocalVariable(_, _, Some(StorageLocation::Calldata(_)), _)
                 ) {
                     return Some(Diagnostic::error(
                         expr.loc(),
                         "cannot assign a value to offset".to_string(),
                     ));
                 }
-            }
+            },
             YulExpression::SuffixAccess(_, exp, YulSuffix::Slot) => {
                 if matches!(**exp, YulExpression::StorageVariable(..)) {
                     return Some(Diagnostic::error(
@@ -731,7 +677,7 @@ pub(crate) fn check_type(
                         "cannot assign to slot of storage variable".to_string(),
                     ));
                 }
-            }
+            },
             _ => (),
         }
 
@@ -747,21 +693,17 @@ pub(crate) fn check_type(
                 expr.loc(),
                 "Storage variables must be accessed with '.slot' or '.offset'".to_string(),
             ));
-        }
+        },
 
-        YulExpression::SolidityLocalVariable(
-            _,
-            Type::Array(_, ref dims),
-            Some(StorageLocation::Calldata(_)),
-            ..,
-        ) => {
+        YulExpression::SolidityLocalVariable(_, Type::Array(_, ref dims), Some(StorageLocation::Calldata(_)), ..) => {
             if dims.last() == Some(&ArrayLength::Dynamic) {
                 return Some(Diagnostic::error(
                     expr.loc(),
-                    "Calldata arrays must be accessed with '.offset', '.length' and the 'calldatacopy' function".to_string()
+                    "Calldata arrays must be accessed with '.offset', '.length' and the 'calldatacopy' function"
+                        .to_string(),
                 ));
             }
-        }
+        },
 
         _ => (),
     }

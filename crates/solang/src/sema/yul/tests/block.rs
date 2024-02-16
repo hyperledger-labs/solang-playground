@@ -44,12 +44,8 @@ contract testTypes {
     "#;
     let ns = parse(file);
     assert_eq!(ns.diagnostics.len(), 2);
-    assert!(ns
-        .diagnostics
-        .contains_message("found contract 'testTypes'"));
-    assert!(ns
-        .diagnostics
-        .contains_message("yul function has never been used"));
+    assert!(ns.diagnostics.contains_message("found contract 'testTypes'"));
+    assert!(ns.diagnostics.contains_message("yul function has never been used"));
 }
 
 #[test]
@@ -97,9 +93,7 @@ contract testTypes {
     "#;
     let ns = parse(file);
     assert_eq!(ns.diagnostics.len(), 1);
-    assert!(ns
-        .diagnostics
-        .contains_message("found contract 'testTypes'"));
+    assert!(ns.diagnostics.contains_message("found contract 'testTypes'"));
 }
 
 #[test]
@@ -147,9 +141,7 @@ contract testTypes {
     "#;
     let ns = parse(file);
     assert_eq!(ns.diagnostics.len(), 1);
-    assert!(ns
-        .diagnostics
-        .contains_message("found contract 'testTypes'"));
+    assert!(ns.diagnostics.contains_message("found contract 'testTypes'"));
 }
 
 #[test]
@@ -210,9 +202,7 @@ contract testTypes {
 }    "#;
     let ns = parse(file);
     assert_eq!(ns.diagnostics.len(), 1);
-    assert!(ns
-        .diagnostics
-        .contains_message("found contract 'testTypes'"));
+    assert!(ns.diagnostics.contains_message("found contract 'testTypes'"));
 
     let file = r#"
     contract testTypes {
@@ -236,9 +226,7 @@ contract testTypes {
 
     let ns = parse(file);
     assert_eq!(ns.diagnostics.len(), 1);
-    assert!(ns
-        .diagnostics
-        .contains_message("found contract 'testTypes'"));
+    assert!(ns.diagnostics.contains_message("found contract 'testTypes'"));
 }
 
 #[test]
@@ -283,14 +271,8 @@ contract testTypes {
 
     let ns = parse(file);
     assert_eq!(ns.diagnostics.len(), 4);
-    assert!(ns
-        .diagnostics
-        .contains_message("found contract 'testTypes'"));
+    assert!(ns.diagnostics.contains_message("found contract 'testTypes'"));
     assert!(ns.diagnostics.contains_message("unreachable yul statement"));
-    assert!(ns
-        .diagnostics
-        .contains_message("yul variable 'x' has never been read"));
-    assert!(ns
-        .diagnostics
-        .contains_message("yul variable 'y' has never been read"));
+    assert!(ns.diagnostics.contains_message("yul variable 'x' has never been read"));
+    assert!(ns.diagnostics.contains_message("yul variable 'y' has never been read"));
 }

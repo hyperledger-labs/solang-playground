@@ -234,12 +234,7 @@ fn storage_variable_reference() {
     let mut cfg = ControlFlowGraph::placeholder();
     let opt = Options::default();
 
-    let expr = ast::YulExpression::SolidityLocalVariable(
-        loc,
-        Type::Int(32),
-        Some(StorageLocation::Storage(loc)),
-        0,
-    );
+    let expr = ast::YulExpression::SolidityLocalVariable(loc, Type::Int(32), Some(StorageLocation::Storage(loc)), 0);
     let _ = expression(&expr, 0, &ns, &mut vartab, &mut cfg, &opt);
 }
 
@@ -307,12 +302,7 @@ fn slot_suffix() {
 
     let expr = ast::YulExpression::SuffixAccess(
         loc,
-        Box::new(ast::YulExpression::StorageVariable(
-            loc,
-            Type::Uint(256),
-            0,
-            0,
-        )),
+        Box::new(ast::YulExpression::StorageVariable(loc, Type::Uint(256), 0, 0)),
         YulSuffix::Slot,
     );
     let res = expression(&expr, 0, &ns, &mut vartab, &mut cfg, &opt);
@@ -357,12 +347,7 @@ fn slot_suffix_panic() {
 
     let expr = ast::YulExpression::SuffixAccess(
         loc,
-        Box::new(ast::YulExpression::SolidityLocalVariable(
-            loc,
-            Type::Int(32),
-            None,
-            2,
-        )),
+        Box::new(ast::YulExpression::SolidityLocalVariable(loc, Type::Int(32), None, 2)),
         YulSuffix::Slot,
     );
 
@@ -379,12 +364,7 @@ fn offset_suffix() {
 
     let expr = ast::YulExpression::SuffixAccess(
         loc,
-        Box::new(ast::YulExpression::StorageVariable(
-            loc,
-            Type::Int(32),
-            1,
-            0,
-        )),
+        Box::new(ast::YulExpression::StorageVariable(loc, Type::Int(32), 1, 0)),
         YulSuffix::Offset,
     );
 
@@ -640,12 +620,7 @@ fn selector_suffix_panic() {
 
     let expr = ast::YulExpression::SuffixAccess(
         loc,
-        Box::new(ast::YulExpression::SolidityLocalVariable(
-            loc,
-            Type::Bool,
-            None,
-            4,
-        )),
+        Box::new(ast::YulExpression::SolidityLocalVariable(loc, Type::Bool, None, 4)),
         YulSuffix::Selector,
     );
     let _res = expression(&expr, 0, &ns, &mut vartab, &mut cfg, &opt);
@@ -709,12 +684,7 @@ fn address_suffix_panic() {
 
     let expr = ast::YulExpression::SuffixAccess(
         loc,
-        Box::new(ast::YulExpression::SolidityLocalVariable(
-            loc,
-            Type::Bool,
-            None,
-            4,
-        )),
+        Box::new(ast::YulExpression::SolidityLocalVariable(loc, Type::Bool, None, 4)),
         YulSuffix::Address,
     );
     let _res = expression(&expr, 0, &ns, &mut vartab, &mut cfg, &opt);

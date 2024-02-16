@@ -31,13 +31,10 @@ fn constructor(
         Some(n) if n == no => {
             diagnostics.push(Diagnostic::error(
                 *loc,
-                format!(
-                    "new cannot construct current contract '{}'",
-                    ns.contracts[no].id
-                ),
+                format!("new cannot construct current contract '{}'", ns.contracts[no].id),
             ));
             return Err(());
-        }
+        },
         Some(n) => n,
         None => {
             diagnostics.push(Diagnostic::error(
@@ -45,7 +42,7 @@ fn constructor(
                 "new contract not allowed in this context".to_string(),
             ));
             return Err(());
-        }
+        },
     };
 
     if !ns.contracts[no].instantiable {
@@ -64,10 +61,7 @@ fn constructor(
     if circular_reference(no, context_contract_no, ns) {
         diagnostics.push(Diagnostic::error(
             *loc,
-            format!(
-                "circular reference creating contract '{}'",
-                ns.contracts[no].id
-            ),
+            format!("circular reference creating contract '{}'", ns.contracts[no].id),
         ));
         return Err(());
     }
@@ -116,11 +110,7 @@ pub fn match_constructor_to_args(
         if params_len != args.len() {
             errors.push(Diagnostic::cast_error(
                 *loc,
-                format!(
-                    "constructor expects {} arguments, {} provided",
-                    params_len,
-                    args.len()
-                ),
+                format!("constructor expects {} arguments, {} provided", params_len, args.len()),
             ));
             matches = false;
         }
@@ -129,10 +119,7 @@ pub fn match_constructor_to_args(
 
         // resolve arguments for this constructor
         for (i, arg) in args.iter().enumerate() {
-            let ty = ns.functions[*function_no]
-                .params
-                .get(i)
-                .map(|p| p.ty.clone());
+            let ty = ns.functions[*function_no].params.get(i).map(|p| p.ty.clone());
 
             let arg = match expression(
                 arg,
@@ -150,7 +137,7 @@ pub fn match_constructor_to_args(
                 Err(()) => {
                     matches = false;
                     continue;
-                }
+                },
             };
 
             if let Some(ty) = &ty {
@@ -158,7 +145,7 @@ pub fn match_constructor_to_args(
                     Ok(expr) => cast_args.push(expr),
                     Err(()) => {
                         matches = false;
-                    }
+                    },
                 }
             }
         }
@@ -173,16 +160,16 @@ pub fn match_constructor_to_args(
     match function_nos.len() {
         0 if args.is_empty() => {
             return Ok((None, Vec::new()));
-        }
+        },
         0 | 1 => {
             diagnostics.extend(errors);
-        }
+        },
         _ => {
             diagnostics.push(Diagnostic::error(
                 *loc,
                 "cannot find overloaded constructor which matches signature".to_string(),
             ));
-        }
+        },
     }
 
     Err(())
@@ -223,19 +210,10 @@ pub fn constructor_named_args(
         _ => {
             diagnostics.push(Diagnostic::error(*loc, "contract expected".to_string()));
             return Err(());
-        }
+        },
     };
 
-    let call_args = parse_call_args(
-        loc,
-        &call_args,
-        Some(no),
-        false,
-        context,
-        ns,
-        symtable,
-        diagnostics,
-    )?;
+    let call_args = parse_call_args(loc, &call_args, Some(no), false, context, ns, symtable, diagnostics)?;
 
     // The current contract cannot be constructed with new. In order to create
     // the contract, we need the code hash of the contract. Part of that code
@@ -244,13 +222,10 @@ pub fn constructor_named_args(
         Some(n) if n == no => {
             diagnostics.push(Diagnostic::error(
                 *loc,
-                format!(
-                    "new cannot construct current contract '{}'",
-                    ns.contracts[no].id
-                ),
+                format!("new cannot construct current contract '{}'", ns.contracts[no].id),
             ));
             return Err(());
-        }
+        },
         Some(n) => n,
         None => {
             diagnostics.push(Diagnostic::error(
@@ -258,7 +233,7 @@ pub fn constructor_named_args(
                 "new contract not allowed in this context".to_string(),
             ));
             return Err(());
-        }
+        },
     };
 
     if !ns.contracts[no].instantiable {
@@ -277,10 +252,7 @@ pub fn constructor_named_args(
     if circular_reference(no, context_contract_no, ns) {
         diagnostics.push(Diagnostic::error(
             *loc,
-            format!(
-                "circular reference creating contract '{}'",
-                ns.contracts[no].id
-            ),
+            format!("circular reference creating contract '{}'", ns.contracts[no].id),
         ));
         return Err(());
     }
@@ -336,11 +308,7 @@ pub fn constructor_named_args(
         } else if params_len != args.len() {
             errors.push(Diagnostic::cast_error_with_note(
                 *loc,
-                format!(
-                    "constructor expects {} arguments, {} provided",
-                    params_len,
-                    args.len()
-                ),
+                format!("constructor expects {} arguments, {} provided", params_len, args.len()),
                 func.loc_prototype,
                 "definition of constructor".to_owned(),
             ));
@@ -366,29 +334,22 @@ pub fn constructor_named_args(
                         "definition of constructor".to_owned(),
                     ));
                     break;
-                }
+                },
             };
 
-            let arg = match expression(
-                arg,
-                context,
-                ns,
-                symtable,
-                &mut errors,
-                ResolveTo::Type(&param.ty),
-            ) {
+            let arg = match expression(arg, context, ns, symtable, &mut errors, ResolveTo::Type(&param.ty)) {
                 Ok(e) => e,
                 Err(()) => {
                     matches = false;
                     continue;
-                }
+                },
             };
 
             match arg.cast(&arg.loc(), &param.ty, true, ns, &mut errors) {
                 Ok(expr) => cast_args.push(expr),
                 Err(()) => {
                     matches = false;
-                }
+                },
             }
         }
 
@@ -417,7 +378,7 @@ pub fn constructor_named_args(
             diagnostics.extend(errors);
 
             Err(())
-        }
+        },
         _ => {
             diagnostics.push(Diagnostic::error(
                 *loc,
@@ -425,7 +386,7 @@ pub fn constructor_named_args(
             ));
 
             Err(())
-        }
+        },
     }
 }
 
@@ -460,10 +421,7 @@ pub fn new(
             if matches!(dim.last(), Some(ArrayLength::Fixed(_))) {
                 diagnostics.push(Diagnostic::error(
                     *loc,
-                    format!(
-                        "new cannot allocate fixed array type '{}'",
-                        ty.to_string(ns)
-                    ),
+                    format!("new cannot allocate fixed array type '{}'", ty.to_string(ns)),
                 ));
                 return Err(());
             }
@@ -475,29 +433,20 @@ pub fn new(
                 ));
                 return Err(());
             }
-        }
-        Type::String | Type::DynamicBytes => {}
+        },
+        Type::String | Type::DynamicBytes => {},
         Type::Contract(n) => {
-            let call_args = parse_call_args(
-                loc,
-                &call_args,
-                Some(*n),
-                false,
-                context,
-                ns,
-                symtable,
-                diagnostics,
-            )?;
+            let call_args = parse_call_args(loc, &call_args, Some(*n), false, context, ns, symtable, diagnostics)?;
 
             return constructor(loc, *n, args, call_args, context, ns, symtable, diagnostics);
-        }
+        },
         _ => {
             diagnostics.push(Diagnostic::error(
                 *loc,
                 format!("new cannot allocate type '{}'", ty.to_string(ns)),
             ));
             return Err(());
-        }
+        },
     };
 
     if let Some(loc) = call_args_loc {
@@ -570,10 +519,7 @@ pub fn new(
 }
 
 /// Is it an (new C).value(1).gas(2)(1, 2, 3) style constructor (not supported)?
-pub(super) fn deprecated_constructor_arguments(
-    expr: &pt::Expression,
-    diagnostics: &mut Diagnostics,
-) -> Result<(), ()> {
+pub(super) fn deprecated_constructor_arguments(expr: &pt::Expression, diagnostics: &mut Diagnostics) -> Result<(), ()> {
     match expr.remove_parenthesis() {
         pt::Expression::FunctionCall(func_loc, ty, _) => {
             if let pt::Expression::MemberAccess(_, ty, call_arg) = ty.as_ref() {
@@ -585,15 +531,18 @@ pub(super) fn deprecated_constructor_arguments(
                     }
                     diagnostics.push(Diagnostic::error(
                         loc,
-                        format!("deprecated call argument syntax '.{}(...)' is not supported, use '{{{}: ...}}' instead", call_arg.name, call_arg.name)
+                        format!(
+                            "deprecated call argument syntax '.{}(...)' is not supported, use '{{{}: ...}}' instead",
+                            call_arg.name, call_arg.name
+                        ),
                     ));
                     return Err(());
                 }
             }
-        }
+        },
         pt::Expression::New(..) => {
             return Err(());
-        }
+        },
         _ => (),
     }
 
@@ -635,9 +584,7 @@ pub(super) fn solana_constructor_check(
             .creates
             .contains(&constructor_contract_no)
         {
-            ns.contracts[context_contract]
-                .creates
-                .push(constructor_contract_no);
+            ns.contracts[context_contract].creates.push(constructor_contract_no);
         }
     } else {
         diagnostics.push(Diagnostic::error(
@@ -651,10 +598,7 @@ pub(super) fn solana_constructor_check(
     }
 
     if let Some(function_no) = context.function_no {
-        if matches!(
-            ns.functions[function_no].visibility,
-            Visibility::External(_)
-        ) {
+        if matches!(ns.functions[function_no].visibility, Visibility::External(_)) {
             diagnostics.push(Diagnostic::error(
                 *loc,
                 "the {accounts: ..} call argument is needed since the constructor may be \

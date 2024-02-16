@@ -281,16 +281,7 @@ fn cfg_dfs(
 
     for edge in cfg.blocks[block_no].successors() {
         degrees[edge] += 1;
-        if cfg_dfs(
-            edge,
-            cfg,
-            visited,
-            stack,
-            degrees,
-            has_cycle,
-            dag,
-            reverse_dag,
-        ) {
+        if cfg_dfs(edge, cfg, visited, stack, degrees, has_cycle, dag, reverse_dag) {
             dag[block_no].push(edge);
             reverse_dag[edge].push(block_no);
         }

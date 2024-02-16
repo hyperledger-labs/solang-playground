@@ -251,7 +251,7 @@ pub(crate) fn function_dispatch(
                     code: ReturnCode::Success,
                 },
             );
-        }
+        },
         None => {
             cfg.add(
                 &mut vartab,
@@ -259,7 +259,7 @@ pub(crate) fn function_dispatch(
                     code: ReturnCode::InvalidDataError,
                 },
             );
-        }
+        },
     }
 
     vartab.finalize(ns, &mut cfg);
@@ -303,20 +303,8 @@ fn add_function_dispatch_case(
         expr: Box::new(argslen),
     };
 
-    let tys = func_cfg
-        .params
-        .iter()
-        .map(|e| e.ty.clone())
-        .collect::<Vec<Type>>();
-    let decoded = abi_decode(
-        &Loc::Codegen,
-        argsdata,
-        &tys,
-        ns,
-        vartab,
-        cfg,
-        Some(truncated_len),
-    );
+    let tys = func_cfg.params.iter().map(|e| e.ty.clone()).collect::<Vec<Type>>();
+    let decoded = abi_decode(&Loc::Codegen, argsdata, &tys, ns, vartab, cfg, Some(truncated_len));
 
     let mut returns: Vec<usize> = Vec::with_capacity(func_cfg.returns.len());
     let mut return_tys: Vec<Type> = Vec::with_capacity(func_cfg.returns.len());
@@ -410,25 +398,13 @@ fn add_constructor_dispatch_case(
     let mut returns: Vec<Expression> = Vec::new();
 
     if !func_cfg.params.is_empty() {
-        let tys = func_cfg
-            .params
-            .iter()
-            .map(|e| e.ty.clone())
-            .collect::<Vec<Type>>();
+        let tys = func_cfg.params.iter().map(|e| e.ty.clone()).collect::<Vec<Type>>();
         let truncated_len = Expression::Trunc {
             loc: Loc::Codegen,
             ty: Type::Uint(32),
             expr: Box::new(argslen),
         };
-        returns = abi_decode(
-            &Loc::Codegen,
-            argsdata,
-            &tys,
-            ns,
-            vartab,
-            cfg,
-            Some(truncated_len),
-        );
+        returns = abi_decode(&Loc::Codegen, argsdata, &tys, ns, vartab, cfg, Some(truncated_len));
     }
 
     if let ASTFunction::SolidityFunction(function_no) = func_cfg.function_no {

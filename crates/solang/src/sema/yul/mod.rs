@@ -49,8 +49,7 @@ pub fn resolve_inline_assembly(
     context.leave_scope(symtable, *loc);
     functions_table.leave_scope(ns);
     let end = start + functions_table.resolved_functions.len();
-    ns.yul_functions
-        .append(&mut functions_table.resolved_functions);
+    ns.yul_functions.append(&mut functions_table.resolved_functions);
 
     (
         InlineAssembly {

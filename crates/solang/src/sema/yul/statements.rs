@@ -29,17 +29,10 @@ pub(crate) fn resolve_yul_statement(
     match statement {
         pt::YulStatement::FunctionDefinition(_) => Ok(true),
         pt::YulStatement::FunctionCall(func_call) => {
-            let data = resolve_top_level_function_call(
-                func_call,
-                reachable,
-                function_table,
-                context,
-                symtable,
-                ns,
-            )?;
+            let data = resolve_top_level_function_call(func_call, reachable, function_table, context, symtable, ns)?;
             resolved_statements.push(data.0);
             Ok(data.1)
-        }
+        },
 
         pt::YulStatement::Block(block) => {
             let data = resolve_yul_block(
@@ -54,7 +47,7 @@ pub(crate) fn resolve_yul_statement(
             );
             resolved_statements.push(YulStatement::Block(Box::new(data.0)));
             Ok(data.1)
-        }
+        },
 
         pt::YulStatement::VariableDeclaration(loc, variables, initializer) => {
             resolved_statements.push(resolve_variable_declaration(
@@ -68,7 +61,7 @@ pub(crate) fn resolve_yul_statement(
                 ns,
             )?);
             Ok(true)
-        }
+        },
 
         pt::YulStatement::Assign(loc, lhs, rhs) => {
             resolved_statements.push(resolve_assignment(
@@ -82,7 +75,7 @@ pub(crate) fn resolve_yul_statement(
                 ns,
             )?);
             Ok(true)
-        }
+        },
 
         pt::YulStatement::If(loc, condition, body) => {
             resolved_statements.push(resolve_if_block(
@@ -97,7 +90,7 @@ pub(crate) fn resolve_yul_statement(
                 ns,
             )?);
             Ok(true)
-        }
+        },
 
         pt::YulStatement::Switch(switch_statement) => {
             let resolved_switch = resolve_switch(
@@ -111,7 +104,7 @@ pub(crate) fn resolve_yul_statement(
             )?;
             resolved_statements.push(resolved_switch.0);
             Ok(resolved_switch.1)
-        }
+        },
 
         pt::YulStatement::Break(loc) => {
             if loop_scope.do_break() {
@@ -124,7 +117,7 @@ pub(crate) fn resolve_yul_statement(
                 ));
                 Err(())
             }
-        }
+        },
 
         pt::YulStatement::Continue(loc) => {
             if loop_scope.do_continue() {
@@ -137,7 +130,7 @@ pub(crate) fn resolve_yul_statement(
                 ));
                 Err(())
             }
-        }
+        },
 
         pt::YulStatement::Leave(loc) => {
             if !context.yul_function {
@@ -149,7 +142,7 @@ pub(crate) fn resolve_yul_statement(
             }
             resolved_statements.push(YulStatement::Leave(*loc, reachable));
             Ok(false)
-        }
+        },
 
         pt::YulStatement::For(for_statement) => {
             let resolved_for = resolve_for_loop(
@@ -163,7 +156,7 @@ pub(crate) fn resolve_yul_statement(
             )?;
             resolved_statements.push(resolved_for.0);
             Ok(resolved_for.1)
-        }
+        },
         pt::YulStatement::Error(..) => Err(()),
     }
 }
@@ -191,7 +184,7 @@ fn resolve_top_level_function_call(
                 YulStatement::BuiltInCall(loc, reachable, ty, args),
                 !func_prototype.stops_execution,
             ))
-        }
+        },
         Ok(YulExpression::FunctionCall(loc, function_no, args, returns)) => {
             if !returns.is_empty() {
                 ns.diagnostics.push(Diagnostic::error(
@@ -200,15 +193,12 @@ fn resolve_top_level_function_call(
                 ));
                 return Err(());
             }
-            Ok((
-                YulStatement::FunctionCall(loc, reachable, function_no, args),
-                true,
-            ))
-        }
+            Ok((YulStatement::FunctionCall(loc, reachable, function_no, args), true))
+        },
 
         Ok(_) => {
             unreachable!("sema::yul::resolve_function_call can only return resolved calls")
-        }
+        },
 
         Err(_) => Err(()),
     }
@@ -238,9 +228,7 @@ fn resolve_variable_declaration(
                 }],
             });
             return Err(());
-        } else if yul_unsupported_builtin(&item.id.name)
-            || parse_builtin_keyword(&item.id.name).is_some()
-        {
+        } else if yul_unsupported_builtin(&item.id.name) || parse_builtin_keyword(&item.id.name).is_some() {
             ns.diagnostics.push(Diagnostic::error(
                 item.loc,
                 format!(
@@ -275,17 +263,8 @@ fn resolve_variable_declaration(
     }
 
     let resolved_init = if let Some(init_expr) = &initializer {
-        let resolved_expr =
-            resolve_yul_expression(init_expr, context, symtable, function_table, ns)?;
-        check_assignment_compatibility(
-            loc,
-            variables,
-            &resolved_expr,
-            context,
-            function_table,
-            symtable,
-            ns,
-        );
+        let resolved_expr = resolve_yul_expression(init_expr, context, symtable, function_table, ns)?;
+        check_assignment_compatibility(loc, variables, &resolved_expr, context, function_table, symtable, ns);
         Some(resolved_expr)
     } else {
         None
@@ -338,12 +317,7 @@ fn resolve_assignment(
         ns,
     );
 
-    Ok(YulStatement::Assignment(
-        *loc,
-        reachable,
-        resolved_lhs,
-        resolved_rhs,
-    ))
+    Ok(YulStatement::Assignment(*loc, reachable, resolved_lhs, resolved_rhs))
 }
 
 /// Checks the the left hand side of an assignment is compatible with it right hand side
@@ -369,7 +343,7 @@ fn check_assignment_compatibility<T>(
                     ),
                 ));
             }
-        }
+        },
 
         YulExpression::BuiltInCall(_, ty, _) => {
             let prototype = ty.get_prototype_info();
@@ -383,7 +357,7 @@ fn check_assignment_compatibility<T>(
                     ),
                 ));
             }
-        }
+        },
 
         _ => {
             if lhs.len() != 1 {
@@ -394,7 +368,7 @@ fn check_assignment_compatibility<T>(
             } else if let Some(diagnostic) = check_type(rhs, context, ns, symtable) {
                 ns.diagnostics.push(diagnostic);
             }
-        }
+        },
     }
 }
 

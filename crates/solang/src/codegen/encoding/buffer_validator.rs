@@ -240,11 +240,7 @@ impl BufferValidator<'_> {
             } else {
                 Some(types.len())
             },
-            current_arg: if self.validation_necessary() {
-                0
-            } else {
-                types.len()
-            },
+            current_arg: if self.validation_necessary() { 0 } else { types.len() },
         }
     }
 }

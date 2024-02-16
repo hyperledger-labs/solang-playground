@@ -2,12 +2,12 @@
 #![deny(unsafe_code)]
 
 use futures::stream::TryStreamExt;
+use solang::languageserver::{Files, GlobalCache, SolangServer};
+use std::collections::HashMap;
+use tokio::sync::Mutex;
 use tower_lsp::{LspService, Server};
 use wasm_bindgen::{prelude::*, JsCast};
 use wasm_bindgen_futures::stream::JsStream;
-use solang::languageserver::{SolangServer, Files, GlobalCache};
-use std::collections::HashMap;
-use tokio::sync::Mutex;
 
 use solang::Target;
 
@@ -43,7 +43,6 @@ pub async fn serve(config: ServerConfig) -> Result<(), JsValue> {
         into_server,
         from_server,
     } = config;
-
 
     let input = JsStream::from(into_server);
     let input = input
@@ -81,8 +80,6 @@ pub async fn serve(config: ServerConfig) -> Result<(), JsValue> {
         }),
     });
 
-
-        
     Server::new(input, output, messages).serve(service).await;
 
     Ok(())

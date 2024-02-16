@@ -62,21 +62,21 @@ pub(super) fn type_bits_and_sign(
                 format!("type enum {} not allowed", ns.enums[*n]),
             ));
             Err(())
-        }
+        },
         Type::Struct(str_ty) => {
             diagnostics.push(Diagnostic::error(
                 *l_loc,
                 format!("type struct {} not allowed", str_ty.definition(ns)),
             ));
             Err(())
-        }
+        },
         Type::Array(..) => {
             diagnostics.push(Diagnostic::error(
                 *l_loc,
                 format!("type array {} not allowed", l.to_string(ns)),
             ));
             Err(())
-        }
+        },
         Type::Ref(n) => type_bits_and_sign(n, l_loc, allow_bytes, ns, diagnostics),
         Type::StorageRef(_, n) => type_bits_and_sign(n, l_loc, allow_bytes, ns, diagnostics),
         _ => {
@@ -85,7 +85,7 @@ pub(super) fn type_bits_and_sign(
                 format!("expression of type {} not allowed", l.to_string(ns)),
             ));
             Err(())
-        }
+        },
     }
 }
 
@@ -113,46 +113,46 @@ pub fn coerce_number(
     match (l, r) {
         (Type::Address(false), Type::Address(false)) if for_compare => {
             return Ok(Type::Address(false));
-        }
+        },
         (Type::Address(true), Type::Address(true)) if for_compare => {
             return Ok(Type::Address(true));
-        }
+        },
         (Type::Contract(left), Type::Contract(right)) if left == right && for_compare => {
             return Ok(Type::Contract(*left));
-        }
+        },
         (Type::Bytes(left_length), Type::Bytes(right_length)) if allow_bytes => {
             return Ok(Type::Bytes(std::cmp::max(*left_length, *right_length)));
-        }
+        },
         (Type::Bytes(_), _) if allow_bytes => {
             return Ok(l.clone());
-        }
+        },
         (_, Type::Bytes(_)) if allow_bytes => {
             return Ok(r.clone());
-        }
+        },
         (Type::FunctionSelector, _) | (_, Type::FunctionSelector) if allow_bytes => {
             return Ok(Type::Bytes(ns.target.selector_length()));
-        }
+        },
         (Type::Rational, Type::Int(_)) => {
             return Ok(Type::Rational);
-        }
+        },
         (Type::Rational, Type::Rational) => {
             return Ok(Type::Rational);
-        }
+        },
         (Type::Rational, Type::Uint(_)) => {
             return Ok(Type::Rational);
-        }
+        },
         (Type::Uint(_), Type::Rational) => {
             return Ok(Type::Rational);
-        }
+        },
         (Type::Int(_), Type::Rational) => {
             return Ok(Type::Rational);
-        }
+        },
         (Type::Bool, Type::Int(_) | Type::Uint(_)) => {
             return Ok(r.clone());
-        }
+        },
         (Type::Int(_) | Type::Uint(_), Type::Bool) => {
             return Ok(l.clone());
-        }
+        },
         _ => (),
     }
 
@@ -168,13 +168,13 @@ pub fn coerce_number(
             let len = left_len.max(right_len + 8);
 
             Type::Int(len.min(256))
-        }
+        },
         (false, true) => {
             // uint8 fits into int16
             let len = (left_len + 8).max(right_len);
 
             Type::Int(len.min(256))
-        }
+        },
     })
 }
 

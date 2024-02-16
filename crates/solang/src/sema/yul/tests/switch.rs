@@ -21,9 +21,9 @@ fn case_not_literal() {
     "#;
 
     let ns = parse(file);
-    assert!(ns.diagnostics.contains_message(
-        r#"unrecognised token 'y', expected "false", "true", hexnumber, hexstring, number, string"#
-    ));
+    assert!(ns
+        .diagnostics
+        .contains_message(r#"unrecognised token 'y', expected "false", "true", hexnumber, hexstring, number, string"#));
 }
 
 #[test]

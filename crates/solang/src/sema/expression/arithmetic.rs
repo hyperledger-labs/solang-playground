@@ -62,7 +62,7 @@ pub(super) fn subtract(
             Err(diag) => {
                 diagnostics.push(diag);
                 Err(())
-            }
+            },
         };
     }
 
@@ -316,7 +316,7 @@ pub(super) fn multiply(
             Err(diag) => {
                 diagnostics.push(diag);
                 Err(())
-            }
+            },
         };
     }
 
@@ -373,13 +373,7 @@ pub(super) fn divide(
 
     check_var_usage_expression(ns, &left, &right, symtable);
 
-    if let Some(expr) = user_defined_operator(
-        loc,
-        &[&left, &right],
-        pt::UserDefinedOperator::Divide,
-        diagnostics,
-        ns,
-    ) {
+    if let Some(expr) = user_defined_operator(loc, &[&left, &right], pt::UserDefinedOperator::Divide, diagnostics, ns) {
         return Ok(expr);
     }
 
@@ -417,13 +411,7 @@ pub(super) fn modulo(
 
     check_var_usage_expression(ns, &left, &right, symtable);
 
-    if let Some(expr) = user_defined_operator(
-        loc,
-        &[&left, &right],
-        pt::UserDefinedOperator::Modulo,
-        diagnostics,
-        ns,
-    ) {
+    if let Some(expr) = user_defined_operator(loc, &[&left, &right], pt::UserDefinedOperator::Modulo, diagnostics, ns) {
         return Ok(expr);
     }
 
@@ -462,23 +450,9 @@ pub(super) fn power(
     // the result is 256 bits
     if resolve_to == ResolveTo::Unknown {
         if base.ty().is_signed_int(ns) {
-            base = expression(
-                b,
-                context,
-                ns,
-                symtable,
-                diagnostics,
-                ResolveTo::Type(&Type::Int(256)),
-            )?;
+            base = expression(b, context, ns, symtable, diagnostics, ResolveTo::Type(&Type::Int(256)))?;
         } else {
-            base = expression(
-                b,
-                context,
-                ns,
-                symtable,
-                diagnostics,
-                ResolveTo::Type(&Type::Uint(256)),
-            )?;
+            base = expression(b, context, ns, symtable, diagnostics, ResolveTo::Type(&Type::Uint(256)))?;
         };
     }
 
@@ -498,16 +472,7 @@ pub(super) fn power(
         return Err(());
     }
 
-    let ty = coerce_number(
-        &base_type,
-        &b.loc(),
-        &exp_type,
-        &e.loc(),
-        false,
-        false,
-        ns,
-        diagnostics,
-    )?;
+    let ty = coerce_number(&base_type, &b.loc(), &exp_type, &e.loc(), false, false, ns, diagnostics)?;
 
     Ok(Expression::Power {
         loc: *loc,
@@ -533,33 +498,18 @@ pub(super) fn equal(
 
     check_var_usage_expression(ns, &left, &right, symtable);
 
-    if let Some(expr) = user_defined_operator(
-        loc,
-        &[&left, &right],
-        pt::UserDefinedOperator::Equal,
-        diagnostics,
-        ns,
-    ) {
+    if let Some(expr) = user_defined_operator(loc, &[&left, &right], pt::UserDefinedOperator::Equal, diagnostics, ns) {
         return Ok(expr);
     }
 
     let left_type = left.ty();
     let right_type = right.ty();
 
-    if let Some(expr) =
-        is_string_equal(loc, &left, &left_type, &right, &right_type, ns, diagnostics)?
-    {
+    if let Some(expr) = is_string_equal(loc, &left, &left_type, &right, &right_type, ns, diagnostics)? {
         return Ok(expr);
     }
 
-    let ty = coerce(
-        &left_type,
-        &left.loc(),
-        &right_type,
-        &right.loc(),
-        ns,
-        diagnostics,
-    )?;
+    let ty = coerce(&left_type, &left.loc(), &right_type, &right.loc(), ns, diagnostics)?;
 
     if ty.is_rational() {
         diagnostics.push(Diagnostic::error(
@@ -608,23 +558,14 @@ pub(super) fn not_equal(
     let left_type = left.ty();
     let right_type = right.ty();
 
-    if let Some(expr) =
-        is_string_equal(loc, &left, &left_type, &right, &right_type, ns, diagnostics)?
-    {
+    if let Some(expr) = is_string_equal(loc, &left, &left_type, &right, &right_type, ns, diagnostics)? {
         return Ok(Expression::Not {
             loc: *loc,
             expr: expr.into(),
         });
     }
 
-    let ty = coerce(
-        &left_type,
-        &left.loc(),
-        &right_type,
-        &right.loc(),
-        ns,
-        diagnostics,
-    )?;
+    let ty = coerce(&left_type, &left.loc(), &right_type, &right.loc(), ns, diagnostics)?;
 
     if ty.is_rational() {
         diagnostics.push(Diagnostic::error(
@@ -672,8 +613,8 @@ fn is_string_equal(
                 )?)),
                 right: StringLocation::CompileTime(l.clone()),
             }));
-        }
-        _ => {}
+        },
+        _ => {},
     }
 
     match (&right, &left_type.deref_any()) {
@@ -690,8 +631,8 @@ fn is_string_equal(
                 )?)),
                 right: StringLocation::CompileTime(value.clone()),
             }));
-        }
-        _ => {}
+        },
+        _ => {},
     }
 
     // compare string
@@ -714,8 +655,8 @@ fn is_string_equal(
                     diagnostics,
                 )?)),
             }));
-        }
-        _ => {}
+        },
+        _ => {},
     }
 
     Ok(None)
@@ -737,13 +678,7 @@ pub(super) fn addition(
 
     check_var_usage_expression(ns, &left, &right, symtable);
 
-    if let Some(expr) = user_defined_operator(
-        loc,
-        &[&left, &right],
-        pt::UserDefinedOperator::Add,
-        diagnostics,
-        ns,
-    ) {
+    if let Some(expr) = user_defined_operator(loc, &[&left, &right], pt::UserDefinedOperator::Add, diagnostics, ns) {
         return Ok(expr);
     }
 
@@ -759,14 +694,14 @@ pub(super) fn addition(
                 "concatenate bytes using the builtin bytes.concat(a, b)".into(),
             ));
             return Err(());
-        }
+        },
         (Type::String, Type::String) => {
             diagnostics.push(Diagnostic::error(
                 *loc,
                 "concatenate string using the builtin string.concat(a, b)".into(),
             ));
             return Err(());
-        }
+        },
         _ => (),
     }
 
@@ -795,7 +730,7 @@ pub(super) fn addition(
             Err(diag) => {
                 diagnostics.push(diag);
                 Err(())
-            }
+            },
         };
     }
 
@@ -808,22 +743,8 @@ pub(super) fn addition(
             Type::Uint(bits)
         };
 
-        left = expression(
-            l,
-            context,
-            ns,
-            symtable,
-            diagnostics,
-            ResolveTo::Type(&resolve_to),
-        )?;
-        right = expression(
-            r,
-            context,
-            ns,
-            symtable,
-            diagnostics,
-            ResolveTo::Type(&resolve_to),
-        )?;
+        left = expression(l, context, ns, symtable, diagnostics, ResolveTo::Type(&resolve_to))?;
+        right = expression(r, context, ns, symtable, diagnostics, ResolveTo::Type(&resolve_to))?;
     }
 
     Ok(Expression::Add {
@@ -882,14 +803,7 @@ pub(super) fn incr_decr(
         }
     };
 
-    let var = expression(
-        v,
-        &mut context,
-        ns,
-        symtable,
-        diagnostics,
-        ResolveTo::Unknown,
-    )?;
+    let var = expression(v, &mut context, ns, symtable, diagnostics, ResolveTo::Unknown)?;
     used_variable(ns, &var, symtable);
     let var_ty = var.ty();
 
@@ -908,7 +822,7 @@ pub(super) fn incr_decr(
                 ),
             ));
             Err(())
-        }
+        },
         Expression::ConstantVariable {
             loc,
             contract_no: None,
@@ -920,7 +834,7 @@ pub(super) fn incr_decr(
                 format!("cannot assign to constant '{}'", ns.constants[*var_no].name),
             ));
             Err(())
-        }
+        },
         Expression::Variable { ty, var_no, .. } => {
             match ty {
                 Type::Int(_) | Type::Uint(_) => (),
@@ -934,10 +848,10 @@ pub(super) fn incr_decr(
                         ),
                     ));
                     return Err(());
-                }
+                },
             };
             Ok(op(var.clone(), ty.clone()))
-        }
+        },
         _ => match &var_ty {
             Type::Ref(r_ty) => match r_ty.as_ref() {
                 Type::Int(_) | Type::Uint(_) => Ok(op(var, r_ty.as_ref().clone())),
@@ -947,7 +861,7 @@ pub(super) fn incr_decr(
                         format!("assigning to incorrect type {}", r_ty.to_string(ns)),
                     ));
                     Err(())
-                }
+                },
             },
             Type::StorageRef(immutable, r_ty) => {
                 if *immutable {
@@ -969,16 +883,13 @@ pub(super) fn incr_decr(
                             format!("assigning to incorrect type {}", r_ty.to_string(ns)),
                         ));
                         Err(())
-                    }
+                    },
                 }
-            }
+            },
             _ => {
-                diagnostics.push(Diagnostic::error(
-                    var.loc(),
-                    "expression is not modifiable".to_string(),
-                ));
+                diagnostics.push(Diagnostic::error(var.loc(), "expression is not modifiable".to_string()));
                 Err(())
-            }
+            },
         },
     }
 }
@@ -986,13 +897,7 @@ pub(super) fn incr_decr(
 // When generating shifts, llvm wants both arguments to have the same width. We want the
 // result of the shift to be left argument, so this function coercies the right argument
 // into the right length.
-pub fn cast_shift_arg(
-    loc: &pt::Loc,
-    expr: Expression,
-    from_width: u16,
-    ty: &Type,
-    ns: &Namespace,
-) -> Expression {
+pub fn cast_shift_arg(loc: &pt::Loc, expr: Expression, from_width: u16, ty: &Type, ns: &Namespace) -> Expression {
     let to_width = ty.bits(ns);
 
     if from_width == to_width {

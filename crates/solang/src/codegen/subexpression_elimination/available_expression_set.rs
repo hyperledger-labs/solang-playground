@@ -3,9 +3,7 @@
 use crate::codegen::subexpression_elimination::available_variable::AvailableVariable;
 use crate::codegen::subexpression_elimination::common_subexpression_tracker::CommonSubExpressionTracker;
 use crate::codegen::subexpression_elimination::AvailableExpression;
-use crate::codegen::subexpression_elimination::{
-    AvailableExpressionSet, BasicExpression, ExpressionType, NodeId,
-};
+use crate::codegen::subexpression_elimination::{AvailableExpressionSet, BasicExpression, ExpressionType, NodeId};
 use crate::codegen::Expression;
 use crate::sema::ast::StringLocation;
 use std::cell::RefCell;
@@ -39,10 +37,9 @@ impl<'a, 'b: 'a> AvailableExpressionSet<'a> {
         for (key, value) in &self.expression_memory {
             let node = new_set.expression_memory.get(key).unwrap();
             for child_id in value.borrow().children.keys() {
-                node.borrow_mut().children.insert(
-                    *child_id,
-                    Rc::clone(new_set.expression_memory.get(child_id).unwrap()),
-                );
+                node.borrow_mut()
+                    .children
+                    .insert(*child_id, Rc::clone(new_set.expression_memory.get(child_id).unwrap()));
             }
         }
 
@@ -50,11 +47,7 @@ impl<'a, 'b: 'a> AvailableExpressionSet<'a> {
     }
 
     /// Checks if an expression is available on both sets
-    fn check_intersection(
-        key: &ExpressionType,
-        value: NodeId,
-        set_2: &AvailableExpressionSet,
-    ) -> bool {
+    fn check_intersection(key: &ExpressionType, value: NodeId, set_2: &AvailableExpressionSet) -> bool {
         // Basic case: the expression is available only available on one set
         if !set_2.expr_map.contains_key(key) {
             return false;
@@ -69,11 +62,7 @@ impl<'a, 'b: 'a> AvailableExpressionSet<'a> {
     }
 
     /// When we exit two blocks, we must intersect their set of available expressions
-    pub fn intersect_sets(
-        &mut self,
-        set_2: &AvailableExpressionSet,
-        cst: &CommonSubExpressionTracker,
-    ) {
+    pub fn intersect_sets(&mut self, set_2: &AvailableExpressionSet, cst: &CommonSubExpressionTracker) {
         self.expr_map
             .retain(|key, value| AvailableExpressionSet::check_intersection(key, *value, set_2));
 
@@ -114,9 +103,8 @@ impl<'a, 'b: 'a> AvailableExpressionSet<'a> {
             }
         }
 
-        self.expression_memory.retain(|key, _| {
-            set_2.expression_memory.contains_key(key) || to_maintain.contains(key)
-        });
+        self.expression_memory
+            .retain(|key, _| set_2.expression_memory.contains_key(key) || to_maintain.contains(key));
 
         for (key, value) in &self.expression_memory {
             if let Some(node) = set_2.expression_memory.get(key) {
@@ -139,17 +127,14 @@ impl<'a, 'b: 'a> AvailableExpressionSet<'a> {
         for (key, node_id) in &set_2.expr_map {
             if !self.expr_map.contains_key(key) {
                 let new_key = match key {
-                    ExpressionType::BinaryOperation(id_1, id_2, op) => {
-                        ExpressionType::BinaryOperation(
-                            node_translation.get(id_1).cloned().unwrap_or(*id_1),
-                            node_translation.get(id_2).cloned().unwrap_or(*id_2),
-                            op.clone(),
-                        )
-                    }
-                    ExpressionType::UnaryOperation(id, op) => ExpressionType::UnaryOperation(
-                        node_translation.get(id).cloned().unwrap_or(*id),
+                    ExpressionType::BinaryOperation(id_1, id_2, op) => ExpressionType::BinaryOperation(
+                        node_translation.get(id_1).cloned().unwrap_or(*id_1),
+                        node_translation.get(id_2).cloned().unwrap_or(*id_2),
                         op.clone(),
                     ),
+                    ExpressionType::UnaryOperation(id, op) => {
+                        ExpressionType::UnaryOperation(node_translation.get(id).cloned().unwrap_or(*id), op.clone())
+                    },
                     _ => key.clone(),
                 };
                 self.expr_map.insert(new_key, *node_id);
@@ -164,28 +149,20 @@ impl<'a, 'b: 'a> AvailableExpressionSet<'a> {
     }
 
     /// Check if a commutative expression exists in the set
-    fn find_commutative(
-        &self,
-        exp: &Expression,
-        left: &Expression,
-        right: &Expression,
-    ) -> Option<NodeId> {
+    fn find_commutative(&self, exp: &Expression, left: &Expression, right: &Expression) -> Option<NodeId> {
         let left_id = self.find_expression(left)?;
         let right_id = self.find_expression(right)?;
 
         let operator = exp.get_ave_operator();
 
-        if let Some(exp_id) = self.expr_map.get(&ExpressionType::BinaryOperation(
-            left_id,
-            right_id,
-            operator.clone(),
-        )) {
+        if let Some(exp_id) = self
+            .expr_map
+            .get(&ExpressionType::BinaryOperation(left_id, right_id, operator.clone()))
+        {
             Some(*exp_id)
         } else {
             self.expr_map
-                .get(&ExpressionType::BinaryOperation(
-                    right_id, left_id, operator,
-                ))
+                .get(&ExpressionType::BinaryOperation(right_id, left_id, operator))
                 .copied()
         }
     }
@@ -257,11 +234,9 @@ impl<'a, 'b: 'a> AvailableExpressionSet<'a> {
         match exp {
             Expression::Variable { .. } | Expression::FunctionArg { .. } => {
                 return Some(ave.add_variable_node(exp, self));
-            }
+            },
 
-            Expression::NumberLiteral { .. }
-            | Expression::BoolLiteral { .. }
-            | Expression::BytesLiteral { .. } => {
+            Expression::NumberLiteral { .. } | Expression::BoolLiteral { .. } | Expression::BytesLiteral { .. } => {
                 let key = exp.get_constant_expression_type();
 
                 let exp_id = if let Some(id) = self.expr_map.get(&key) {
@@ -271,21 +246,17 @@ impl<'a, 'b: 'a> AvailableExpressionSet<'a> {
                 };
 
                 return Some(exp_id);
-            }
+            },
 
             Expression::StringCompare { left, right, .. } => {
-                return if let (
-                    StringLocation::RunTime(operand_1),
-                    StringLocation::RunTime(operand_2),
-                ) = (left, right)
-                {
+                return if let (StringLocation::RunTime(operand_1), StringLocation::RunTime(operand_2)) = (left, right) {
                     self.process_commutative(exp, operand_1, operand_2, ave, cst)
                 } else {
                     None
                 };
-            }
+            },
 
-            _ => {}
+            _ => {},
         }
 
         // Process commutative expressions
@@ -376,36 +347,26 @@ impl<'a, 'b: 'a> AvailableExpressionSet<'a> {
     pub fn find_expression(&self, exp: &Expression) -> Option<NodeId> {
         match exp {
             Expression::FunctionArg { arg_no, .. } => {
-                return self
-                    .expr_map
-                    .get(&ExpressionType::FunctionArg(*arg_no))
-                    .copied();
-            }
+                return self.expr_map.get(&ExpressionType::FunctionArg(*arg_no)).copied();
+            },
 
             Expression::Variable { var_no, .. } => {
-                return self
-                    .expr_map
-                    .get(&ExpressionType::Variable(*var_no))
-                    .copied();
-            }
+                return self.expr_map.get(&ExpressionType::Variable(*var_no)).copied();
+            },
 
             //Expression::ConstantVariable(..)
-            Expression::NumberLiteral { .. }
-            | Expression::BoolLiteral { .. }
-            | Expression::BytesLiteral { .. } => {
+            Expression::NumberLiteral { .. } | Expression::BoolLiteral { .. } | Expression::BytesLiteral { .. } => {
                 let key = exp.get_constant_expression_type();
                 return self.expr_map.get(&key).copied();
-            }
+            },
 
             Expression::StringCompare { left, right, .. } => {
-                if let (StringLocation::RunTime(operand_1), StringLocation::RunTime(operand_2)) =
-                    (left, right)
-                {
+                if let (StringLocation::RunTime(operand_1), StringLocation::RunTime(operand_2)) = (left, right) {
                     return self.find_commutative(exp, operand_1, operand_2);
                 }
-            }
+            },
 
-            _ => {}
+            _ => {},
         }
 
         // Commutative expressions
@@ -420,9 +381,10 @@ impl<'a, 'b: 'a> AvailableExpressionSet<'a> {
 
             let operator = exp.get_ave_operator();
 
-            if let Some(exp_id) = self.expr_map.get(&ExpressionType::BinaryOperation(
-                left_id, right_id, operator,
-            )) {
+            if let Some(exp_id) = self
+                .expr_map
+                .get(&ExpressionType::BinaryOperation(left_id, right_id, operator))
+            {
                 return Some(*exp_id);
             }
 
@@ -434,10 +396,7 @@ impl<'a, 'b: 'a> AvailableExpressionSet<'a> {
             let id = self.find_expression(operand)?;
             let operator = exp.get_ave_operator();
 
-            if let Some(expr_id) = self
-                .expr_map
-                .get(&ExpressionType::UnaryOperation(id, operator))
-            {
+            if let Some(expr_id) = self.expr_map.get(&ExpressionType::UnaryOperation(id, operator)) {
                 return Some(*expr_id);
             }
 
@@ -465,14 +424,10 @@ impl<'a, 'b: 'a> AvailableExpressionSet<'a> {
         }
 
         let operator = exp.get_ave_operator();
-        let expr_type_1 =
-            ExpressionType::BinaryOperation(left_id.unwrap(), right_id.unwrap(), operator.clone());
-        let expr_type_2 =
-            ExpressionType::BinaryOperation(right_id.unwrap(), left_id.unwrap(), operator);
+        let expr_type_1 = ExpressionType::BinaryOperation(left_id.unwrap(), right_id.unwrap(), operator.clone());
+        let expr_type_2 = ExpressionType::BinaryOperation(right_id.unwrap(), left_id.unwrap(), operator);
 
-        let new_expr = if let Some(regen_var) =
-            cst.check_variable_available(&expr_type_1, &rebuilt_expr)
-        {
+        let new_expr = if let Some(regen_var) = cst.check_variable_available(&expr_type_1, &rebuilt_expr) {
             regen_var
         } else if let Some(regen_var) = cst.check_variable_available(&expr_type_2, &rebuilt_expr) {
             regen_var
@@ -540,15 +495,13 @@ impl<'a, 'b: 'a> AvailableExpressionSet<'a> {
             }
 
             let operator = exp.get_ave_operator();
-            let expr_type =
-                ExpressionType::BinaryOperation(left_id.unwrap(), right_id.unwrap(), operator);
+            let expr_type = ExpressionType::BinaryOperation(left_id.unwrap(), right_id.unwrap(), operator);
 
-            let new_expr =
-                if let Some(regen_expr) = cst.check_variable_available(&expr_type, &rebuild_expr) {
-                    regen_expr
-                } else {
-                    rebuild_expr
-                };
+            let new_expr = if let Some(regen_expr) = cst.check_variable_available(&expr_type, &rebuild_expr) {
+                regen_expr
+            } else {
+                rebuild_expr
+            };
 
             let node_id = if let Some(expr_id) = self.expr_map.get(&expr_type) {
                 *expr_id
@@ -571,12 +524,11 @@ impl<'a, 'b: 'a> AvailableExpressionSet<'a> {
             let operator = exp.get_ave_operator();
             let expr_type = ExpressionType::UnaryOperation(id.unwrap(), operator);
 
-            let new_expr =
-                if let Some(regen_expr) = cst.check_variable_available(&expr_type, &rebuilt_expr) {
-                    regen_expr
-                } else {
-                    rebuilt_expr
-                };
+            let new_expr = if let Some(regen_expr) = cst.check_variable_available(&expr_type, &rebuilt_expr) {
+                regen_expr
+            } else {
+                rebuilt_expr
+            };
 
             let node_id = if let Some(expr_id) = self.expr_map.get(&expr_type) {
                 *expr_id

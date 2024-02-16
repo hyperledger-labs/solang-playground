@@ -110,12 +110,7 @@ impl<'a> Dispatch<'a> {
     /// Create a new `Dispatch` struct that has all the data needed for building the dispatch logic.
     ///
     /// `ty` specifies whether to include constructors or functions.
-    fn new(
-        all_cfg: &'a [ControlFlowGraph],
-        ns: &'a mut Namespace,
-        opt: &'a Options,
-        ty: FunctionTy,
-    ) -> Self {
+    fn new(all_cfg: &'a [ControlFlowGraph], ns: &'a mut Namespace, opt: &'a Options, ty: FunctionTy) -> Self {
         let mut vartab = Vartable::new(ns.next_id);
         let mut cfg = new_cfg(ns, ty);
 
@@ -360,14 +355,7 @@ impl<'a> Dispatch<'a> {
             };
             self.add(Instr::ReturnData { data, data_len })
         } else {
-            let (data, data_len) = abi_encode(
-                &Codegen,
-                returns_expr,
-                self.ns,
-                &mut self.vartab,
-                &mut self.cfg,
-                false,
-            );
+            let (data, data_len) = abi_encode(&Codegen, returns_expr, self.ns, &mut self.vartab, &mut self.cfg, false);
             self.add(Instr::ReturnData { data, data_len });
         }
 
@@ -380,9 +368,7 @@ impl<'a> Dispatch<'a> {
             return;
         }
 
-        let true_block = self
-            .cfg
-            .new_basic_block(format!("func_{func_no}_got_value"));
+        let true_block = self.cfg.new_basic_block(format!("func_{func_no}_got_value"));
         let false_block = self.cfg.new_basic_block(format!("func_{func_no}_no_value"));
         self.add(Instr::BranchCond {
             cond: Expression::More {
@@ -423,17 +409,18 @@ impl<'a> Dispatch<'a> {
 
     /// Build calls to fallback or receive functions (if they are present in the contract).
     fn fallback_or_receive(&mut self) {
-        let (fallback_cfg, receive_cfg) = self.all_cfg.iter().enumerate().fold(
-            (None, None),
-            |(mut fallback_cfg, mut receive_cfg), (no, cfg)| {
-                match cfg.ty {
-                    FunctionTy::Fallback if cfg.public => fallback_cfg = Some(no),
-                    FunctionTy::Receive if cfg.public => receive_cfg = Some(no),
-                    _ => {}
-                }
-                (fallback_cfg, receive_cfg)
-            },
-        );
+        let (fallback_cfg, receive_cfg) =
+            self.all_cfg
+                .iter()
+                .enumerate()
+                .fold((None, None), |(mut fallback_cfg, mut receive_cfg), (no, cfg)| {
+                    match cfg.ty {
+                        FunctionTy::Fallback if cfg.public => fallback_cfg = Some(no),
+                        FunctionTy::Receive if cfg.public => receive_cfg = Some(no),
+                        _ => {},
+                    }
+                    (fallback_cfg, receive_cfg)
+                });
 
         // No need to check value transferred; we will abort either way
         if (fallback_cfg.is_none() && receive_cfg.is_none()) || self.ty == FunctionTy::Constructor {

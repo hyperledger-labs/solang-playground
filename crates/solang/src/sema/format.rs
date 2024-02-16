@@ -33,10 +33,7 @@ pub fn string_format(
 
         let ty = expr.ty();
 
-        resolved_args.push(
-            expr.cast(&arg.loc(), ty.deref_any(), true, ns, diagnostics)
-                .unwrap(),
-        );
+        resolved_args.push(expr.cast(&arg.loc(), ty.deref_any(), true, ns, diagnostics).unwrap());
     }
 
     let mut format_iterator = FormatIterator::new(literals).peekable();
@@ -75,10 +72,7 @@ pub fn string_format(
                 let specifier = parse_format_specifier(loc, &mut format_iterator, diagnostics)?;
 
                 if resolved_args.is_empty() {
-                    diagnostics.push(Diagnostic::error(
-                        loc,
-                        String::from("missing argument to format"),
-                    ));
+                    diagnostics.push(Diagnostic::error(loc, String::from("missing argument to format")));
                     return Err(());
                 }
 
@@ -108,9 +102,7 @@ pub fn string_format(
                 ) {
                     diagnostics.push(Diagnostic::error(
                         arg.loc(),
-                        String::from(
-                            "argument must be a bool, enum, address, contract, string, or bytes, int, uint",
-                        ),
+                        String::from("argument must be a bool, enum, address, contract, string, or bytes, int, uint"),
                     ));
                     return Err(());
                 }
@@ -162,29 +154,23 @@ fn parse_format_specifier(
                 Some((loc, 'x')) => {
                     arg = FormatArg::Hex;
                     last_loc = loc;
-                }
+                },
                 Some((loc, 'b')) => {
                     last_loc = loc;
 
                     arg = FormatArg::Binary;
-                }
+                },
                 Some((_, '}')) => {
                     return Ok(FormatArg::Default);
-                }
+                },
                 Some((loc, ch)) => {
-                    diagnostics.push(Diagnostic::error(
-                        loc,
-                        format!("unexpected format char '{ch}'"),
-                    ));
+                    diagnostics.push(Diagnostic::error(loc, format!("unexpected format char '{ch}'")));
                     return Err(());
-                }
+                },
                 None => {
-                    diagnostics.push(Diagnostic::error(
-                        last_loc,
-                        String::from("missing format specifier"),
-                    ));
+                    diagnostics.push(Diagnostic::error(last_loc, String::from("missing format specifier")));
                     return Err(());
-                }
+                },
             }
 
             match format_iterator.next() {
@@ -195,30 +181,21 @@ fn parse_format_specifier(
                         format!("unexpected format char '{ch}', expected closing '}}'"),
                     ));
                     Err(())
-                }
+                },
                 None => {
-                    diagnostics.push(Diagnostic::error(
-                        last_loc,
-                        String::from("missing closing '}'"),
-                    ));
+                    diagnostics.push(Diagnostic::error(last_loc, String::from("missing closing '}'")));
                     Err(())
-                }
+                },
             }
-        }
+        },
         Some((loc, ch)) => {
-            diagnostics.push(Diagnostic::error(
-                loc,
-                format!("unexpected format char '{ch}'"),
-            ));
+            diagnostics.push(Diagnostic::error(loc, format!("unexpected format char '{ch}'")));
             Err(())
-        }
+        },
         None => {
-            diagnostics.push(Diagnostic::error(
-                last_loc,
-                String::from("missing closing '}'"),
-            ));
+            diagnostics.push(Diagnostic::error(last_loc, String::from("missing closing '}'")));
             Err(())
-        }
+        },
     }
 }
 

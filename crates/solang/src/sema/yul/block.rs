@@ -4,9 +4,7 @@ use crate::sema::ast::Namespace;
 use crate::sema::expression::ExprContext;
 use crate::sema::symtable::{LoopScopes, Symtable};
 use crate::sema::yul::ast::{YulBlock, YulStatement};
-use crate::sema::yul::functions::{
-    process_function_header, resolve_function_definition, FunctionsTable,
-};
+use crate::sema::yul::functions::{process_function_header, resolve_function_definition, FunctionsTable};
 use crate::sema::yul::statements::resolve_yul_statement;
 use solang_parser::{
     diagnostics::Diagnostic,
@@ -28,15 +26,8 @@ pub fn resolve_yul_block(
     function_table.enter_scope();
     context.enter_scope();
 
-    let (body, mut next_reachable) = process_statements(
-        statements,
-        context,
-        reachable,
-        symtable,
-        loop_scope,
-        function_table,
-        ns,
-    );
+    let (body, mut next_reachable) =
+        process_statements(statements, context, reachable, symtable, loop_scope, function_table, ns);
 
     next_reachable &= reachable;
     context.leave_scope(symtable, *loc);
@@ -83,9 +74,7 @@ pub(crate) fn process_statements(
                 continue;
             };
 
-            if let Ok(resolved_func) =
-                resolve_function_definition(func_def, functions_table, context, ns)
-            {
+            if let Ok(resolved_func) = resolve_function_definition(func_def, functions_table, context, ns) {
                 functions_table.resolved_functions[index] = resolved_func;
             }
         }
@@ -113,21 +102,16 @@ pub(crate) fn process_statements(
                     }
                 The function definition is not unreachable, because it does not execute anything.
                 */
-                if !reachable
-                    && !has_unreachable
-                    && !matches!(item, pt::YulStatement::FunctionDefinition(..))
-                {
-                    ns.diagnostics.push(Diagnostic::warning(
-                        item.loc(),
-                        "unreachable yul statement".to_string(),
-                    ));
+                if !reachable && !has_unreachable && !matches!(item, pt::YulStatement::FunctionDefinition(..)) {
+                    ns.diagnostics
+                        .push(Diagnostic::warning(item.loc(), "unreachable yul statement".to_string()));
                     has_unreachable = true;
                 }
                 reachable &= can_reach_next_statement;
-            }
+            },
             Err(_) => {
                 break;
-            }
+            },
         }
     }
 

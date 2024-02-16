@@ -392,9 +392,7 @@ fn view_function() {
 
     let ns = parse(file);
     assert_eq!(ns.diagnostics.len(), 1);
-    assert!(ns
-        .diagnostics
-        .contains_message("found contract 'testTypes'"));
+    assert!(ns.diagnostics.contains_message("found contract 'testTypes'"));
 }
 
 #[test]
@@ -414,13 +412,7 @@ fn function_without_modifier() {
     "#;
     let ns = parse(file);
     assert_eq!(ns.diagnostics.len(), 3);
-    assert!(ns
-        .diagnostics
-        .contains_message("found contract 'testTypes'"));
-    assert!(ns
-        .diagnostics
-        .contains_message("yul variable 'x' has never been read"));
-    assert!(ns
-        .diagnostics
-        .contains_message("function can be declared 'view'"));
+    assert!(ns.diagnostics.contains_message("found contract 'testTypes'"));
+    assert!(ns.diagnostics.contains_message("yul variable 'x' has never been read"));
+    assert!(ns.diagnostics.contains_message("function can be declared 'view'"));
 }

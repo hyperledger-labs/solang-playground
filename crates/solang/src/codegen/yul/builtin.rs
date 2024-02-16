@@ -24,17 +24,13 @@ impl Expression {
     fn to_number_literal(&self) -> Expression {
         match self {
             Expression::BoolLiteral { loc, value } => {
-                let val = if *value {
-                    BigInt::from(1)
-                } else {
-                    BigInt::from(0)
-                };
+                let val = if *value { BigInt::from(1) } else { BigInt::from(0) };
                 Expression::NumberLiteral {
                     loc: *loc,
                     ty: Type::Uint(256),
                     value: val,
                 }
-            }
+            },
             _ => panic!("expression should not be converted into number literal"),
         }
     }
@@ -287,7 +283,7 @@ fn process_arithmetic(
                 right: Box::new(right.clone()),
             };
             branch_if_zero(right, expr, cfg, vartab)
-        }
+        },
         YulBuiltInFunction::SDiv => {
             let expr = Expression::SignedDivide {
                 loc: *loc,
@@ -296,7 +292,7 @@ fn process_arithmetic(
                 right: Box::new(right.clone()),
             };
             branch_if_zero(right, expr, cfg, vartab)
-        }
+        },
         YulBuiltInFunction::Mod => {
             let expr = Expression::UnsignedModulo {
                 loc: *loc,
@@ -305,7 +301,7 @@ fn process_arithmetic(
                 right: Box::new(right.clone()),
             };
             branch_if_zero(right, expr, cfg, vartab)
-        }
+        },
         YulBuiltInFunction::SMod => {
             let expr = Expression::SignedModulo {
                 loc: *loc,
@@ -314,7 +310,7 @@ fn process_arithmetic(
                 right: Box::new(right.clone()),
             };
             branch_if_zero(right, expr, cfg, vartab)
-        }
+        },
         YulBuiltInFunction::Exp => Expression::Power {
             loc: *loc,
             ty: left.ty(),
@@ -406,7 +402,7 @@ fn process_arithmetic(
                 args: vec![right, left, equalized_modulo],
             };
             branch_if_zero(modulo_operand, codegen_expr, cfg, vartab)
-        }
+        },
 
         _ => panic!("This is not a binary arithmetic operation!"),
     }
@@ -435,22 +431,12 @@ fn cast_to_number(expr: Expression, ns: &Namespace) -> Expression {
 }
 
 /// This function matches the type between the right and left hand sides of operations
-fn equalize_types(
-    mut left: Expression,
-    mut right: Expression,
-    ns: &Namespace,
-) -> (Expression, Expression) {
-    if matches!(
-        left,
-        Expression::BytesLiteral { .. } | Expression::BoolLiteral { .. }
-    ) {
+fn equalize_types(mut left: Expression, mut right: Expression, ns: &Namespace) -> (Expression, Expression) {
+    if matches!(left, Expression::BytesLiteral { .. } | Expression::BoolLiteral { .. }) {
         left = left.to_number_literal();
     }
 
-    if matches!(
-        right,
-        Expression::BytesLiteral { .. } | Expression::BoolLiteral { .. }
-    ) {
+    if matches!(right, Expression::BytesLiteral { .. } | Expression::BoolLiteral { .. }) {
         right = right.to_number_literal();
     }
 
@@ -624,9 +610,7 @@ fn byte_builtin(
     let op_shift_right = Expression::ShiftRight {
         loc: *loc,
         ty: Type::Uint(256),
-        left: Box::new(
-            expression(&args[1], contract_no, ns, vartab, cfg, opt).cast(&Type::Uint(256), ns),
-        ),
+        left: Box::new(expression(&args[1], contract_no, ns, vartab, cfg, opt).cast(&Type::Uint(256), ns)),
         right: Box::new(op_eight_times),
         signed: false,
     };

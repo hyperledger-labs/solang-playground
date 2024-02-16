@@ -103,9 +103,7 @@ fn parse_test() {
     let lex = Lexer::new(src, 0, &mut comments, &mut errors);
 
     let my_errs = &mut Vec::new();
-    let actual_parse_tree = solidity::SourceUnitParser::new()
-        .parse(src, 0, my_errs, lex)
-        .unwrap();
+    let actual_parse_tree = solidity::SourceUnitParser::new().parse(src, 0, my_errs, lex).unwrap();
     let expected_parse_tree = SourceUnit(vec![
         SourceUnitPart::ContractDefinition(Box::new(ContractDefinition {
             loc: Loc::File(0, 92, 702),
@@ -208,18 +206,8 @@ fn parse_test() {
                             name: "sum".to_string(),
                         })),
                         vec![
-                            Expression::NumberLiteral(
-                                Loc::File(0, 765, 766),
-                                "1".to_string(),
-                                "".to_string(),
-                                None,
-                            ),
-                            Expression::NumberLiteral(
-                                Loc::File(0, 768, 769),
-                                "1".to_string(),
-                                "".to_string(),
-                                None,
-                            ),
+                            Expression::NumberLiteral(Loc::File(0, 765, 766), "1".to_string(), "".to_string(), None),
+                            Expression::NumberLiteral(Loc::File(0, 768, 769), "1".to_string(), "".to_string(), None),
                         ],
                     ),
                     Some((
@@ -525,10 +513,7 @@ fn parse_error_test() {
                 Loc::File(0, 134, 199,),
                 "/// Insufficient balance for transfer. Needed `required` but only".to_owned(),
             ),
-            Comment::DocLine(
-                Loc::File(0, 212, 238,),
-                "/// `available` available.".to_owned(),
-            ),
+            Comment::DocLine(Loc::File(0, 212, 238,), "/// `available` available.".to_owned(),),
             Comment::DocLine(
                 Loc::File(0, 251, 290,),
                 "/// @param available balance available.".to_owned(),
@@ -582,417 +567,398 @@ fn test_assembly_parser() {
     let lex = Lexer::new(src, 0, &mut comments, &mut errors);
 
     let my_errs = &mut Vec::new();
-    let actual_parse_tree = solidity::SourceUnitParser::new()
-        .parse(src, 0, my_errs, lex)
-        .unwrap();
+    let actual_parse_tree = solidity::SourceUnitParser::new().parse(src, 0, my_errs, lex).unwrap();
 
-    let expected_parse_tree = SourceUnit(vec![SourceUnitPart::FunctionDefinition(Box::new(
-        FunctionDefinition {
-            loc_prototype: Loc::File(0, 17, 32),
-            loc: Loc::File(0, 17, 1045),
-            ty: FunctionTy::Function,
-            name: Some(Identifier {
-                loc: Loc::File(0, 26, 29),
-                name: "bar".to_string(),
-            }),
-            name_loc: Loc::File(0, 26, 29),
-            params: vec![],
-            attributes: vec![],
-            return_not_returns: None,
-            returns: vec![],
-            body: Some(Statement::Block {
-                loc: Loc::File(0, 32, 1045),
-                unchecked: false,
-                statements: vec![
-                    Statement::Assembly {
-                        loc: Loc::File(0, 54, 736),
-                        block: YulBlock {
-                            loc: Loc::File(0, 72, 736),
-                            statements: vec![
-                                YulStatement::VariableDeclaration(
-                                    Loc::File(0, 98, 108),
-                                    vec![YulTypedIdentifier {
+    let expected_parse_tree = SourceUnit(vec![SourceUnitPart::FunctionDefinition(Box::new(FunctionDefinition {
+        loc_prototype: Loc::File(0, 17, 32),
+        loc: Loc::File(0, 17, 1045),
+        ty: FunctionTy::Function,
+        name: Some(Identifier {
+            loc: Loc::File(0, 26, 29),
+            name: "bar".to_string(),
+        }),
+        name_loc: Loc::File(0, 26, 29),
+        params: vec![],
+        attributes: vec![],
+        return_not_returns: None,
+        returns: vec![],
+        body: Some(Statement::Block {
+            loc: Loc::File(0, 32, 1045),
+            unchecked: false,
+            statements: vec![
+                Statement::Assembly {
+                    loc: Loc::File(0, 54, 736),
+                    block: YulBlock {
+                        loc: Loc::File(0, 72, 736),
+                        statements: vec![
+                            YulStatement::VariableDeclaration(
+                                Loc::File(0, 98, 108),
+                                vec![YulTypedIdentifier {
+                                    loc: Loc::File(0, 102, 103),
+                                    id: Identifier {
                                         loc: Loc::File(0, 102, 103),
+                                        name: "x".to_string(),
+                                    },
+                                    ty: None,
+                                }],
+                                Some(YulExpression::NumberLiteral(
+                                    Loc::File(0, 107, 108),
+                                    "0".to_string(),
+                                    "".to_string(),
+                                    None,
+                                )),
+                            ),
+                            YulStatement::For(YulFor {
+                                loc: Loc::File(0, 133, 388),
+                                init_block: YulBlock {
+                                    loc: Loc::File(0, 137, 151),
+                                    statements: vec![YulStatement::VariableDeclaration(
+                                        Loc::File(0, 139, 149),
+                                        vec![YulTypedIdentifier {
+                                            loc: Loc::File(0, 143, 144),
+                                            id: Identifier {
+                                                loc: Loc::File(0, 143, 144),
+                                                name: "i".to_string(),
+                                            },
+                                            ty: None,
+                                        }],
+                                        Some(YulExpression::NumberLiteral(
+                                            Loc::File(0, 148, 149),
+                                            "0".to_string(),
+                                            "".to_string(),
+                                            None,
+                                        )),
+                                    )],
+                                },
+                                condition: YulExpression::FunctionCall(Box::new(YulFunctionCall {
+                                    loc: Loc::File(0, 152, 164),
+                                    id: Identifier {
+                                        loc: Loc::File(0, 152, 154),
+                                        name: "lt".to_string(),
+                                    },
+                                    arguments: vec![
+                                        YulExpression::Variable(Identifier {
+                                            loc: Loc::File(0, 155, 156),
+                                            name: "i".to_string(),
+                                        }),
+                                        YulExpression::HexNumberLiteral(
+                                            Loc::File(0, 158, 163),
+                                            "0x100".to_string(),
+                                            None,
+                                        ),
+                                    ],
+                                })),
+                                post_block: YulBlock {
+                                    loc: Loc::File(0, 165, 186),
+                                    statements: vec![YulStatement::Assign(
+                                        Loc::File(0, 167, 184),
+                                        vec![YulExpression::Variable(Identifier {
+                                            loc: Loc::File(0, 167, 168),
+                                            name: "i".to_string(),
+                                        })],
+                                        YulExpression::FunctionCall(Box::new(YulFunctionCall {
+                                            loc: Loc::File(0, 172, 184),
+                                            id: Identifier {
+                                                loc: Loc::File(0, 172, 175),
+                                                name: "add".to_string(),
+                                            },
+                                            arguments: vec![
+                                                YulExpression::Variable(Identifier {
+                                                    loc: Loc::File(0, 176, 177),
+                                                    name: "i".to_string(),
+                                                }),
+                                                YulExpression::HexNumberLiteral(
+                                                    Loc::File(0, 179, 183),
+                                                    "0x20".to_string(),
+                                                    None,
+                                                ),
+                                            ],
+                                        })),
+                                    )],
+                                },
+                                execution_block: YulBlock {
+                                    loc: Loc::File(0, 187, 388),
+                                    statements: vec![
+                                        YulStatement::Assign(
+                                            Loc::File(0, 217, 248),
+                                            vec![YulExpression::Variable(Identifier {
+                                                loc: Loc::File(0, 217, 218),
+                                                name: "x".to_string(),
+                                            })],
+                                            YulExpression::FunctionCall(Box::new(YulFunctionCall {
+                                                loc: Loc::File(0, 232, 248),
+                                                id: Identifier {
+                                                    loc: Loc::File(0, 232, 235),
+                                                    name: "add".to_string(),
+                                                },
+                                                arguments: vec![
+                                                    YulExpression::Variable(Identifier {
+                                                        loc: Loc::File(0, 236, 237),
+                                                        name: "x".to_string(),
+                                                    }),
+                                                    YulExpression::FunctionCall(Box::new(YulFunctionCall {
+                                                        loc: Loc::File(0, 239, 247),
+                                                        id: Identifier {
+                                                            loc: Loc::File(0, 239, 244),
+                                                            name: "mload".to_string(),
+                                                        },
+                                                        arguments: vec![YulExpression::Variable(Identifier {
+                                                            loc: Loc::File(0, 245, 246),
+                                                            name: "i".to_string(),
+                                                        })],
+                                                    })),
+                                                ],
+                                            })),
+                                        ),
+                                        YulStatement::If(
+                                            Loc::File(0, 278, 362),
+                                            YulExpression::FunctionCall(Box::new(YulFunctionCall {
+                                                loc: Loc::File(0, 281, 292),
+                                                id: Identifier {
+                                                    loc: Loc::File(0, 281, 283),
+                                                    name: "gt".to_string(),
+                                                },
+                                                arguments: vec![
+                                                    YulExpression::Variable(Identifier {
+                                                        loc: Loc::File(0, 284, 285),
+                                                        name: "i".to_string(),
+                                                    }),
+                                                    YulExpression::HexNumberLiteral(
+                                                        Loc::File(0, 287, 291),
+                                                        "0x10".to_string(),
+                                                        None,
+                                                    ),
+                                                ],
+                                            })),
+                                            YulBlock {
+                                                loc: Loc::File(0, 293, 362),
+                                                statements: vec![YulStatement::Break(Loc::File(0, 327, 332))],
+                                            },
+                                        ),
+                                    ],
+                                },
+                            }),
+                            YulStatement::VariableDeclaration(
+                                Loc::File(0, 414, 451),
+                                vec![
+                                    YulTypedIdentifier {
+                                        loc: Loc::File(0, 418, 425),
                                         id: Identifier {
-                                            loc: Loc::File(0, 102, 103),
-                                            name: "x".to_string(),
+                                            loc: Loc::File(0, 418, 419),
+                                            name: "h".to_string(),
+                                        },
+                                        ty: Some(Identifier {
+                                            loc: Loc::File(0, 422, 425),
+                                            name: "u32".to_string(),
+                                        }),
+                                    },
+                                    YulTypedIdentifier {
+                                        loc: Loc::File(0, 427, 428),
+                                        id: Identifier {
+                                            loc: Loc::File(0, 427, 428),
+                                            name: "y".to_string(),
                                         },
                                         ty: None,
-                                    }],
-                                    Some(YulExpression::NumberLiteral(
-                                        Loc::File(0, 107, 108),
-                                        "0".to_string(), "".to_string(),
-                                        None,
-                                    )),
-                                ),
-                                YulStatement::For(YulFor {
-                                    loc: Loc::File(0, 133, 388),
-                                    init_block: YulBlock {
-                                        loc: Loc::File(0, 137, 151),
-                                        statements: vec![YulStatement::VariableDeclaration(
-                                            Loc::File(0, 139, 149),
-                                            vec![YulTypedIdentifier {
-                                                loc: Loc::File(0, 143, 144),
-                                                id: Identifier {
-                                                    loc: Loc::File(0, 143, 144),
-                                                    name: "i".to_string(),
-                                                },
-                                                ty: None,
-                                            }],
-                                            Some(YulExpression::NumberLiteral(
-                                                Loc::File(0, 148, 149),
-                                                "0".to_string(), "".to_string(),
-                                                None,
-                                            )),
-                                        )],
                                     },
-                                    condition: YulExpression::FunctionCall(Box::new(YulFunctionCall {
-                                        loc: Loc::File(0, 152, 164),
+                                    YulTypedIdentifier {
+                                        loc: Loc::File(0, 430, 437),
                                         id: Identifier {
-                                            loc: Loc::File(0, 152, 154),
-                                            name: "lt".to_string(),
+                                            loc: Loc::File(0, 430, 431),
+                                            name: "z".to_string(),
                                         },
-                                        arguments: vec![
-                                            YulExpression::Variable(Identifier {
-                                                loc: Loc::File(0, 155, 156),
-                                                name: "i".to_string(),
-                                            }),
-                                            YulExpression::HexNumberLiteral(
-                                                Loc::File(0, 158, 163),
-                                                "0x100".to_string(),
-                                                None,
-                                            ),
-                                        ],
-                                    })),
-                                    post_block: YulBlock {
-                                        loc: Loc::File(0, 165, 186),
-                                        statements: vec![YulStatement::Assign(
-                                            Loc::File(0, 167, 184),
-                                            vec![YulExpression::Variable(Identifier {
-                                                loc: Loc::File(0, 167, 168),
-                                                name: "i".to_string(),
-                                            })],
-                                            YulExpression::FunctionCall(Box::new(
-                                                YulFunctionCall {
-                                                    loc: Loc::File(0, 172, 184),
-                                                    id: Identifier {
-                                                        loc: Loc::File(0, 172, 175),
-                                                        name: "add".to_string(),
-                                                    },
-                                                    arguments: vec![
-                                                        YulExpression::Variable(Identifier {
-                                                            loc: Loc::File(0, 176, 177),
-                                                            name: "i".to_string(),
-                                                        }),
-                                                        YulExpression::HexNumberLiteral(
-                                                            Loc::File(0, 179, 183),
-                                                            "0x20".to_string(),
-                                                            None,
-                                                        ),
-                                                    ],
-                                                },
-                                            )),
-                                        )],
+                                        ty: Some(Identifier {
+                                            loc: Loc::File(0, 434, 437),
+                                            name: "u16".to_string(),
+                                        }),
                                     },
-                                    execution_block: YulBlock {
-                                        loc: Loc::File(0, 187, 388),
-                                        statements: vec![
-                                            YulStatement::Assign(
-                                                Loc::File(0, 217, 248),
-                                                vec![YulExpression::Variable(Identifier {
-                                                    loc: Loc::File(0, 217, 218),
-                                                    name: "x".to_string(),
-                                                })],
-                                                YulExpression::FunctionCall(Box::new(
-                                                    YulFunctionCall {
-                                                        loc: Loc::File(0, 232, 248),
-                                                        id: Identifier {
-                                                            loc: Loc::File(0, 232, 235),
-                                                            name: "add".to_string(),
-                                                        },
-                                                        arguments: vec![
-                                                            YulExpression::Variable(Identifier {
-                                                                loc: Loc::File(0, 236, 237),
-                                                                name: "x".to_string(),
-                                                            }),
-                                                            YulExpression::FunctionCall(Box::new(
-                                                                YulFunctionCall {
-                                                                    loc: Loc::File(0, 239, 247),
-                                                                    id: Identifier {
-                                                                        loc: Loc::File(0, 239, 244),
-                                                                        name: "mload".to_string(),
-                                                                    },
-                                                                    arguments: vec![
-                                                                        YulExpression::Variable(
-                                                                            Identifier {
-                                                                                loc: Loc::File(0, 245, 246),
-                                                                                name: "i".to_string(),
-                                                                            },
-                                                                        ),
-                                                                    ],
-                                                                },
-                                                            )),
-                                                        ],
-                                                    },
-                                                )),
-                                            ),
-                                            YulStatement::If(
-                                                Loc::File(0, 278, 362),
-                                                YulExpression::FunctionCall(Box::new(
-                                                    YulFunctionCall {
-                                                        loc: Loc::File(0, 281, 292),
-                                                        id: Identifier {
-                                                            loc: Loc::File(0, 281, 283),
-                                                            name: "gt".to_string(),
-                                                        },
-                                                        arguments: vec![
-                                                            YulExpression::Variable(Identifier {
-                                                                loc: Loc::File(0, 284, 285),
-                                                                name: "i".to_string(),
-                                                            }),
-                                                            YulExpression::HexNumberLiteral(
-                                                                Loc::File(0, 287, 291),
-                                                                "0x10".to_string(),
-                                                                None,
-                                                            ),
-                                                        ],
-                                                    },
-                                                )),
-                                                YulBlock {
-                                                    loc: Loc::File(0, 293, 362),
-                                                    statements: vec![YulStatement::Break(Loc::File(0, 327, 332))],
-                                                },
-                                            ),
-                                        ],
+                                ],
+                                Some(YulExpression::FunctionCall(Box::new(YulFunctionCall {
+                                    loc: Loc::File(0, 441, 451),
+                                    id: Identifier {
+                                        loc: Loc::File(0, 441, 449),
+                                        name: "funcCall".to_string(),
                                     },
-                            }),
-                                YulStatement::VariableDeclaration(
-                                    Loc::File(0, 414, 451),
-                                    vec![
-                                        YulTypedIdentifier {
-                                            loc: Loc::File(0, 418, 425),
+                                    arguments: vec![],
+                                }))),
+                            ),
+                            YulStatement::Switch(YulSwitch {
+                                loc: Loc::File(0, 477, 714),
+                                condition: YulExpression::Variable(Identifier {
+                                    loc: Loc::File(0, 484, 485),
+                                    name: "x".to_string(),
+                                }),
+                                cases: vec![YulSwitchOptions::Case(
+                                    Loc::File(0, 510, 620),
+                                    YulExpression::NumberLiteral(
+                                        Loc::File(0, 515, 516),
+                                        "0".to_string(),
+                                        "".to_string(),
+                                        None,
+                                    ),
+                                    YulBlock {
+                                        loc: Loc::File(0, 517, 620),
+                                        statements: vec![YulStatement::FunctionCall(Box::new(YulFunctionCall {
+                                            loc: Loc::File(0, 547, 559),
                                             id: Identifier {
-                                                loc: Loc::File(0, 418, 419),
-                                                name: "h".to_string(),
+                                                loc: Loc::File(0, 547, 553),
+                                                name: "revert".to_string(),
                                             },
-                                            ty: Some(Identifier {
-                                                loc: Loc::File(0, 422, 425),
-                                                name: "u32".to_string(),
-                                            }),
-                                        },
-                                        YulTypedIdentifier {
-                                            loc: Loc::File(0, 427, 428),
+                                            arguments: vec![
+                                                YulExpression::NumberLiteral(
+                                                    Loc::File(0, 554, 555),
+                                                    "0".to_string(),
+                                                    "".to_string(),
+                                                    None,
+                                                ),
+                                                YulExpression::NumberLiteral(
+                                                    Loc::File(0, 557, 558),
+                                                    "0".to_string(),
+                                                    "".to_string(),
+                                                    None,
+                                                ),
+                                            ],
+                                        }))],
+                                    },
+                                )],
+                                default: Some(YulSwitchOptions::Default(
+                                    Loc::File(0, 645, 714),
+                                    YulBlock {
+                                        loc: Loc::File(0, 653, 714),
+                                        statements: vec![YulStatement::Leave(Loc::File(0, 683, 688))],
+                                    },
+                                )),
+                            }),
+                        ],
+                    },
+                    dialect: Some(StringLiteral {
+                        loc: Loc::File(0, 63, 71),
+                        unicode: false,
+                        string: "evmasm".to_string(),
+                    }),
+                    flags: None,
+                },
+                Statement::Assembly {
+                    loc: Loc::File(0, 758, 1027),
+                    block: YulBlock {
+                        loc: Loc::File(0, 767, 1027),
+                        statements: vec![YulStatement::FunctionDefinition(Box::new(YulFunctionDefinition {
+                            loc: Loc::File(0, 794, 1005),
+                            id: Identifier {
+                                loc: Loc::File(0, 803, 808),
+                                name: "power".to_string(),
+                            },
+                            params: vec![
+                                YulTypedIdentifier {
+                                    loc: Loc::File(0, 809, 820),
+                                    id: Identifier {
+                                        loc: Loc::File(0, 809, 813),
+                                        name: "base".to_string(),
+                                    },
+                                    ty: Some(Identifier {
+                                        loc: Loc::File(0, 816, 820),
+                                        name: "u256".to_string(),
+                                    }),
+                                },
+                                YulTypedIdentifier {
+                                    loc: Loc::File(0, 822, 830),
+                                    id: Identifier {
+                                        loc: Loc::File(0, 822, 830),
+                                        name: "exponent".to_string(),
+                                    },
+                                    ty: None,
+                                },
+                            ],
+                            returns: vec![YulTypedIdentifier {
+                                loc: Loc::File(0, 835, 841),
+                                id: Identifier {
+                                    loc: Loc::File(0, 835, 841),
+                                    name: "result".to_string(),
+                                },
+                                ty: None,
+                            }],
+                            body: YulBlock {
+                                loc: Loc::File(0, 866, 1005),
+                                statements: vec![
+                                    YulStatement::VariableDeclaration(
+                                        Loc::File(0, 896, 940),
+                                        vec![YulTypedIdentifier {
+                                            loc: Loc::File(0, 900, 901),
                                             id: Identifier {
-                                                loc: Loc::File(0, 427, 428),
+                                                loc: Loc::File(0, 900, 901),
                                                 name: "y".to_string(),
                                             },
                                             ty: None,
-                                        },
-                                        YulTypedIdentifier {
-                                            loc: Loc::File(0, 430, 437),
+                                        }],
+                                        Some(YulExpression::FunctionCall(Box::new(YulFunctionCall {
+                                            loc: Loc::File(0, 905, 940),
                                             id: Identifier {
-                                                loc: Loc::File(0, 430, 431),
-                                                name: "z".to_string(),
+                                                loc: Loc::File(0, 905, 908),
+                                                name: "and".to_string(),
                                             },
-                                            ty: Some(Identifier {
-                                                loc: Loc::File(0, 434, 437),
-                                                name: "u16".to_string(),
-                                            }),
-                                        },
-                                    ],
-                                    Some(YulExpression::FunctionCall(Box::new(
-                                        YulFunctionCall {
-                                            loc: Loc::File(0, 441, 451),
-                                            id: Identifier {
-                                                loc: Loc::File(0, 441, 449),
-                                                name: "funcCall".to_string(),
-                                            },
-                                            arguments: vec![],
-                                        },
-                                    ))),
-                                ),
-                                YulStatement::Switch(YulSwitch {
-                                    loc: Loc::File(0, 477, 714),
-                                    condition: YulExpression::Variable(Identifier {
-                                        loc: Loc::File(0, 484, 485),
-                                        name: "x".to_string(),
-                                    }),
-                                    cases: vec![YulSwitchOptions::Case(
-                                        Loc::File(0, 510, 620),
-                                        YulExpression::NumberLiteral(
-                                            Loc::File(0, 515, 516),
-                                            "0".to_string(), "".to_string(),
-                                            None,
-                                        ),
-                                        YulBlock {
-                                            loc: Loc::File(0, 517, 620),
-                                            statements: vec![YulStatement::FunctionCall(Box::new(
-                                                YulFunctionCall {
-                                                    loc: Loc::File(0, 547, 559),
+                                            arguments: vec![
+                                                YulExpression::StringLiteral(
+                                                    StringLiteral {
+                                                        loc: Loc::File(0, 909, 914),
+                                                        unicode: false,
+                                                        string: "abc".to_string(),
+                                                    },
+                                                    Some(Identifier {
+                                                        loc: Loc::File(0, 915, 918),
+                                                        name: "u32".to_string(),
+                                                    }),
+                                                ),
+                                                YulExpression::FunctionCall(Box::new(YulFunctionCall {
+                                                    loc: Loc::File(0, 920, 939),
                                                     id: Identifier {
-                                                        loc: Loc::File(0, 547, 553),
-                                                        name: "revert".to_string(),
+                                                        loc: Loc::File(0, 920, 923),
+                                                        name: "add".to_string(),
                                                     },
                                                     arguments: vec![
                                                         YulExpression::NumberLiteral(
-                                                            Loc::File(0, 554, 555),
-                                                            "0".to_string(), "".to_string(),
-                                                            None,
+                                                            Loc::File(0, 924, 930),
+                                                            "3".to_string(),
+                                                            "".to_string(),
+                                                            Some(Identifier {
+                                                                loc: Loc::File(0, 926, 930),
+                                                                name: "u256".to_string(),
+                                                            }),
                                                         ),
                                                         YulExpression::NumberLiteral(
-                                                            Loc::File(0, 557, 558),
-                                                            "0".to_string(), "".to_string(),
-                                                            None,
+                                                            Loc::File(0, 932, 938),
+                                                            "2".to_string(),
+                                                            "".to_string(),
+                                                            Some(Identifier {
+                                                                loc: Loc::File(0, 934, 938),
+                                                                name: "u256".to_string(),
+                                                            }),
                                                         ),
                                                     ],
-                                                },
-                                            ))],
-                                        }
-                                    )],
-                                    default: Some(YulSwitchOptions::Default(
-                                        Loc::File(0, 645, 714),
-                                        YulBlock {
-                                            loc: Loc::File(0, 653, 714),
-                                            statements: vec![YulStatement::Leave(Loc::File(0, 683, 688))],
-                                        }
-                                    )),
-                            }),
-                            ],
-                        },
-                        dialect: Some(StringLiteral {
-                            loc: Loc::File(0, 63, 71),
-                            unicode: false,
-                            string: "evmasm".to_string(),
-                        }),
-                        flags: None,
-                    },
-                    Statement::Assembly {
-                        loc: Loc::File(0, 758, 1027),
-                        block: YulBlock {
-                          loc: Loc::File(0, 767, 1027),
-                            statements: vec![YulStatement::FunctionDefinition(Box::new(
-                                YulFunctionDefinition {
-                                    loc: Loc::File(0, 794, 1005),
-                                    id: Identifier {
-                                        loc: Loc::File(0, 803, 808),
-                                        name: "power".to_string(),
-                                    },
-                                    params: vec![
-                                        YulTypedIdentifier {
-                                            loc: Loc::File(0, 809, 820),
+                                                })),
+                                            ],
+                                        }))),
+                                    ),
+                                    YulStatement::VariableDeclaration(
+                                        Loc::File(0, 969, 979),
+                                        vec![YulTypedIdentifier {
+                                            loc: Loc::File(0, 973, 979),
                                             id: Identifier {
-                                                loc: Loc::File(0, 809, 813),
-                                                name: "base".to_string(),
-                                            },
-                                            ty: Some(Identifier {
-                                                loc: Loc::File(0, 816, 820),
-                                                name: "u256".to_string(),
-                                            }),
-                                        },
-                                        YulTypedIdentifier {
-                                            loc: Loc::File(0, 822, 830),
-                                            id: Identifier {
-                                                loc: Loc::File(0, 822, 830),
-                                                name: "exponent".to_string(),
+                                                loc: Loc::File(0, 973, 979),
+                                                name: "result".to_string(),
                                             },
                                             ty: None,
-                                        },
-                                    ],
-                                    returns: vec![YulTypedIdentifier {
-                                        loc: Loc::File(0, 835, 841),
-                                        id: Identifier {
-                                            loc: Loc::File(0, 835, 841),
-                                            name: "result".to_string(),
-                                        },
-                                        ty: None,
-                                    }],
-                                    body: YulBlock {
-                                        loc: Loc::File(0, 866, 1005),
-                                        statements:  vec![
-                                            YulStatement::VariableDeclaration(
-                                                Loc::File(0, 896, 940),
-                                                vec![YulTypedIdentifier {
-                                                    loc: Loc::File(0, 900, 901),
-                                                    id: Identifier {
-                                                        loc: Loc::File(0, 900, 901),
-                                                        name: "y".to_string(),
-                                                    },
-                                                    ty: None,
-                                                }],
-                                                Some(YulExpression::FunctionCall(Box::new(
-                                                    YulFunctionCall {
-                                                        loc: Loc::File(0, 905, 940),
-                                                        id: Identifier {
-                                                            loc: Loc::File(0, 905, 908),
-                                                            name: "and".to_string(),
-                                                        },
-                                                        arguments: vec![
-                                                            YulExpression::StringLiteral(
-                                                                StringLiteral {
-                                                                    loc: Loc::File(0, 909, 914),
-                                                                    unicode: false,
-                                                                    string: "abc".to_string(),
-                                                                },
-                                                                Some(Identifier {
-                                                                    loc: Loc::File(0, 915, 918),
-                                                                    name: "u32".to_string(),
-                                                                }),
-                                                            ),
-                                                            YulExpression::FunctionCall(Box::new(
-                                                                YulFunctionCall {
-                                                                    loc: Loc::File(0, 920, 939),
-                                                                    id: Identifier {
-                                                                        loc: Loc::File(0, 920, 923),
-                                                                        name: "add".to_string(),
-                                                                    },
-                                                                    arguments: vec![
-                                                                        YulExpression::NumberLiteral(
-                                                                            Loc::File(0, 924, 930),
-                                                                            "3".to_string(), "".to_string(),
-                                                                            Some(Identifier {
-                                                                                loc: Loc::File(0, 926, 930),
-                                                                                name: "u256".to_string(),
-                                                                            }),
-                                                                        ),
-                                                                        YulExpression::NumberLiteral(
-                                                                            Loc::File(0, 932, 938),
-                                                                            "2".to_string(), "".to_string(),
-                                                                            Some(Identifier {
-                                                                                loc: Loc::File(0, 934, 938),
-                                                                                name: "u256".to_string(),
-                                                                            }),
-                                                                        ),
-                                                                    ],
-                                                                },
-                                                            )),
-                                                        ],
-                                                    },
-                                                ))),
-                                            ),
-                                            YulStatement::VariableDeclaration(
-                                                Loc::File(0, 969, 979),
-                                                vec![YulTypedIdentifier {
-                                                    loc: Loc::File(0, 973, 979),
-                                                    id: Identifier {
-                                                        loc: Loc::File(0, 973, 979),
-                                                        name: "result".to_string(),
-                                                    },
-                                                    ty: None,
-                                                }],
-                                                None,
-                                            ),
-                                        ],
-                                    }
-                                },
-                            ))],
-                        },
-                        dialect: None,
-                        flags: None,
+                                        }],
+                                        None,
+                                    ),
+                                ],
+                            },
+                        }))],
                     },
-                ],
-            }),
-        },
-    ))]);
+                    dialect: None,
+                    flags: None,
+                },
+            ],
+        }),
+    }))]);
 
     assert_eq!(expected_parse_tree, actual_parse_tree);
 
@@ -1019,60 +985,58 @@ fn parse_revert_test() {
     let (actual_parse_tree, _) = crate::parse(src, 0).unwrap();
     assert_eq!(actual_parse_tree.0.len(), 1);
 
-    let expected_parse_tree = SourceUnit(vec![SourceUnitPart::ContractDefinition(Box::new(
-        ContractDefinition {
-            loc: Loc::File(0, 9, 150),
-            ty: ContractTy::Contract(Loc::File(0, 9, 17)),
-            name: Some(Identifier {
-                loc: Loc::File(0, 18, 27),
-                name: "TestToken".to_string(),
-            }),
-            base: vec![],
-            parts: vec![
-                ContractPart::ErrorDefinition(Box::new(ErrorDefinition {
-                    loc: Loc::File(0, 42, 59),
-                    keyword: Expression::Variable(Identifier {
-                        loc: Loc::File(0, 42, 47),
-                        name: "error".to_string(),
-                    }),
-                    name: Some(Identifier {
-                        loc: Loc::File(0, 48, 57),
-                        name: "BAR_ERROR".to_string(),
-                    }),
-                    fields: vec![],
-                })),
-                ContractPart::FunctionDefinition(Box::new(FunctionDefinition {
-                    loc_prototype: Loc::File(0, 73, 89),
-                    loc: Loc::File(0, 73, 140),
-                    ty: FunctionTy::Function,
-                    name: Some(Identifier {
-                        loc: Loc::File(0, 82, 85),
-                        name: "foo".to_string(),
-                    }),
-                    name_loc: Loc::File(0, 82, 85),
-                    params: vec![],
-                    attributes: vec![],
-                    return_not_returns: None,
-                    returns: vec![],
-                    body: Some(Statement::Block {
-                        loc: Loc::File(0, 89, 140),
-                        unchecked: false,
-                        statements: vec![Statement::Revert(
-                            Loc::File(0, 107, 125),
-                            Some(IdentifierPath {
+    let expected_parse_tree = SourceUnit(vec![SourceUnitPart::ContractDefinition(Box::new(ContractDefinition {
+        loc: Loc::File(0, 9, 150),
+        ty: ContractTy::Contract(Loc::File(0, 9, 17)),
+        name: Some(Identifier {
+            loc: Loc::File(0, 18, 27),
+            name: "TestToken".to_string(),
+        }),
+        base: vec![],
+        parts: vec![
+            ContractPart::ErrorDefinition(Box::new(ErrorDefinition {
+                loc: Loc::File(0, 42, 59),
+                keyword: Expression::Variable(Identifier {
+                    loc: Loc::File(0, 42, 47),
+                    name: "error".to_string(),
+                }),
+                name: Some(Identifier {
+                    loc: Loc::File(0, 48, 57),
+                    name: "BAR_ERROR".to_string(),
+                }),
+                fields: vec![],
+            })),
+            ContractPart::FunctionDefinition(Box::new(FunctionDefinition {
+                loc_prototype: Loc::File(0, 73, 89),
+                loc: Loc::File(0, 73, 140),
+                ty: FunctionTy::Function,
+                name: Some(Identifier {
+                    loc: Loc::File(0, 82, 85),
+                    name: "foo".to_string(),
+                }),
+                name_loc: Loc::File(0, 82, 85),
+                params: vec![],
+                attributes: vec![],
+                return_not_returns: None,
+                returns: vec![],
+                body: Some(Statement::Block {
+                    loc: Loc::File(0, 89, 140),
+                    unchecked: false,
+                    statements: vec![Statement::Revert(
+                        Loc::File(0, 107, 125),
+                        Some(IdentifierPath {
+                            loc: Loc::File(0, 114, 123),
+                            identifiers: vec![Identifier {
                                 loc: Loc::File(0, 114, 123),
-                                identifiers: vec![Identifier {
-                                    loc: Loc::File(0, 114, 123),
-                                    name: "BAR_ERROR".to_string(),
-                                }],
-                            }),
-                            vec![],
-                        )],
-                    }),
-                })),
-            ],
-        },
-    ))]);
+                                name: "BAR_ERROR".to_string(),
+                            }],
+                        }),
+                        vec![],
+                    )],
+                }),
+            })),
+        ],
+    }))]);
 
     assert_eq!(actual_parse_tree, expected_parse_tree);
 }
@@ -1189,25 +1153,21 @@ fn test_libsolidity() {
     let source_delimiter = regex::Regex::new(r"====.*====").unwrap();
     let error_matcher = regex::Regex::new(r"// ----\r?\n// \w+( \d+)?:").unwrap();
 
-    let semantic_tests = WalkDir::new(
-        Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("../testdata/solidity/test/libsolidity/semanticTests"),
-    )
-    .into_iter()
-    .collect::<Result<Vec<_>, _>>()
-    .unwrap()
-    .into_iter()
-    .map(|entry| (false, entry));
+    let semantic_tests =
+        WalkDir::new(Path::new(env!("CARGO_MANIFEST_DIR")).join("../testdata/solidity/test/libsolidity/semanticTests"))
+            .into_iter()
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap()
+            .into_iter()
+            .map(|entry| (false, entry));
 
-    let syntax_tests = WalkDir::new(
-        Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("../testdata/solidity/test/libsolidity/syntaxTests"),
-    )
-    .into_iter()
-    .collect::<Result<Vec<_>, _>>()
-    .unwrap()
-    .into_iter()
-    .map(|entry| (true, entry));
+    let syntax_tests =
+        WalkDir::new(Path::new(env!("CARGO_MANIFEST_DIR")).join("../testdata/solidity/test/libsolidity/syntaxTests"))
+            .into_iter()
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap()
+            .into_iter()
+            .map(|entry| (true, entry));
 
     let errors = semantic_tests
         .into_iter()
@@ -1216,9 +1176,7 @@ fn test_libsolidity() {
             if entry.file_name().to_string_lossy().ends_with(".sol") {
                 let source = match fs::read_to_string(entry.path()) {
                     Ok(source) => source,
-                    Err(err) if matches!(err.kind(), std::io::ErrorKind::InvalidData) => {
-                        return Ok(vec![])
-                    }
+                    Err(err) if matches!(err.kind(), std::io::ErrorKind::InvalidData) => return Ok(vec![]),
                     Err(err) => return Err(err.to_string()),
                 };
 
@@ -1244,9 +1202,7 @@ fn test_libsolidity() {
         .into_iter()
         .flatten()
         .filter_map(|(path, expect_error, source_part)| {
-            let result = match timeout_after(Duration::from_secs(5), move || {
-                crate::parse(&source_part, 0)
-            }) {
+            let result = match timeout_after(Duration::from_secs(5), move || crate::parse(&source_part, 0)) {
                 Ok(result) => result,
                 Err(err) => return Some(format!("{path:?}: \n\t{err}")),
             };

@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::codegen::cfg::{
-    optimize_and_check_cfg, populate_arguments, populate_named_returns, ASTFunction,
-    ControlFlowGraph, Instr,
+    optimize_and_check_cfg, populate_arguments, populate_named_returns, ASTFunction, ControlFlowGraph, Instr,
 };
 use crate::codegen::statements::LoopScopes;
 use crate::codegen::vartable::Vartable;
@@ -48,14 +47,8 @@ pub(crate) fn generate_yul_function_cfg(
 }
 
 /// Generate the CFG containing all the instructions from a YUL function
-fn yul_function_cfg(
-    contract_no: usize,
-    function_no: usize,
-    ns: &mut Namespace,
-    opt: &Options,
-) -> ControlFlowGraph {
-    let mut vartab =
-        Vartable::from_symbol_table(&ns.yul_functions[function_no].symtable, ns.next_id);
+fn yul_function_cfg(contract_no: usize, function_no: usize, ns: &mut Namespace, opt: &Options) -> ControlFlowGraph {
+    let mut vartab = Vartable::from_symbol_table(&ns.yul_functions[function_no].symtable, ns.next_id);
 
     let mut loops = LoopScopes::new();
     let yul_func = &ns.yul_functions[function_no];

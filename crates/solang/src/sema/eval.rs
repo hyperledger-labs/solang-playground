@@ -32,30 +32,19 @@ pub fn eval_const_number(
     diagnostics: &mut Diagnostics,
 ) -> Result<(pt::Loc, BigInt), EvaluationError> {
     match expr {
-        Expression::Add {
-            loc, left, right, ..
-        } => Ok((
+        Expression::Add { loc, left, right, .. } => Ok((
             *loc,
-            eval_const_number(left, ns, diagnostics)?.1
-                + eval_const_number(right, ns, diagnostics)?.1,
+            eval_const_number(left, ns, diagnostics)?.1 + eval_const_number(right, ns, diagnostics)?.1,
         )),
-        Expression::Subtract {
-            loc, left, right, ..
-        } => Ok((
+        Expression::Subtract { loc, left, right, .. } => Ok((
             *loc,
-            eval_const_number(left, ns, diagnostics)?.1
-                - eval_const_number(right, ns, diagnostics)?.1,
+            eval_const_number(left, ns, diagnostics)?.1 - eval_const_number(right, ns, diagnostics)?.1,
         )),
-        Expression::Multiply {
-            loc, left, right, ..
-        } => Ok((
+        Expression::Multiply { loc, left, right, .. } => Ok((
             *loc,
-            eval_const_number(left, ns, diagnostics)?.1
-                * eval_const_number(right, ns, diagnostics)?.1,
+            eval_const_number(left, ns, diagnostics)?.1 * eval_const_number(right, ns, diagnostics)?.1,
         )),
-        Expression::Divide {
-            loc, left, right, ..
-        } => {
+        Expression::Divide { loc, left, right, .. } => {
             let divisor = eval_const_number(right, ns, diagnostics)?.1;
 
             if divisor.is_zero() {
@@ -65,10 +54,8 @@ pub fn eval_const_number(
             } else {
                 Ok((*loc, eval_const_number(left, ns, diagnostics)?.1 / divisor))
             }
-        }
-        Expression::Modulo {
-            loc, left, right, ..
-        } => {
+        },
+        Expression::Modulo { loc, left, right, .. } => {
             let divisor = eval_const_number(right, ns, diagnostics)?.1;
 
             if divisor.is_zero() {
@@ -78,27 +65,18 @@ pub fn eval_const_number(
             } else {
                 Ok((*loc, eval_const_number(left, ns, diagnostics)?.1 % divisor))
             }
-        }
-        Expression::BitwiseAnd {
-            loc, left, right, ..
-        } => Ok((
+        },
+        Expression::BitwiseAnd { loc, left, right, .. } => Ok((
             *loc,
-            eval_const_number(left, ns, diagnostics)?.1
-                & eval_const_number(right, ns, diagnostics)?.1,
+            eval_const_number(left, ns, diagnostics)?.1 & eval_const_number(right, ns, diagnostics)?.1,
         )),
-        Expression::BitwiseOr {
-            loc, left, right, ..
-        } => Ok((
+        Expression::BitwiseOr { loc, left, right, .. } => Ok((
             *loc,
-            eval_const_number(left, ns, diagnostics)?.1
-                | eval_const_number(right, ns, diagnostics)?.1,
+            eval_const_number(left, ns, diagnostics)?.1 | eval_const_number(right, ns, diagnostics)?.1,
         )),
-        Expression::BitwiseXor {
-            loc, left, right, ..
-        } => Ok((
+        Expression::BitwiseXor { loc, left, right, .. } => Ok((
             *loc,
-            eval_const_number(left, ns, diagnostics)?.1
-                ^ eval_const_number(right, ns, diagnostics)?.1,
+            eval_const_number(left, ns, diagnostics)?.1 ^ eval_const_number(right, ns, diagnostics)?.1,
         )),
         Expression::Power { loc, base, exp, .. } => {
             let b = eval_const_number(base, ns, diagnostics)?.1;
@@ -122,10 +100,8 @@ pub fn eval_const_number(
                 }
                 Ok((*loc, res))
             }
-        }
-        Expression::ShiftLeft {
-            loc, left, right, ..
-        } => {
+        },
+        Expression::ShiftLeft { loc, left, right, .. } => {
             let l = eval_const_number(left, ns, diagnostics)?.1;
             let r = eval_const_number(right, ns, diagnostics)?.1;
             let r = match r.to_usize() {
@@ -134,13 +110,11 @@ pub fn eval_const_number(
                     diagnostics.push(Diagnostic::error(*loc, format!("cannot left shift by {r}")));
 
                     return Err(EvaluationError::MathError);
-                }
+                },
             };
             Ok((*loc, l << r))
-        }
-        Expression::ShiftRight {
-            loc, left, right, ..
-        } => {
+        },
+        Expression::ShiftRight { loc, left, right, .. } => {
             let l = eval_const_number(left, ns, diagnostics)?.1;
             let r = eval_const_number(right, ns, diagnostics)?.1;
             let r = match r.to_usize() {
@@ -149,27 +123,17 @@ pub fn eval_const_number(
                     diagnostics.push(Diagnostic::error(*loc, format!("right left shift by {r}")));
 
                     return Err(EvaluationError::MathError);
-                }
+                },
             };
             Ok((*loc, l >> r))
-        }
+        },
         Expression::NumberLiteral { loc, value, .. } => Ok((*loc, value.clone())),
-        Expression::ZeroExt { loc, expr, .. } => {
-            Ok((*loc, eval_const_number(expr, ns, diagnostics)?.1))
-        }
-        Expression::SignExt { loc, expr, .. } => {
-            Ok((*loc, eval_const_number(expr, ns, diagnostics)?.1))
-        }
-        Expression::Cast { loc, expr, .. } => {
-            Ok((*loc, eval_const_number(expr, ns, diagnostics)?.1))
-        }
+        Expression::ZeroExt { loc, expr, .. } => Ok((*loc, eval_const_number(expr, ns, diagnostics)?.1)),
+        Expression::SignExt { loc, expr, .. } => Ok((*loc, eval_const_number(expr, ns, diagnostics)?.1)),
+        Expression::Cast { loc, expr, .. } => Ok((*loc, eval_const_number(expr, ns, diagnostics)?.1)),
         Expression::Not { loc, expr: n } => Ok((*loc, !eval_const_number(n, ns, diagnostics)?.1)),
-        Expression::BitwiseNot { loc, expr, .. } => {
-            Ok((*loc, !eval_const_number(expr, ns, diagnostics)?.1))
-        }
-        Expression::Negate { loc, expr, .. } => {
-            Ok((*loc, -eval_const_number(expr, ns, diagnostics)?.1))
-        }
+        Expression::BitwiseNot { loc, expr, .. } => Ok((*loc, !eval_const_number(expr, ns, diagnostics)?.1)),
+        Expression::Negate { loc, expr, .. } => Ok((*loc, -eval_const_number(expr, ns, diagnostics)?.1)),
         Expression::ConstantVariable {
             contract_no: Some(contract_no),
             var_no,
@@ -183,7 +147,7 @@ pub fn eval_const_number(
                 // we should have errored about this already
                 Err(EvaluationError::NotAConstant)
             }
-        }
+        },
         Expression::ConstantVariable {
             contract_no: None,
             var_no,
@@ -197,7 +161,7 @@ pub fn eval_const_number(
                 // we should have errored about this already
                 Err(EvaluationError::NotAConstant)
             }
-        }
+        },
         _ => {
             diagnostics.push(Diagnostic::error(
                 expr.loc(),
@@ -205,40 +169,25 @@ pub fn eval_const_number(
             ));
 
             Err(EvaluationError::NotAConstant)
-        }
+        },
     }
 }
 
 /// Resolve an expression where a compile-time constant(rational) is expected
-pub fn eval_const_rational(
-    expr: &Expression,
-    ns: &Namespace,
-) -> Result<(pt::Loc, BigRational), Diagnostic> {
+pub fn eval_const_rational(expr: &Expression, ns: &Namespace) -> Result<(pt::Loc, BigRational), Diagnostic> {
     match expr {
-        Expression::Add {
-            loc, left, right, ..
-        } => Ok((
+        Expression::Add { loc, left, right, .. } => Ok((
             *loc,
             eval_const_rational(left, ns)?.1 + eval_const_rational(right, ns)?.1,
         )),
-        Expression::Subtract {
-            loc, left, right, ..
-        } => Ok((
+        Expression::Subtract { loc, left, right, .. } => Ok((
             *loc,
             eval_const_rational(left, ns)?.1 - eval_const_rational(right, ns)?.1,
         )),
         Expression::Multiply {
-            loc,
-            left: l,
-            right: r,
-            ..
-        } => Ok((
-            *loc,
-            eval_const_rational(l, ns)?.1 * eval_const_rational(r, ns)?.1,
-        )),
-        Expression::Divide {
-            loc, left, right, ..
-        } => {
+            loc, left: l, right: r, ..
+        } => Ok((*loc, eval_const_rational(l, ns)?.1 * eval_const_rational(r, ns)?.1)),
+        Expression::Divide { loc, left, right, .. } => {
             let divisor = eval_const_rational(right, ns)?.1;
 
             if divisor.is_zero() {
@@ -246,12 +195,9 @@ pub fn eval_const_rational(
             } else {
                 Ok((*loc, eval_const_rational(left, ns)?.1 / divisor))
             }
-        }
+        },
         Expression::Modulo {
-            loc,
-            left: l,
-            right: r,
-            ..
+            loc, left: l, right: r, ..
         } => {
             let divisor = eval_const_rational(r, ns)?.1;
 
@@ -260,10 +206,8 @@ pub fn eval_const_rational(
             } else {
                 Ok((*loc, eval_const_rational(l, ns)?.1 % divisor))
             }
-        }
-        Expression::NumberLiteral { loc, value, .. } => {
-            Ok((*loc, BigRational::from_integer(value.clone())))
-        }
+        },
+        Expression::NumberLiteral { loc, value, .. } => Ok((*loc, BigRational::from_integer(value.clone()))),
         Expression::RationalNumberLiteral { loc, value, .. } => Ok((*loc, value.clone())),
         Expression::Cast { loc, expr, .. } => Ok((*loc, eval_const_rational(expr, ns)?.1)),
         Expression::Negate { loc, expr, .. } => Ok((*loc, -eval_const_rational(expr, ns)?.1)),
@@ -279,7 +223,7 @@ pub fn eval_const_rational(
                 .clone();
 
             eval_const_rational(&expr, ns)
-        }
+        },
         Expression::ConstantVariable {
             contract_no: None,
             var_no,
@@ -288,7 +232,7 @@ pub fn eval_const_rational(
             let expr = ns.constants[*var_no].initializer.as_ref().unwrap().clone();
 
             eval_const_rational(&expr, ns)
-        }
+        },
         _ => Err(Diagnostic::error(
             expr.loc(),
             "expression not allowed in constant rational number expression".to_string(),
@@ -318,28 +262,20 @@ fn check_term_for_constant_overflow(expr: &Expression, diagnostics: &mut Diagnos
         | Expression::BitwiseAnd { .. }
         | Expression::BitwiseOr { .. }
         | Expression::BitwiseXor { .. }
-        | Expression::NumberLiteral { .. } => match eval_constants_in_expression(expr, diagnostics)
-        {
-            (
-                Some(Expression::NumberLiteral {
-                    loc,
-                    ty,
-                    value: result,
-                }),
-                _,
-            ) => {
+        | Expression::NumberLiteral { .. } => match eval_constants_in_expression(expr, diagnostics) {
+            (Some(Expression::NumberLiteral { loc, ty, value: result }), _) => {
                 if let Some(diagnostic) = overflow_diagnostic(&result, &ty, &loc) {
                     diagnostics.push(diagnostic);
                 }
 
                 return false;
-            }
+            },
             (None, false) => {
                 return false;
-            }
-            _ => {}
+            },
+            _ => {},
         },
-        _ => {}
+        _ => {},
     }
 
     true
@@ -378,7 +314,7 @@ pub(crate) fn eval_constants_in_expression(
             } else {
                 (None, true)
             }
-        }
+        },
         Expression::Subtract {
             loc,
             ty,
@@ -405,7 +341,7 @@ pub(crate) fn eval_constants_in_expression(
             } else {
                 (None, true)
             }
-        }
+        },
 
         Expression::Multiply {
             loc,
@@ -433,13 +369,8 @@ pub(crate) fn eval_constants_in_expression(
             } else {
                 (None, true)
             }
-        }
-        Expression::Divide {
-            loc,
-            ty,
-            left,
-            right,
-        } => {
+        },
+        Expression::Divide { loc, ty, left, right } => {
             let left = eval_constants_in_expression(left, diagnostics).0;
             let right = eval_constants_in_expression(right, diagnostics).0;
 
@@ -464,14 +395,9 @@ pub(crate) fn eval_constants_in_expression(
             } else {
                 (None, true)
             }
-        }
+        },
 
-        Expression::Modulo {
-            loc,
-            ty,
-            left,
-            right,
-        } => {
+        Expression::Modulo { loc, ty, left, right } => {
             let left = eval_constants_in_expression(left, diagnostics).0;
             let right = eval_constants_in_expression(right, diagnostics).0;
 
@@ -496,7 +422,7 @@ pub(crate) fn eval_constants_in_expression(
             } else {
                 (None, true)
             }
-        }
+        },
         Expression::Power {
             loc,
             ty,
@@ -535,13 +461,8 @@ pub(crate) fn eval_constants_in_expression(
             } else {
                 (None, true)
             }
-        }
-        Expression::ShiftLeft {
-            loc,
-            ty,
-            left,
-            right,
-        } => {
+        },
+        Expression::ShiftLeft { loc, ty, left, right } => {
             let left = eval_constants_in_expression(left, diagnostics).0;
             let right = eval_constants_in_expression(right, diagnostics).0;
 
@@ -573,7 +494,7 @@ pub(crate) fn eval_constants_in_expression(
             } else {
                 (None, true)
             }
-        }
+        },
 
         Expression::ShiftRight {
             loc,
@@ -613,13 +534,8 @@ pub(crate) fn eval_constants_in_expression(
             } else {
                 (None, true)
             }
-        }
-        Expression::BitwiseAnd {
-            loc,
-            ty,
-            left,
-            right,
-        } => {
+        },
+        Expression::BitwiseAnd { loc, ty, left, right } => {
             let left = eval_constants_in_expression(left, diagnostics).0;
             let right = eval_constants_in_expression(right, diagnostics).0;
 
@@ -639,13 +555,8 @@ pub(crate) fn eval_constants_in_expression(
             } else {
                 (None, true)
             }
-        }
-        Expression::BitwiseOr {
-            loc,
-            ty,
-            left,
-            right,
-        } => {
+        },
+        Expression::BitwiseOr { loc, ty, left, right } => {
             let left = eval_constants_in_expression(left, diagnostics).0;
             let right = eval_constants_in_expression(right, diagnostics).0;
 
@@ -665,13 +576,8 @@ pub(crate) fn eval_constants_in_expression(
             } else {
                 (None, true)
             }
-        }
-        Expression::BitwiseXor {
-            loc,
-            ty,
-            left,
-            right,
-        } => {
+        },
+        Expression::BitwiseXor { loc, ty, left, right } => {
             let left = eval_constants_in_expression(left, diagnostics).0;
             let right = eval_constants_in_expression(right, diagnostics).0;
 
@@ -691,7 +597,7 @@ pub(crate) fn eval_constants_in_expression(
             } else {
                 (None, true)
             }
-        }
+        },
         Expression::ZeroExt { loc, to, expr } => {
             let expr = eval_constants_in_expression(expr, diagnostics).0;
             if let Some(Expression::NumberLiteral { value, .. }) = expr {
@@ -706,7 +612,7 @@ pub(crate) fn eval_constants_in_expression(
             } else {
                 (None, true)
             }
-        }
+        },
         Expression::SignExt { loc, to, expr } => {
             let expr = eval_constants_in_expression(expr, diagnostics).0;
             if let Some(Expression::NumberLiteral { value, .. }) = expr {
@@ -721,7 +627,7 @@ pub(crate) fn eval_constants_in_expression(
             } else {
                 (None, true)
             }
-        }
+        },
         Expression::NumberLiteral { .. } => (Some(expr.clone()), true),
         _ => (None, true),
     }
@@ -748,10 +654,7 @@ pub(crate) fn overflow_diagnostic(result: &BigInt, ty: &Type, loc: &Loc) -> Opti
             if result.bits() > *bits as u64 {
                 return Some(Diagnostic::error(
                     *loc,
-                    format!(
-                        "value is too large to fit into type uint{}",
-                        ty.get_type_size(),
-                    ),
+                    format!("value is too large to fit into type uint{}", ty.get_type_size(),),
                 ));
             }
         }
@@ -761,10 +664,7 @@ pub(crate) fn overflow_diagnostic(result: &BigInt, ty: &Type, loc: &Loc) -> Opti
             if result.to_signed_bytes_be().len() * 8 > (*bits as usize) {
                 return Some(Diagnostic::error(
                     *loc,
-                    format!(
-                        "value is too large to fit into type int{}",
-                        ty.get_type_size(),
-                    ),
+                    format!("value is too large to fit into type int{}", ty.get_type_size(),),
                 ));
             }
         }
@@ -782,11 +682,7 @@ pub(crate) fn overflow_diagnostic(result: &BigInt, ty: &Type, loc: &Loc) -> Opti
             if result.bits() > *bits as u64 {
                 return Some(Diagnostic::error(
                     *loc,
-                    format!(
-                        "value {} does not fit into type uint{}.",
-                        result,
-                        ty.get_type_size(),
-                    ),
+                    format!("value {} does not fit into type uint{}.", result, ty.get_type_size(),),
                 ));
             }
         }
@@ -796,11 +692,7 @@ pub(crate) fn overflow_diagnostic(result: &BigInt, ty: &Type, loc: &Loc) -> Opti
             if result.to_signed_bytes_be().len() * 8 > (*bits as usize) {
                 return Some(Diagnostic::error(
                     *loc,
-                    format!(
-                        "value {} does not fit into type int{}.",
-                        result,
-                        ty.get_type_size(),
-                    ),
+                    format!("value {} does not fit into type int{}.", result, ty.get_type_size(),),
                 ));
             }
         }

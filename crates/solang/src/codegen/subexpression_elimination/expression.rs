@@ -35,27 +35,21 @@ impl Expression {
                 right: Box::new(right.clone()),
             },
 
-            Expression::BitwiseOr {
-                loc, ty: expr_type, ..
-            } => Expression::BitwiseOr {
+            Expression::BitwiseOr { loc, ty: expr_type, .. } => Expression::BitwiseOr {
                 loc: *loc,
                 ty: expr_type.clone(),
                 left: Box::new(left.clone()),
                 right: Box::new(right.clone()),
             },
 
-            Expression::BitwiseAnd {
-                loc, ty: expr_type, ..
-            } => Expression::BitwiseAnd {
+            Expression::BitwiseAnd { loc, ty: expr_type, .. } => Expression::BitwiseAnd {
                 loc: *loc,
                 ty: expr_type.clone(),
                 left: Box::new(left.clone()),
                 right: Box::new(right.clone()),
             },
 
-            Expression::BitwiseXor {
-                loc, ty: expr_type, ..
-            } => Expression::BitwiseXor {
+            Expression::BitwiseXor { loc, ty: expr_type, .. } => Expression::BitwiseXor {
                 loc: *loc,
                 ty: expr_type.clone(),
                 left: Box::new(left.clone()),
@@ -85,36 +79,28 @@ impl Expression {
                 left: Box::new(left.clone()),
                 right: Box::new(right.clone()),
             },
-            Expression::UnsignedDivide {
-                loc, ty: expr_type, ..
-            } => Expression::UnsignedDivide {
+            Expression::UnsignedDivide { loc, ty: expr_type, .. } => Expression::UnsignedDivide {
                 loc: *loc,
                 ty: expr_type.clone(),
                 left: Box::new(left.clone()),
                 right: Box::new(right.clone()),
             },
 
-            Expression::SignedDivide {
-                loc, ty: expr_type, ..
-            } => Expression::SignedDivide {
+            Expression::SignedDivide { loc, ty: expr_type, .. } => Expression::SignedDivide {
                 loc: *loc,
                 ty: expr_type.clone(),
                 left: Box::new(left.clone()),
                 right: Box::new(right.clone()),
             },
 
-            Expression::SignedModulo {
-                loc, ty: expr_type, ..
-            } => Expression::SignedModulo {
+            Expression::SignedModulo { loc, ty: expr_type, .. } => Expression::SignedModulo {
                 loc: *loc,
                 ty: expr_type.clone(),
                 left: Box::new(left.clone()),
                 right: Box::new(right.clone()),
             },
 
-            Expression::UnsignedModulo {
-                loc, ty: expr_type, ..
-            } => Expression::UnsignedModulo {
+            Expression::UnsignedModulo { loc, ty: expr_type, .. } => Expression::UnsignedModulo {
                 loc: *loc,
                 ty: expr_type.clone(),
                 left: Box::new(left.clone()),
@@ -134,9 +120,7 @@ impl Expression {
                 exp: Box::new(right.clone()),
             },
 
-            Expression::ShiftLeft {
-                loc, ty: expr_type, ..
-            } => Expression::ShiftLeft {
+            Expression::ShiftLeft { loc, ty: expr_type, .. } => Expression::ShiftLeft {
                 loc: *loc,
                 ty: expr_type.clone(),
                 left: Box::new(left.clone()),
@@ -207,7 +191,7 @@ impl Expression {
                     left: StringLocation::RunTime(Box::new(left.clone())),
                     right: StringLocation::RunTime(Box::new(right.clone())),
                 }
-            }
+            },
 
             _ => unreachable!("Cannot rebuild this expression"),
         }
@@ -217,33 +201,25 @@ impl Expression {
     #[must_use]
     pub fn rebuild_unary_expression(&self, operand: &Expression) -> Expression {
         match self {
-            Expression::ZeroExt {
-                loc, ty: expr_type, ..
-            } => Expression::ZeroExt {
+            Expression::ZeroExt { loc, ty: expr_type, .. } => Expression::ZeroExt {
                 loc: *loc,
                 ty: expr_type.clone(),
                 expr: Box::new(operand.clone()),
             },
 
-            Expression::SignExt {
-                loc, ty: expr_type, ..
-            } => Expression::SignExt {
+            Expression::SignExt { loc, ty: expr_type, .. } => Expression::SignExt {
                 loc: *loc,
                 ty: expr_type.clone(),
                 expr: Box::new(operand.clone()),
             },
 
-            Expression::Trunc {
-                loc, ty: expr_type, ..
-            } => Expression::Trunc {
+            Expression::Trunc { loc, ty: expr_type, .. } => Expression::Trunc {
                 loc: *loc,
                 ty: expr_type.clone(),
                 expr: Box::new(operand.clone()),
             },
 
-            Expression::Cast {
-                loc, ty: expr_type, ..
-            } => Expression::Cast {
+            Expression::Cast { loc, ty: expr_type, .. } => Expression::Cast {
                 loc: *loc,
                 ty: expr_type.clone(),
                 expr: Box::new(operand.clone()),
@@ -261,9 +237,7 @@ impl Expression {
                 expr: Box::new(operand.clone()),
             },
 
-            Expression::BitwiseNot {
-                loc, ty: expr_type, ..
-            } => Expression::BitwiseNot {
+            Expression::BitwiseNot { loc, ty: expr_type, .. } => Expression::BitwiseNot {
                 loc: *loc,
                 ty: expr_type.clone(),
                 expr: Box::new(operand.clone()),
@@ -309,9 +283,7 @@ impl Expression {
             | Expression::SignedModulo { left, right, .. }
             | Expression::UnsignedModulo { left, right, .. }
             | Expression::Power {
-                base: left,
-                exp: right,
-                ..
+                base: left, exp: right, ..
             }
             | Expression::ShiftLeft { left, right, .. }
             | Expression::ShiftRight { left, right, .. }

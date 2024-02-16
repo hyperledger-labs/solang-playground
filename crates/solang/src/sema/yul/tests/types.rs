@@ -63,9 +63,7 @@ contract testTypes {
     "#;
 
     let ns = parse(file);
-    assert!(ns
-        .diagnostics
-        .contains_message("function 'doThis' returns nothing"));
+    assert!(ns.diagnostics.contains_message("function 'doThis' returns nothing"));
 
     assert!(ns
         .diagnostics

@@ -1,12 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use super::encoding::{abi_decode, abi_encode};
-use super::revert::{
-    assert_failure, expr_assert, log_runtime_error, require, PanicCode, SolidityError,
-};
-use super::storage::{
-    array_offset, array_pop, array_push, storage_slots_array_pop, storage_slots_array_push,
-};
+use super::revert::{assert_failure, expr_assert, log_runtime_error, require, PanicCode, SolidityError};
+use super::storage::{array_offset, array_pop, array_push, storage_slots_array_pop, storage_slots_array_push};
 use super::{
     cfg::{ControlFlowGraph, Instr, InternalCallTy},
     vartable::Vartable,
@@ -20,10 +16,7 @@ use crate::codegen::{Builtin, Expression};
 use crate::sema::ast::ExternalCallAccounts;
 use crate::sema::{
     ast,
-    ast::{
-        ArrayLength, CallTy, FormatArg, Function, Namespace, RetrieveType, StringLocation,
-        StructType, Type,
-    },
+    ast::{ArrayLength, CallTy, FormatArg, Function, Namespace, RetrieveType, StringLocation, StructType, Type},
     diagnostics::Diagnostics,
     eval::{eval_const_number, eval_const_rational, eval_constants_in_expression},
     expression::integers::bigint_to_expression,
@@ -62,12 +55,12 @@ pub fn expression(
         } => {
             // base storage variables should precede contract variables, not overlap
             ns.contracts[contract_no].get_storage_slot(*loc, *var_contract_no, *var_no, ns, None)
-        }
+        },
         ast::Expression::StorageLoad { loc, ty, expr } => {
             let storage = expression(expr, cfg, contract_no, func, ns, vartab, opt);
 
             load_storage(loc, ty, storage, cfg, vartab)
-        }
+        },
         ast::Expression::Add {
             loc,
             ty,
@@ -130,13 +123,8 @@ pub fn expression(
                     right: Box::new(expression(right, cfg, contract_no, func, ns, vartab, opt)),
                 }
             }
-        }
-        ast::Expression::Divide {
-            loc,
-            ty,
-            left,
-            right,
-        } => {
+        },
+        ast::Expression::Divide { loc, ty, left, right } => {
             let l = expression(left, cfg, contract_no, func, ns, vartab, opt);
             let r = expression(right, cfg, contract_no, func, ns, vartab, opt);
             if ty.is_signed_int(ns) {
@@ -154,13 +142,8 @@ pub fn expression(
                     right: Box::new(r),
                 }
             }
-        }
-        ast::Expression::Modulo {
-            loc,
-            ty,
-            left,
-            right,
-        } => {
+        },
+        ast::Expression::Modulo { loc, ty, left, right } => {
             let l = expression(left, cfg, contract_no, func, ns, vartab, opt);
             let r = expression(right, cfg, contract_no, func, ns, vartab, opt);
             if ty.is_signed_int(ns) {
@@ -178,7 +161,7 @@ pub fn expression(
                     right: Box::new(r),
                 }
             }
-        }
+        },
         ast::Expression::Power {
             loc,
             ty,
@@ -192,45 +175,25 @@ pub fn expression(
             base: Box::new(expression(base, cfg, contract_no, func, ns, vartab, opt)),
             exp: Box::new(expression(exp, cfg, contract_no, func, ns, vartab, opt)),
         },
-        ast::Expression::BitwiseOr {
-            loc,
-            ty,
-            left,
-            right,
-        } => Expression::BitwiseOr {
+        ast::Expression::BitwiseOr { loc, ty, left, right } => Expression::BitwiseOr {
             loc: *loc,
             ty: ty.clone(),
             left: Box::new(expression(left, cfg, contract_no, func, ns, vartab, opt)),
             right: Box::new(expression(right, cfg, contract_no, func, ns, vartab, opt)),
         },
-        ast::Expression::BitwiseAnd {
-            loc,
-            ty,
-            left,
-            right,
-        } => Expression::BitwiseAnd {
+        ast::Expression::BitwiseAnd { loc, ty, left, right } => Expression::BitwiseAnd {
             loc: *loc,
             ty: ty.clone(),
             left: Box::new(expression(left, cfg, contract_no, func, ns, vartab, opt)),
             right: Box::new(expression(right, cfg, contract_no, func, ns, vartab, opt)),
         },
-        ast::Expression::BitwiseXor {
-            loc,
-            ty,
-            left,
-            right,
-        } => Expression::BitwiseXor {
+        ast::Expression::BitwiseXor { loc, ty, left, right } => Expression::BitwiseXor {
             loc: *loc,
             ty: ty.clone(),
             left: Box::new(expression(left, cfg, contract_no, func, ns, vartab, opt)),
             right: Box::new(expression(right, cfg, contract_no, func, ns, vartab, opt)),
         },
-        ast::Expression::ShiftLeft {
-            loc,
-            ty,
-            left,
-            right,
-        } => Expression::ShiftLeft {
+        ast::Expression::ShiftLeft { loc, ty, left, right } => Expression::ShiftLeft {
             loc: *loc,
             ty: ty.clone(),
             left: Box::new(expression(left, cfg, contract_no, func, ns, vartab, opt)),
@@ -269,7 +232,7 @@ pub fn expression(
                 left: Box::new(l),
                 right: Box::new(r),
             }
-        }
+        },
         ast::Expression::MoreEqual { loc, left, right } => Expression::MoreEqual {
             loc: *loc,
             signed: left.ty().is_signed_int(ns),
@@ -285,7 +248,7 @@ pub fn expression(
                 left: Box::new(l),
                 right: Box::new(r),
             }
-        }
+        },
         ast::Expression::LessEqual { loc, left, right } => Expression::LessEqual {
             loc: *loc,
             signed: left.ty().is_signed_int(ns),
@@ -341,9 +304,7 @@ pub fn expression(
             overflowing: *unchecked,
             expr: Box::new(expression(expr, cfg, contract_no, func, ns, vartab, opt)),
         },
-        ast::Expression::StructLiteral {
-            loc, ty, values, ..
-        } => Expression::StructLiteral {
+        ast::Expression::StructLiteral { loc, ty, values, .. } => Expression::StructLiteral {
             loc: *loc,
             ty: ty.clone(),
             values: values
@@ -402,7 +363,7 @@ pub fn expression(
             }
 
             assign_single(left, cfg_right, cfg, contract_no, func, ns, vartab, opt)
-        }
+        },
         ast::Expression::PreDecrement {
             loc,
             ty,
@@ -414,19 +375,7 @@ pub fn expression(
             ty,
             unchecked,
             expr: var,
-        } => pre_incdec(
-            vartab,
-            ty,
-            var,
-            cfg,
-            contract_no,
-            func,
-            ns,
-            loc,
-            expr,
-            *unchecked,
-            opt,
-        ),
+        } => pre_incdec(vartab, ty, var, cfg, contract_no, func, ns, loc, expr, *unchecked, opt),
         ast::Expression::PostDecrement {
             loc,
             ty,
@@ -438,19 +387,7 @@ pub fn expression(
             ty,
             unchecked,
             expr: var,
-        } => post_incdec(
-            vartab,
-            ty,
-            var,
-            cfg,
-            contract_no,
-            func,
-            ns,
-            loc,
-            expr,
-            *unchecked,
-            opt,
-        ),
+        } => post_incdec(vartab, ty, var, cfg, contract_no, func, ns, loc, expr, *unchecked, opt),
         ast::Expression::Constructor {
             loc,
             contract_no: constructor_contract,
@@ -491,7 +428,7 @@ pub fn expression(
                 ty: Type::Contract(*constructor_contract),
                 var_no: address_res,
             }
-        }
+        },
         ast::Expression::InternalFunction {
             function_no,
             signature,
@@ -499,9 +436,7 @@ pub fn expression(
             ..
         } => {
             let function_no = if let Some(signature) = signature {
-                ns.contracts[contract_no].virtual_functions[signature]
-                    .last()
-                    .unwrap()
+                ns.contracts[contract_no].virtual_functions[signature].last().unwrap()
             } else {
                 function_no
             };
@@ -510,7 +445,7 @@ pub fn expression(
                 ty: ty.clone(),
                 cfg_no: ns.contracts[contract_no].all_functions[function_no],
             }
-        }
+        },
         ast::Expression::StorageArrayLength {
             loc,
             ty,
@@ -532,7 +467,7 @@ pub fn expression(
                     )
                     .unwrap();
                     expression(&ast_expr, cfg, contract_no, func, ns, vartab, opt)
-                }
+                },
                 Type::DynamicBytes | Type::String => Expression::StorageArrayLength {
                     loc: *loc,
                     ty: ty.clone(),
@@ -551,7 +486,7 @@ pub fn expression(
                         } else {
                             load_storage(loc, &ns.storage_type(), array, cfg, vartab)
                         }
-                    }
+                    },
                     ArrayLength::Fixed(length) => {
                         let ast_expr = bigint_to_expression(
                             loc,
@@ -563,12 +498,12 @@ pub fn expression(
                         )
                         .unwrap();
                         expression(&ast_expr, cfg, contract_no, func, ns, vartab, opt)
-                    }
+                    },
                     _ => unreachable!(),
                 },
                 _ => unreachable!(),
             }
-        }
+        },
         ast::Expression::Builtin {
             kind: ast::Builtin::ExternalFunctionAddress,
             args: func_expr,
@@ -581,7 +516,7 @@ pub fn expression(
 
                 func_expr.external_function_address()
             }
-        }
+        },
         ast::Expression::Builtin {
             loc,
             kind: ast::Builtin::FunctionSelector,
@@ -596,12 +531,12 @@ pub fn expression(
                     ty: Type::Bytes(selector.len() as u8),
                     value: selector,
                 }
-            }
+            },
             _ => {
                 let func_expr = expression(&func_expr[0], cfg, contract_no, func, ns, vartab, opt);
 
                 func_expr.external_function_selector()
-            }
+            },
         },
         ast::Expression::EventSelector { loc, ty, event_no } => {
             let emitter = new_event_emitter(loc, *event_no, &[], ns);
@@ -611,7 +546,7 @@ pub fn expression(
                 ty: ty.clone(),
                 value: emitter.selector(contract_no),
             }
-        }
+        },
         ast::Expression::InternalFunctionCall { .. }
         | ast::Expression::ExternalFunctionCall { .. }
         | ast::Expression::ExternalFunctionCallRaw { .. }
@@ -622,7 +557,7 @@ pub fn expression(
             let mut returns = emit_function_call(expr, contract_no, cfg, func, ns, vartab, opt);
 
             returns.remove(0)
-        }
+        },
         ast::Expression::ExternalFunction {
             loc,
             ty,
@@ -645,7 +580,7 @@ pub fn expression(
                 ty: ty.clone(),
                 expr: Box::new(struct_literal),
             }
-        }
+        },
         ast::Expression::Subscript {
             loc,
             ty: elem_ty,
@@ -696,7 +631,7 @@ pub fn expression(
             } else {
                 unreachable!();
             }
-        }
+        },
         ast::Expression::StructMember {
             loc,
             ty,
@@ -732,21 +667,17 @@ pub fn expression(
             } else {
                 member_ptr
             }
-        }
+        },
         ast::Expression::StringCompare { loc, left, right } => Expression::StringCompare {
             loc: *loc,
             left: string_location(left, cfg, contract_no, func, ns, vartab, opt),
             right: string_location(right, cfg, contract_no, func, ns, vartab, opt),
         },
-        ast::Expression::Or { loc, left, right } => {
-            expr_or(left, cfg, contract_no, func, ns, vartab, loc, right, opt)
-        }
-        ast::Expression::And { loc, left, right } => {
-            and(left, cfg, contract_no, func, ns, vartab, loc, right, opt)
-        }
+        ast::Expression::Or { loc, left, right } => expr_or(left, cfg, contract_no, func, ns, vartab, loc, right, opt),
+        ast::Expression::And { loc, left, right } => and(left, cfg, contract_no, func, ns, vartab, loc, right, opt),
         ast::Expression::CheckingTrunc { loc, to, expr } => {
             checking_trunc(loc, expr, to, cfg, contract_no, func, ns, vartab, opt)
-        }
+        },
         ast::Expression::Trunc { loc, to, expr } => Expression::Trunc {
             loc: *loc,
             ty: to.clone(),
@@ -777,22 +708,19 @@ pub fn expression(
                     expr: Box::new(expression(expr, cfg, contract_no, func, ns, vartab, opt)),
                 }
             }
-        }
-        ast::Expression::Cast { to, expr, .. }
-            if matches!((expr.ty(), to), (Type::Address(_), Type::Contract(_))) =>
-        {
+        },
+        ast::Expression::Cast { to, expr, .. } if matches!((expr.ty(), to), (Type::Address(_), Type::Contract(_))) => {
             // Address and Contract have the same underlying type. CSE will create
             // a temporary to replace multiple casts from address to Contract, which have no
             // real purpose.
             expression(expr, cfg, contract_no, func, ns, vartab, opt)
-        }
+        },
         ast::Expression::Cast { loc, to, expr }
-            if matches!(to, Type::Array(..))
-                && matches!(**expr, ast::Expression::ArrayLiteral { .. }) =>
+            if matches!(to, Type::Array(..)) && matches!(**expr, ast::Expression::ArrayLiteral { .. }) =>
         {
             let codegen_expr = expression(expr, cfg, contract_no, func, ns, vartab, opt);
             array_literal_to_memory_array(loc, &codegen_expr, to, cfg, vartab)
-        }
+        },
         ast::Expression::Cast { loc, to, expr } => {
             if expr.ty() == Type::Rational {
                 let (_, n) = eval_const_rational(expr, ns).unwrap();
@@ -813,13 +741,8 @@ pub fn expression(
                     expr: Box::new(expression(expr, cfg, contract_no, func, ns, vartab, opt)),
                 }
             }
-        }
-        ast::Expression::BytesCast {
-            loc,
-            to,
-            from,
-            expr,
-        } => Expression::BytesCast {
+        },
+        ast::Expression::BytesCast { loc, to, from, expr } => Expression::BytesCast {
             loc: *loc,
             ty: to.clone(),
             from: from.clone(),
@@ -872,7 +795,7 @@ pub fn expression(
                     opt,
                 )
             }
-        }
+        },
         ast::Expression::Builtin {
             loc,
             tys: ty,
@@ -883,28 +806,17 @@ pub fn expression(
                 if ns.target == Target::Solana || args[0].ty().is_storage_bytes() {
                     array_pop(loc, args, &ty[0], cfg, contract_no, func, ns, vartab, opt)
                 } else {
-                    storage_slots_array_pop(
-                        loc,
-                        args,
-                        &ty[0],
-                        cfg,
-                        contract_no,
-                        func,
-                        ns,
-                        vartab,
-                        opt,
-                    )
+                    storage_slots_array_pop(loc, args, &ty[0], cfg, contract_no, func, ns, vartab, opt)
                 }
             } else {
                 let address_res = vartab.temp_anonymous(&ty[0]);
 
-                let array_pos = match expression(&args[0], cfg, contract_no, func, ns, vartab, opt)
-                {
+                let array_pos = match expression(&args[0], cfg, contract_no, func, ns, vartab, opt) {
                     Expression::Variable { var_no, .. } => {
                         vartab.set_dirty(var_no);
 
                         var_no
-                    }
+                    },
                     _ => unreachable!(),
                 };
 
@@ -925,7 +837,7 @@ pub fn expression(
                     var_no: address_res,
                 }
             }
-        }
+        },
         ast::Expression::Builtin {
             kind: ast::Builtin::Assert,
             args,
@@ -949,7 +861,7 @@ pub fn expression(
             }
 
             Expression::Poison
-        }
+        },
         ast::Expression::Builtin {
             kind: ast::Builtin::Require,
             args,
@@ -1010,27 +922,13 @@ pub fn expression(
             ..
         } if expr.len() == 1 && ns.target == Target::EVM => {
             builtin_evm_gasprice(loc, expr, cfg, contract_no, func, ns, vartab, opt)
-        }
-        ast::Expression::Builtin {
-            loc,
-            tys,
-            kind,
-            args,
-        } => expr_builtin(
-            args,
-            cfg,
-            contract_no,
-            func,
-            ns,
-            vartab,
-            loc,
-            tys,
-            *kind,
-            opt,
-        ),
+        },
+        ast::Expression::Builtin { loc, tys, kind, args } => {
+            expr_builtin(args, cfg, contract_no, func, ns, vartab, loc, tys, *kind, opt)
+        },
         ast::Expression::FormatString { loc, format: args } => {
             format_string(args, cfg, contract_no, func, ns, vartab, loc, opt)
-        }
+        },
         ast::Expression::AllocDynamicBytes {
             loc,
             ty,
@@ -1043,19 +941,7 @@ pub fn expression(
             cond,
             true_option: left,
             false_option: right,
-        } => conditional_operator(
-            loc,
-            ty,
-            cond,
-            cfg,
-            contract_no,
-            func,
-            ns,
-            vartab,
-            left,
-            right,
-            opt,
-        ),
+        } => conditional_operator(loc, ty, cond, cfg, contract_no, func, ns, vartab, left, right, opt),
         ast::Expression::InterfaceId { loc, contract_no } => interfaceid(ns, *contract_no, loc),
         ast::Expression::BoolLiteral { loc, value } => Expression::BoolLiteral {
             loc: *loc,
@@ -1072,13 +958,11 @@ pub fn expression(
             ty: ty.clone(),
             value: value.clone(),
         },
-        ast::Expression::RationalNumberLiteral { loc, ty, value } => {
-            Expression::RationalNumberLiteral {
-                loc: *loc,
-                ty: ty.clone(),
-                rational: value.clone(),
-            }
-        }
+        ast::Expression::RationalNumberLiteral { loc, ty, value } => Expression::RationalNumberLiteral {
+            loc: *loc,
+            ty: ty.clone(),
+            rational: value.clone(),
+        },
         ast::Expression::Variable { loc, ty, var_no } => Expression::Variable {
             loc: *loc,
             ty: ty.clone(),
@@ -1117,10 +1001,8 @@ pub fn expression(
                 ty: ty.clone(),
                 var_no: var,
             }
-        }
-        ast::Expression::NamedMember {
-            loc, array, name, ..
-        } => {
+        },
+        ast::Expression::NamedMember { loc, array, name, .. } => {
             // This expression should only exist for Solana's AccountInfo array
             assert_eq!(
                 array.ty().deref_memory(),
@@ -1147,7 +1029,7 @@ pub fn expression(
                 var_no: var_placeholder,
                 ty,
             }
-        }
+        },
 
         ast::Expression::List { .. } => unreachable!("List shall not appear in the CFG"),
     }
@@ -1171,7 +1053,7 @@ fn memory_array_push(
             vartab.set_dirty(var_no);
 
             var_no
-        }
+        },
         _ => unreachable!(),
     };
     cfg.add(
@@ -1264,7 +1146,7 @@ fn post_incdec(
                     expr,
                 },
             );
-        }
+        },
         _ => {
             let dest = expression(var, cfg, contract_no, func, ns, vartab, opt);
             let res = vartab.temp_anonymous(ty);
@@ -1291,7 +1173,7 @@ fn post_incdec(
                             storage: dest,
                         },
                     );
-                }
+                },
                 Type::Ref(_) => {
                     cfg.add(
                         vartab,
@@ -1304,10 +1186,10 @@ fn post_incdec(
                             },
                         },
                     );
-                }
+                },
                 _ => unreachable!(),
             }
-        }
+        },
     }
     Expression::Variable {
         loc: *loc,
@@ -1384,7 +1266,7 @@ fn pre_incdec(
                     },
                 },
             );
-        }
+        },
         _ => {
             let dest = expression(var, cfg, contract_no, func, ns, vartab, opt);
 
@@ -1402,7 +1284,7 @@ fn pre_incdec(
                             storage: dest,
                         },
                     );
-                }
+                },
                 Type::Ref(_) => {
                     cfg.add(
                         vartab,
@@ -1415,10 +1297,10 @@ fn pre_incdec(
                             },
                         },
                     );
-                }
+                },
                 _ => unreachable!(),
             }
-        }
+        },
     }
     Expression::Variable {
         loc: *loc,
@@ -1454,10 +1336,7 @@ fn expr_or(
         Instr::Set {
             loc: *loc,
             res: pos,
-            expr: Expression::BoolLiteral {
-                loc: *loc,
-                value: true,
-            },
+            expr: Expression::BoolLiteral { loc: *loc, value: true },
         },
     );
     cfg.add(
@@ -1763,15 +1642,7 @@ fn abi_encode_with_selector(
     opt: &Options,
 ) -> Expression {
     let mut args_iter = args.iter();
-    let selector = expression(
-        args_iter.next().unwrap(),
-        cfg,
-        contract_no,
-        func,
-        ns,
-        vartab,
-        opt,
-    );
+    let selector = expression(args_iter.next().unwrap(), cfg, contract_no, func, ns, vartab, opt);
     let args = args_iter
         .map(|v| expression(v, cfg, contract_no, func, ns, vartab, opt))
         .collect::<Vec<Expression>>();
@@ -1948,7 +1819,7 @@ fn expr_builtin(
             cfg.add(vartab, Instr::WriteBuffer { buf, value, offset });
 
             Expression::Undefined { ty: tys[0].clone() }
-        }
+        },
         ast::Builtin::WriteBytes | ast::Builtin::WriteString => {
             let buffer = expression(&args[0], cfg, contract_no, func, ns, vartab, opt);
             let data = expression(&args[1], cfg, contract_no, func, ns, vartab, opt);
@@ -2018,7 +1889,7 @@ fn expr_builtin(
                 },
             );
             Expression::Undefined { ty: tys[0].clone() }
-        }
+        },
         ast::Builtin::ReadInt8
         | ast::Builtin::ReadInt16LE
         | ast::Builtin::ReadInt32LE
@@ -2089,7 +1960,7 @@ fn expr_builtin(
                 kind: (&builtin).into(),
                 args: vec![buf, offset],
             }
-        }
+        },
         ast::Builtin::AddMod | ast::Builtin::MulMod => {
             let arguments: Vec<Expression> = args
                 .iter()
@@ -2157,7 +2028,7 @@ fn expr_builtin(
                 ty: tys[0].clone(),
                 var_no: temp,
             }
-        }
+        },
         ast::Builtin::GetAddress => {
             if let Some(constant_id) = &ns.contracts[contract_no].program_id {
                 return Expression::NumberLiteral {
@@ -2180,7 +2051,7 @@ fn expr_builtin(
                 ty: Type::Address(false),
                 expr: Box::new(codegen_expr),
             }
-        }
+        },
         ast::Builtin::ECRecover => {
             // TODO:
             // EVM: call precompile 1 (code below is untested)
@@ -2240,7 +2111,7 @@ fn expr_builtin(
                 ty: Type::Bool,
                 value: 0.into(),
             }
-        }
+        },
         _ => {
             let arguments: Vec<Expression> = args
                 .iter()
@@ -2268,7 +2139,7 @@ fn expr_builtin(
                 kind: (&builtin).into(),
                 args: arguments,
             }
-        }
+        },
     }
 }
 
@@ -2439,12 +2310,7 @@ fn format_string(
 ) -> Expression {
     let args = args
         .iter()
-        .map(|(spec, arg)| {
-            (
-                *spec,
-                expression(arg, cfg, contract_no, func, ns, vartab, opt),
-            )
-        })
+        .map(|(spec, arg)| (*spec, expression(arg, cfg, contract_no, func, ns, vartab, opt)))
         .collect();
     Expression::FormatString { loc: *loc, args }
 }
@@ -2576,7 +2442,7 @@ pub fn assign_single(
                 ty: ty.clone(),
                 var_no: *var_no,
             }
-        }
+        },
         _ => {
             let left_ty = left.ty();
             let ty = cfg_right.ty();
@@ -2592,16 +2458,15 @@ pub fn assign_single(
 
             let dest = expression(left, cfg, contract_no, func, ns, vartab, opt);
 
-            let cfg_right =
-                if !left_ty.is_contract_storage() && cfg_right.ty().is_fixed_reference_type(ns) {
-                    Expression::Load {
-                        loc: pt::Loc::Codegen,
-                        ty: cfg_right.ty(),
-                        expr: Box::new(cfg_right),
-                    }
-                } else {
-                    cfg_right
-                };
+            let cfg_right = if !left_ty.is_contract_storage() && cfg_right.ty().is_fixed_reference_type(ns) {
+                Expression::Load {
+                    loc: pt::Loc::Codegen,
+                    ty: cfg_right.ty(),
+                    expr: Box::new(cfg_right),
+                }
+            } else {
+                cfg_right
+            };
 
             cfg.add(
                 vartab,
@@ -2614,10 +2479,7 @@ pub fn assign_single(
 
             match left_ty {
                 Type::StorageRef(..) if set_storage_bytes => {
-                    if let Expression::Subscript {
-                        expr: array, index, ..
-                    } = dest
-                    {
+                    if let Expression::Subscript { expr: array, index, .. } = dest {
                         // Set a byte in a byte array
                         cfg.add(
                             vartab,
@@ -2634,7 +2496,7 @@ pub fn assign_single(
                     } else {
                         unreachable!();
                     }
-                }
+                },
                 Type::StorageRef(..) => {
                     cfg.add(
                         vartab,
@@ -2648,7 +2510,7 @@ pub fn assign_single(
                             storage: dest,
                         },
                     );
-                }
+                },
                 Type::Ref(_) => {
                     cfg.add(
                         vartab,
@@ -2661,7 +2523,7 @@ pub fn assign_single(
                             },
                         },
                     );
-                }
+                },
                 _ => unreachable!(),
             }
 
@@ -2670,7 +2532,7 @@ pub fn assign_single(
                 ty,
                 var_no: pos,
             }
-        }
+        },
     }
 }
 
@@ -2687,9 +2549,7 @@ pub fn emit_function_call(
     match expr {
         ast::Expression::InternalFunctionCall { function, args, .. } => {
             if let ast::Expression::InternalFunction {
-                function_no,
-                signature,
-                ..
+                function_no, signature, ..
             } = function.as_ref()
             {
                 let args = args
@@ -2819,7 +2679,7 @@ pub fn emit_function_call(
             } else {
                 unreachable!();
             }
-        }
+        },
         ast::Expression::ExternalFunctionCallRaw {
             loc,
             address,
@@ -2899,7 +2759,7 @@ pub fn emit_function_call(
                 }
             };
             vec![success, Expression::ReturnData { loc: *loc }]
-        }
+        },
         ast::Expression::ExternalFunctionCall {
             loc,
             function,
@@ -2909,15 +2769,11 @@ pub fn emit_function_call(
             ..
         } => {
             if let ast::Expression::ExternalFunction {
-                function_no,
-                address,
-                ..
+                function_no, address, ..
             } = function.as_ref()
             {
                 let dest_func = &ns.functions[*function_no];
-                let contract_function_no = dest_func
-                    .contract_no
-                    .map(|contract_no| (contract_no, *function_no));
+                let contract_function_no = dest_func.contract_no.map(|contract_no| (contract_no, *function_no));
 
                 let mut tys: Vec<Type> = args.iter().map(|a| a.ty()).collect();
                 let mut args: Vec<Expression> = args
@@ -3000,26 +2856,13 @@ pub fn emit_function_call(
 
                 // If the first element of returns is Void, we can discard the returns
                 if !dest_func.returns.is_empty() && returns[0] != Type::Void {
-                    let tys = dest_func
-                        .returns
-                        .iter()
-                        .map(|e| e.ty.clone())
-                        .collect::<Vec<Type>>();
-                    abi_decode(
-                        loc,
-                        &Expression::ReturnData { loc: *loc },
-                        &tys,
-                        ns,
-                        vartab,
-                        cfg,
-                        None,
-                    )
+                    let tys = dest_func.returns.iter().map(|e| e.ty.clone()).collect::<Vec<Type>>();
+                    abi_decode(loc, &Expression::ReturnData { loc: *loc }, &tys, ns, vartab, cfg, None)
                 } else {
                     vec![Expression::Poison]
                 }
             } else if let Type::ExternalFunction {
-                returns: func_returns,
-                ..
+                returns: func_returns, ..
             } = function.ty()
             {
                 let mut tys: Vec<Type> = args.iter().map(|a| a.ty()).collect();
@@ -3101,7 +2944,7 @@ pub fn emit_function_call(
             } else {
                 unreachable!();
             }
-        }
+        },
         ast::Expression::Builtin {
             loc,
             tys,
@@ -3110,7 +2953,7 @@ pub fn emit_function_call(
         } => {
             let data = expression(&args[0], cfg, caller_contract_no, func, ns, vartab, opt);
             abi_decode(loc, &data, tys, ns, vartab, cfg, None)
-        }
+        },
         _ => unreachable!(),
     }
 }
@@ -3192,7 +3035,7 @@ fn array_subscript(
             )
             .unwrap();
             expression(&ast_bigint, cfg, contract_no, func, ns, vartab, opt)
-        }
+        },
         Type::Array(..) => match array_ty.array_length() {
             None => {
                 if let Type::StorageRef(..) = array_ty {
@@ -3204,8 +3047,7 @@ fn array_subscript(
                             elem_ty: array_ty.storage_array_elem().deref_into(),
                         }
                     } else {
-                        let array_length =
-                            load_storage(loc, &Type::Uint(256), array.clone(), cfg, vartab);
+                        let array_length = load_storage(loc, &Type::Uint(256), array.clone(), cfg, vartab);
 
                         array = Expression::Keccak256 {
                             loc: *loc,
@@ -3226,10 +3068,7 @@ fn array_subscript(
                         args: vec![array.clone()],
                     };
 
-                    if let Expression::Variable {
-                        loc, var_no: num, ..
-                    } = &array
-                    {
+                    if let Expression::Variable { loc, var_no: num, .. } = &array {
                         // If the size is known (is in cfg.array_length_map), do the replacement
 
                         if let Some(array_length_var) = cfg.array_lengths_temps.get(num) {
@@ -3242,19 +3081,12 @@ fn array_subscript(
                     }
                     returned
                 }
-            }
+            },
             Some(l) => {
-                let ast_big_int = bigint_to_expression(
-                    loc,
-                    l,
-                    ns,
-                    &mut Diagnostics::default(),
-                    ResolveTo::Unknown,
-                    None,
-                )
-                .unwrap();
+                let ast_big_int =
+                    bigint_to_expression(loc, l, ns, &mut Diagnostics::default(), ResolveTo::Unknown, None).unwrap();
                 expression(&ast_big_int, cfg, contract_no, func, ns, vartab, opt)
-            }
+            },
         },
         Type::DynamicBytes | Type::Slice(_) => Expression::Builtin {
             loc: *loc,
@@ -3264,7 +3096,7 @@ fn array_subscript(
         },
         _ => {
             unreachable!();
-        }
+        },
     };
 
     let array_width = array_length.ty().bits(ns);
@@ -3450,10 +3282,7 @@ fn array_subscript(
         } else {
             let elem_size = elem_ty.storage_slots(ns);
 
-            if let Expression::NumberLiteral {
-                value: arr_length, ..
-            } = &array_length
-            {
+            if let Expression::NumberLiteral { value: arr_length, .. } = &array_length {
                 if arr_length.mul(elem_size.clone()).to_u64().is_some() {
                     // we need to calculate the storage offset. If this can be done with 64 bit
                     // arithmetic it will be much more efficient on wasm
@@ -3517,7 +3346,7 @@ fn array_subscript(
             _ => {
                 // should not happen as type-checking already done
                 unreachable!();
-            }
+            },
         }
     }
 }
@@ -3532,15 +3361,9 @@ fn string_location(
     opt: &Options,
 ) -> StringLocation<Expression> {
     match loc {
-        StringLocation::RunTime(s) => StringLocation::RunTime(Box::new(expression(
-            s,
-            cfg,
-            contract_no,
-            func,
-            ns,
-            vartab,
-            opt,
-        ))),
+        StringLocation::RunTime(s) => {
+            StringLocation::RunTime(Box::new(expression(s, cfg, contract_no, func, ns, vartab, opt)))
+        },
         StringLocation::CompileTime(vec) => StringLocation::CompileTime(vec.clone()),
     }
 }

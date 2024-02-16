@@ -4,8 +4,8 @@ use super::tags::resolve_tags;
 use super::{annotions_not_allowed, ast, SourceUnit, SOLANA_BUCKET_SIZE};
 use super::{
     ast::{
-        ArrayLength, Contract, Diagnostic, EnumDecl, ErrorDecl, EventDecl, Mapping, Namespace,
-        Parameter, StructDecl, StructType, Symbol, Tag, Type, UserTypeDecl,
+        ArrayLength, Contract, Diagnostic, EnumDecl, ErrorDecl, EventDecl, Mapping, Namespace, Parameter, StructDecl,
+        StructType, Symbol, Tag, Type, UserTypeDecl,
     },
     diagnostics::Diagnostics,
     ContractDefinition, SOLANA_SPARSE_ARRAY_SIZE,
@@ -57,11 +57,7 @@ struct ResolveStructFields<'a> {
 
 /// Resolve all the types we can find (enums, structs, contracts). structs can have other
 /// structs as fields, including ones that have not been declared yet.
-pub fn resolve_typenames<'a>(
-    tree: &'a SourceUnit,
-    file_no: usize,
-    ns: &mut Namespace,
-) -> ResolveFields<'a> {
+pub fn resolve_typenames<'a>(tree: &'a SourceUnit, file_no: usize, ns: &mut Namespace) -> ResolveFields<'a> {
     let mut delay = ResolveFields {
         structs: Vec::new(),
         events: Vec::new(),
@@ -74,7 +70,7 @@ pub fn resolve_typenames<'a>(
                 annotions_not_allowed(&item.annotations, "enum", ns);
 
                 let _ = enum_decl(def, file_no, &item.doccomments, None, ns);
-            }
+            },
             pt::SourceUnitPart::StructDefinition(def) => {
                 annotions_not_allowed(&item.annotations, "struct", ns);
 
@@ -84,10 +80,7 @@ pub fn resolve_typenames<'a>(
                     file_no,
                     None,
                     def.name.as_ref().unwrap(),
-                    Symbol::Struct(
-                        def.name.as_ref().unwrap().loc,
-                        StructType::UserDefined(struct_no),
-                    ),
+                    Symbol::Struct(def.name.as_ref().unwrap().loc, StructType::UserDefined(struct_no)),
                 ) {
                     ns.structs.push(StructDecl {
                         tags: Vec::new(),
@@ -106,17 +99,16 @@ pub fn resolve_typenames<'a>(
                         contract: None,
                     });
                 }
-            }
+            },
             pt::SourceUnitPart::EventDefinition(def) => {
                 annotions_not_allowed(&item.annotations, "event", ns);
 
                 let event_no = ns.events.len();
 
-                if let Some(Symbol::Event(events)) = ns.variable_symbols.get_mut(&(
-                    file_no,
-                    None,
-                    def.name.as_ref().unwrap().name.to_owned(),
-                )) {
+                if let Some(Symbol::Event(events)) =
+                    ns.variable_symbols
+                        .get_mut(&(file_no, None, def.name.as_ref().unwrap().name.to_owned()))
+                {
                     events.push((def.name.as_ref().unwrap().loc, event_no));
                 } else if !ns.add_symbol(
                     file_no,
@@ -143,7 +135,7 @@ pub fn resolve_typenames<'a>(
                     pt: def,
                     comments: item.doccomments.clone(),
                 });
-            }
+            },
             pt::SourceUnitPart::ErrorDefinition(def) => {
                 match &def.keyword {
                     pt::Expression::Variable(id) if id.name == "error" => (),
@@ -161,7 +153,7 @@ pub fn resolve_typenames<'a>(
                             "'function', 'error', or 'event' expected".into(),
                         ));
                         continue;
-                    }
+                    },
                 }
 
                 annotions_not_allowed(&item.annotations, "error", ns);
@@ -191,12 +183,12 @@ pub fn resolve_typenames<'a>(
                     pt: def,
                     comments: item.doccomments.clone(),
                 });
-            }
+            },
             pt::SourceUnitPart::TypeDefinition(ty) => {
                 annotions_not_allowed(&item.annotations, "type", ns);
 
                 type_decl(ty, file_no, &item.doccomments, None, ns);
-            }
+            },
             _ => (),
         }
     }
@@ -228,7 +220,7 @@ fn type_decl(
         Err(_) => {
             ns.diagnostics.extend(diagnostics);
             return;
-        }
+        },
     };
 
     // We could permit all types to be defined here, however:
@@ -247,12 +239,7 @@ fn type_decl(
 
     let pos = ns.user_types.len();
 
-    if !ns.add_symbol(
-        file_no,
-        contract_no,
-        &def.name,
-        Symbol::UserType(def.name.loc, pos),
-    ) {
+    if !ns.add_symbol(file_no, contract_no, &def.name, Symbol::UserType(def.name.loc, pos)) {
         return;
     }
 
@@ -291,8 +278,8 @@ fn check_infinite_struct_size(graph: &Graph, nodes: Vec<usize>, ns: &mut Namespa
         for edge in graph.edges_connecting(a.into(), b.into()) {
             match &ns.structs[a].fields[*edge.weight()].ty {
                 Type::Array(_, dims) if dims.contains(&ArrayLength::Dynamic) => continue,
-                Type::Array(_, _) => {}
-                Type::Struct(StructType::UserDefined(_)) => {}
+                Type::Array(_, _) => {},
+                Type::Struct(StructType::UserDefined(_)) => {},
                 _ => continue,
             }
             infinite_edge = true;
@@ -391,8 +378,7 @@ fn find_struct_recursion(ns: &mut Namespace) {
 pub fn resolve_fields(delay: ResolveFields, file_no: usize, ns: &mut Namespace) {
     // now we can resolve the fields for the structs
     for resolve in delay.structs {
-        let (tags, fields) =
-            struct_decl(resolve.pt, file_no, &resolve.comments, resolve.contract, ns);
+        let (tags, fields) = struct_decl(resolve.pt, file_no, &resolve.comments, resolve.contract, ns);
 
         ns.structs[resolve.struct_no].tags = tags;
         ns.structs[resolve.struct_no].fields = fields;
@@ -410,8 +396,7 @@ pub fn resolve_fields(delay: ResolveFields, file_no: usize, ns: &mut Namespace) 
 
         let (tags, fields) = event_decl(event.pt, file_no, &event.comments, contract_no, ns);
 
-        ns.events[event.event_no].signature =
-            ns.signature(&ns.events[event.event_no].id.name, &fields);
+        ns.events[event.event_no].signature = ns.signature(&ns.events[event.event_no].id.name, &fields);
         ns.events[event.event_no].fields = fields;
         ns.events[event.event_no].tags = tags;
     }
@@ -438,18 +423,9 @@ fn resolve_contract<'a>(
 
     let contract_no = def.contract_no;
 
-    let doc = resolve_tags(
-        name.loc.file_no(),
-        "contract",
-        &def.doccomments,
-        None,
-        None,
-        None,
-        ns,
-    );
+    let doc = resolve_tags(name.loc.file_no(), "contract", &def.doccomments, None, None, None, ns);
 
-    ns.contracts
-        .push(Contract::new(name, def.ty.clone(), doc, def.loc));
+    ns.contracts.push(Contract::new(name, def.ty.clone(), doc, def.loc));
 
     contract_annotations(contract_no, &def.annotations, ns);
 
@@ -478,7 +454,7 @@ fn resolve_contract<'a>(
                 if !enum_decl(e, file_no, &parts.doccomments, Some(contract_no), ns) {
                     broken = true;
                 }
-            }
+            },
             pt::ContractPart::StructDefinition(ref pt) => {
                 annotions_not_allowed(&parts.annotations, "struct", ns);
 
@@ -488,10 +464,7 @@ fn resolve_contract<'a>(
                     file_no,
                     Some(contract_no),
                     pt.name.as_ref().unwrap(),
-                    Symbol::Struct(
-                        pt.name.as_ref().unwrap().loc,
-                        StructType::UserDefined(struct_no),
-                    ),
+                    Symbol::Struct(pt.name.as_ref().unwrap().loc, StructType::UserDefined(struct_no)),
                 ) {
                     ns.structs.push(StructDecl {
                         tags: Vec::new(),
@@ -512,7 +485,7 @@ fn resolve_contract<'a>(
                 } else {
                     broken = true;
                 }
-            }
+            },
             pt::ContractPart::EventDefinition(pt) => {
                 annotions_not_allowed(&parts.annotations, "event", ns);
 
@@ -550,7 +523,7 @@ fn resolve_contract<'a>(
                     pt,
                     comments: parts.doccomments.clone(),
                 });
-            }
+            },
             pt::ContractPart::ErrorDefinition(def) => {
                 match &def.keyword {
                     pt::Expression::Variable(id) if id.name == "error" => (),
@@ -570,7 +543,7 @@ fn resolve_contract<'a>(
                             "'function', 'error', or 'event' expected".into(),
                         ));
                         continue;
-                    }
+                    },
                 }
 
                 annotions_not_allowed(&parts.annotations, "error", ns);
@@ -600,12 +573,12 @@ fn resolve_contract<'a>(
                     pt: def,
                     comments: parts.doccomments.clone(),
                 });
-            }
+            },
             pt::ContractPart::TypeDefinition(ty) => {
                 annotions_not_allowed(&parts.annotations, "type", ns);
 
                 type_decl(ty, file_no, &parts.doccomments, Some(contract_no), ns);
-            }
+            },
             _ => (),
         }
     }
@@ -614,11 +587,7 @@ fn resolve_contract<'a>(
 }
 
 /// Resolve annotations attached to a contract
-fn contract_annotations(
-    contract_no: usize,
-    annotations: &[&pt::Annotation],
-    ns: &mut ast::Namespace,
-) {
+fn contract_annotations(contract_no: usize, annotations: &[&pt::Annotation], ns: &mut ast::Namespace) {
     let mut seen_program_id = None;
 
     for note in annotations {
@@ -654,24 +623,20 @@ fn contract_annotations(
                         if v.len() != ns.address_length {
                             ns.diagnostics.push(Diagnostic::error(
                                 loc,
-                                format!(
-                                    "address literal {} incorrect length of {}",
-                                    string,
-                                    v.len()
-                                ),
+                                format!("address literal {} incorrect length of {}", string, v.len()),
                             ));
                         } else {
                             seen_program_id = Some(note.loc);
 
                             ns.contracts[contract_no].program_id = Some(v);
                         }
-                    }
+                    },
                     Err(FromBase58Error::InvalidBase58Length) => {
                         ns.diagnostics.push(Diagnostic::error(
                             loc,
                             format!("address literal {string} invalid base58 length"),
                         ));
-                    }
+                    },
                     Err(FromBase58Error::InvalidBase58Character(ch, pos)) => {
                         if let pt::Loc::File(_, start, end) = &mut loc {
                             *start += pos + 1; // location includes quotes
@@ -681,16 +646,16 @@ fn contract_annotations(
                             loc,
                             format!("address literal {string} invalid character '{ch}'"),
                         ));
-                    }
+                    },
                 }
-            }
+            },
             _ => {
                 ns.diagnostics.push(Diagnostic::error(
                         note.loc,
                             r#"annotion takes an account, for example '@program_id("BBH7Xi5ddus5EoQhzJLgyodVxJJGkvBRCY5AhBA1jwUr")'"#
                         .into(),
                     ));
-            }
+            },
         }
     }
 }
@@ -722,13 +687,13 @@ pub fn struct_decl(
             Err(()) => {
                 ns.diagnostics.extend(diagnostics);
                 Type::Unresolved
-            }
+            },
         };
 
-        if let Some(other) = fields.iter().find(|f| {
-            f.id.as_ref().map(|id| id.name.as_str())
-                == Some(field.name.as_ref().unwrap().name.as_str())
-        }) {
+        if let Some(other) = fields
+            .iter()
+            .find(|f| f.id.as_ref().map(|id| id.name.as_str()) == Some(field.name.as_ref().unwrap().name.as_str()))
+        {
             ns.diagnostics.push(Diagnostic::error_with_note(
                 field.name.as_ref().unwrap().loc,
                 format!(
@@ -737,10 +702,7 @@ pub fn struct_decl(
                     field.name.as_ref().unwrap().name
                 ),
                 other.loc,
-                format!(
-                    "location of previous declaration of '{}'",
-                    other.name_as_str()
-                ),
+                format!("location of previous declaration of '{}'", other.name_as_str()),
             ));
             continue;
         }
@@ -823,7 +785,7 @@ fn event_decl(
             Err(()) => {
                 ns.diagnostics.extend(diagnostics);
                 Type::Unresolved
-            }
+            },
         };
 
         if ty.contains_mapping(ns) {
@@ -847,10 +809,7 @@ fn event_decl(
                         name.name
                     ),
                     other.loc,
-                    format!(
-                        "location of previous declaration of '{}'",
-                        other.name_as_str()
-                    ),
+                    format!("location of previous declaration of '{}'", other.name_as_str()),
                 ));
                 continue;
             }
@@ -946,7 +905,7 @@ fn error_decl(
             Err(()) => {
                 ns.diagnostics.extend(diagnostics);
                 Type::Unresolved
-            }
+            },
         };
 
         if ty.contains_mapping(ns) {
@@ -970,10 +929,7 @@ fn error_decl(
                         name.name
                     ),
                     other.loc,
-                    format!(
-                        "location of previous declaration of '{}'",
-                        other.name_as_str()
-                    ),
+                    format!("location of previous declaration of '{}'", other.name_as_str()),
                 ));
                 continue;
             }
@@ -1055,10 +1011,7 @@ fn enum_decl(
             continue;
         }
 
-        entries.insert(
-            e.as_ref().unwrap().name.to_string(),
-            e.as_ref().unwrap().loc,
-        );
+        entries.insert(e.as_ref().unwrap().name.to_string(), e.as_ref().unwrap().loc);
     }
 
     let tags = resolve_tags(
@@ -1197,10 +1150,8 @@ impl Type {
                 let mut result = key.user_struct_no(ns);
                 result.extend(value.user_struct_no(ns));
                 result
-            }
-            Type::Array(ty, _) | Type::Ref(ty) | Type::Slice(ty) | Type::StorageRef(_, ty) => {
-                ty.user_struct_no(ns)
-            }
+            },
+            Type::Array(ty, _) | Type::Ref(ty) | Type::Slice(ty) | Type::StorageRef(_, ty) => ty.user_struct_no(ns),
             Type::UserType(no) => ns.user_types[*no].ty.user_struct_no(ns),
             _ => HashSet::new(),
         }
@@ -1245,7 +1196,7 @@ impl Type {
                     if value_name.is_some() { " " } else { "" },
                     value_name.as_ref().map(|id| id.name.as_str()).unwrap_or(""),
                 )
-            }
+            },
             Type::ExternalFunction {
                 params,
                 mutability,
@@ -1288,13 +1239,13 @@ impl Type {
                 }
 
                 s
-            }
+            },
             Type::Contract(n) => format!("contract {}", ns.contracts[*n].id),
             Type::UserType(n) => format!("usertype {}", ns.user_types[*n]),
             Type::Ref(r) => r.to_string(ns),
             Type::StorageRef(_, ty) => {
                 format!("{} storage", ty.to_string(ns))
-            }
+            },
             Type::Void => "void".into(),
             Type::Unreachable => "unreachable".into(),
             // A slice of bytes1 is like bytes
@@ -1362,7 +1313,7 @@ impl Type {
                         .collect::<Vec<String>>()
                         .join(",")
                 )
-            }
+            },
             Type::InternalFunction { .. } | Type::ExternalFunction { .. } => "function".to_owned(),
             Type::UserType(n) => ns.user_types[*n].ty.to_signature_string(say_tuple, ns),
             // TODO: should an unresolved type not match another unresolved type?
@@ -1378,10 +1329,9 @@ impl Type {
         match self {
             Type::String | Type::DynamicBytes => Type::Ref(Box::new(Type::Uint(8))),
             Type::Ref(t) => t.array_deref(),
-            Type::Array(ty, dim) if dim.len() > 1 => Type::Ref(Box::new(Type::Array(
-                ty.clone(),
-                dim[..dim.len() - 1].to_vec(),
-            ))),
+            Type::Array(ty, dim) if dim.len() > 1 => {
+                Type::Ref(Box::new(Type::Array(ty.clone(), dim[..dim.len() - 1].to_vec())))
+            },
             Type::Array(ty, dim) if dim.len() == 1 => Type::Ref(ty.clone()),
             Type::Bytes(_) => Type::Bytes(1),
             Type::Slice(ty) => Type::Ref(Box::new(*ty.clone())),
@@ -1431,9 +1381,7 @@ impl Type {
     #[must_use]
     pub fn array_elem(&self) -> Self {
         match self {
-            Type::Array(ty, dim) if dim.len() > 1 => {
-                Type::Array(ty.clone(), dim[..dim.len() - 1].to_vec())
-            }
+            Type::Array(ty, dim) if dim.len() > 1 => Type::Array(ty.clone(), dim[..dim.len() - 1].to_vec()),
             Type::Array(ty, dim) if dim.len() == 1 => *ty.clone(),
             Type::DynamicBytes => Type::Bytes(1),
             Type::Slice(ty) => *ty.clone(),
@@ -1448,10 +1396,9 @@ impl Type {
         match self {
             Type::Mapping(Mapping { value, .. }) => Type::StorageRef(false, value.clone()),
             Type::DynamicBytes | Type::String | Type::Bytes(_) => Type::Bytes(1),
-            Type::Array(ty, dim) if dim.len() > 1 => Type::StorageRef(
-                false,
-                Box::new(Type::Array(ty.clone(), dim[..dim.len() - 1].to_vec())),
-            ),
+            Type::Array(ty, dim) if dim.len() > 1 => {
+                Type::StorageRef(false, Box::new(Type::Array(ty.clone(), dim[..dim.len() - 1].to_vec())))
+            },
             Type::Array(ty, dim) if dim.len() == 1 => Type::StorageRef(false, ty.clone()),
             Type::StorageRef(_, ty) => ty.storage_array_elem(),
             _ => panic!("deref on non-array"),
@@ -1474,11 +1421,7 @@ impl Type {
         self.memory_size_of_internal(ns, &mut HashSet::new())
     }
 
-    pub fn memory_size_of_internal(
-        &self,
-        ns: &Namespace,
-        structs_visited: &mut HashSet<usize>,
-    ) -> BigInt {
+    pub fn memory_size_of_internal(&self, ns: &Namespace, structs_visited: &mut HashSet<usize>) -> BigInt {
         self.guarded_recursion(structs_visited, 0.into(), |structs_visited| match self {
             Type::Enum(_) => BigInt::one(),
             Type::Bool => BigInt::one(),
@@ -1487,9 +1430,7 @@ impl Type {
             Type::Value => BigInt::from(ns.value_length),
             Type::Uint(n) | Type::Int(n) => BigInt::from(n / 8),
             Type::Rational => unreachable!(),
-            Type::Array(_, dims) if dims.first() == Some(&ArrayLength::Dynamic) => {
-                (ns.target.ptr_size() / 8).into()
-            }
+            Type::Array(_, dims) if dims.first() == Some(&ArrayLength::Dynamic) => (ns.target.ptr_size() / 8).into(),
             Type::Array(ty, dims) => {
                 let pointer_size = (ns.target.ptr_size() / 8).into();
                 ty.memory_size_of_internal(ns, structs_visited).mul(
@@ -1501,7 +1442,7 @@ impl Type {
                         })
                         .product::<BigInt>(),
                 )
-            }
+            },
             Type::Struct(str_ty) => str_ty
                 .definition(ns)
                 .fields
@@ -1518,11 +1459,9 @@ impl Type {
                 // Address and selector
                 Type::Address(false).memory_size_of_internal(ns, structs_visited)
                     + Type::Uint(32).memory_size_of_internal(ns, structs_visited)
-            }
+            },
             Type::Unresolved | Type::Mapping(..) => BigInt::zero(),
-            Type::UserType(no) => ns.user_types[*no]
-                .ty
-                .memory_size_of_internal(ns, structs_visited),
+            Type::UserType(no) => ns.user_types[*no].ty.memory_size_of_internal(ns, structs_visited),
             Type::FunctionSelector => BigInt::from(ns.target.selector_length()),
             _ => unimplemented!("sizeof on {:?}", self),
         })
@@ -1588,7 +1527,7 @@ impl Type {
                 let size = dynamic_array_size(dims);
                 // A pointer is four bytes on Solana
                 size * 4
-            }
+            },
             Type::Array(ty, dims) => ty.solana_storage_size(ns).mul(
                 dims.iter()
                     .map(|d| match d {
@@ -1732,7 +1671,7 @@ impl Type {
                     let size = dynamic_array_size(dims);
                     // A pointer is four bytes on Solana
                     size * 4
-                }
+                },
                 Type::Array(ty, dims) => {
                     let pointer_size = BigInt::from(4);
                     if self.is_sparse_solana(ns) {
@@ -1745,12 +1684,12 @@ impl Type {
                                     ArrayLength::Fixed(d) => d,
                                     ArrayLength::AnyFixed => {
                                         panic!("unknown length");
-                                    }
+                                    },
                                 })
                                 .product::<BigInt>(),
                         )
                     }
-                }
+                },
                 Type::Struct(str_ty) => str_ty
                     .definition(ns)
                     .storage_offsets
@@ -1762,7 +1701,7 @@ impl Type {
                 Type::ExternalFunction { .. } => {
                     // Address and selector
                     BigInt::from(ns.address_length + 4)
-                }
+                },
                 Type::Mapping(..) => BigInt::from(SOLANA_BUCKET_SIZE) * BigInt::from(4),
                 Type::Ref(ty) | Type::StorageRef(_, ty) => ty.storage_slots(ns),
                 Type::Unresolved => BigInt::one(),
@@ -1779,9 +1718,7 @@ impl Type {
                     .filter(|f| !f.infinite_size)
                     .map(|f| f.ty.storage_slots(ns))
                     .sum(),
-                Type::Array(_, dims) if dims.contains(&ArrayLength::Dynamic) => {
-                    dynamic_array_size(dims)
-                }
+                Type::Array(_, dims) if dims.contains(&ArrayLength::Dynamic) => dynamic_array_size(dims),
                 Type::Array(ty, dims) => {
                     let one = 1.into();
                     ty.storage_slots(ns)
@@ -1792,10 +1729,10 @@ impl Type {
                                 ArrayLength::Fixed(len) => len,
                                 ArrayLength::AnyFixed => {
                                     unreachable!("unknown length")
-                                }
+                                },
                             })
                             .product::<BigInt>()
-                }
+                },
                 _ => BigInt::one(),
             }
         }
@@ -1819,7 +1756,7 @@ impl Type {
                     } else {
                         ty.storage_align(ns)
                     }
-                }
+                },
                 Type::Struct(str_ty) => str_ty
                     .definition(ns)
                     .fields
@@ -1888,7 +1825,7 @@ impl Type {
                     return true;
                 }
                 ty.is_dynamic_internal(ns, structs_visited)
-            }
+            },
             Type::Struct(str_ty) => str_ty
                 .definition(ns)
                 .fields
@@ -1906,11 +1843,7 @@ impl Type {
     pub fn can_have_data_location(&self) -> bool {
         matches!(
             self,
-            Type::Array(..)
-                | Type::Struct(_)
-                | Type::Mapping(..)
-                | Type::String
-                | Type::DynamicBytes
+            Type::Array(..) | Type::Struct(_) | Type::Mapping(..) | Type::String | Type::DynamicBytes
         )
     }
 
@@ -1959,11 +1892,7 @@ impl Type {
         self.contains_mapping_internal(ns, &mut HashSet::new())
     }
 
-    fn contains_mapping_internal(
-        &self,
-        ns: &Namespace,
-        structs_visited: &mut HashSet<usize>,
-    ) -> bool {
+    fn contains_mapping_internal(&self, ns: &Namespace, structs_visited: &mut HashSet<usize>) -> bool {
         self.guarded_recursion(structs_visited, false, |structs_visited| match self {
             Type::Mapping(..) => true,
             Type::Array(ty, _) => ty.contains_mapping_internal(ns, structs_visited),
@@ -1972,9 +1901,7 @@ impl Type {
                 .fields
                 .iter()
                 .any(|f| f.ty.contains_mapping_internal(ns, structs_visited)),
-            Type::StorageRef(_, r) | Type::Ref(r) => {
-                r.contains_mapping_internal(ns, structs_visited)
-            }
+            Type::StorageRef(_, r) | Type::Ref(r) => r.contains_mapping_internal(ns, structs_visited),
             _ => false,
         })
     }
@@ -1984,20 +1911,16 @@ impl Type {
         self.contains_internal_function_internal(ns, &mut HashSet::new())
     }
 
-    fn contains_internal_function_internal(
-        &self,
-        ns: &Namespace,
-        structs_visited: &mut HashSet<usize>,
-    ) -> bool {
+    fn contains_internal_function_internal(&self, ns: &Namespace, structs_visited: &mut HashSet<usize>) -> bool {
         self.guarded_recursion(structs_visited, false, |structs_visited| match self {
             Type::InternalFunction { .. } => true,
             Type::Array(ty, _) => ty.contains_internal_function_internal(ns, structs_visited),
-            Type::Struct(str_ty) => str_ty.definition(ns).fields.iter().any(|f| {
-                f.ty.contains_internal_function_internal(ns, structs_visited)
-            }),
-            Type::StorageRef(_, r) | Type::Ref(r) => {
-                r.contains_internal_function_internal(ns, structs_visited)
-            }
+            Type::Struct(str_ty) => str_ty
+                .definition(ns)
+                .fields
+                .iter()
+                .any(|f| f.ty.contains_internal_function_internal(ns, structs_visited)),
+            Type::StorageRef(_, r) | Type::Ref(r) => r.contains_internal_function_internal(ns, structs_visited),
             _ => false,
         })
     }
@@ -2011,18 +1934,14 @@ impl Type {
                 } else {
                     Some(*str_ty)
                 }
-            }
+            },
             Type::StorageRef(_, r) | Type::Ref(r) => r.is_builtin_struct(),
             _ => None,
         }
     }
 
     /// Does the type contain any builtin type
-    pub fn contains_builtins<'a>(
-        &'a self,
-        ns: &'a Namespace,
-        builtin: &StructType,
-    ) -> Option<&'a Type> {
+    pub fn contains_builtins<'a>(&'a self, ns: &'a Namespace, builtin: &StructType) -> Option<&'a Type> {
         self.contains_builtins_internal(ns, builtin, &mut HashSet::new())
     }
 
@@ -2038,12 +1957,12 @@ impl Type {
                 .contains_builtins_internal(ns, builtin, structs_visited)
                 .or_else(|| value.contains_builtins_internal(ns, builtin, structs_visited)),
             Type::Struct(str_ty) if str_ty == builtin => Some(self),
-            Type::Struct(str_ty) => str_ty.definition(ns).fields.iter().find_map(|f| {
-                f.ty.contains_builtins_internal(ns, builtin, structs_visited)
-            }),
-            Type::StorageRef(_, r) | Type::Ref(r) => {
-                r.contains_builtins_internal(ns, builtin, structs_visited)
-            }
+            Type::Struct(str_ty) => str_ty
+                .definition(ns)
+                .fields
+                .iter()
+                .find_map(|f| f.ty.contains_builtins_internal(ns, builtin, structs_visited)),
+            Type::StorageRef(_, r) | Type::Ref(r) => r.contains_builtins_internal(ns, builtin, structs_visited),
             _ => None,
         })
     }
@@ -2098,12 +2017,8 @@ impl Type {
                     .collect::<String>()
             ),
             Type::Mapping(Mapping { key, value, .. }) => {
-                format!(
-                    "mapping:{}:{}",
-                    key.to_llvm_string(ns),
-                    value.to_llvm_string(ns)
-                )
-            }
+                format!("mapping:{}:{}", key.to_llvm_string(ns), value.to_llvm_string(ns))
+            },
             Type::Contract(i) => ns.contracts[*i].id.name.to_owned(),
             Type::InternalFunction { .. } => "function".to_owned(),
             Type::ExternalFunction { .. } => "function".to_owned(),
@@ -2132,7 +2047,7 @@ impl Type {
                 );
 
                 len >= BigInt::from(SOLANA_SPARSE_ARRAY_SIZE)
-            }
+            },
             _ => false,
         }
     }
@@ -2140,15 +2055,9 @@ impl Type {
     // Does this type contain itself
     pub fn is_recursive(&self, ns: &Namespace) -> bool {
         match self {
-            Type::Struct(StructType::UserDefined(n)) => {
-                ns.structs[*n].fields.iter().any(|f| f.recursive)
-            }
-            Type::Mapping(Mapping { key, value, .. }) => {
-                key.is_recursive(ns) || value.is_recursive(ns)
-            }
-            Type::Array(ty, _) | Type::Ref(ty) | Type::Slice(ty) | Type::StorageRef(_, ty) => {
-                ty.is_recursive(ns)
-            }
+            Type::Struct(StructType::UserDefined(n)) => ns.structs[*n].fields.iter().any(|f| f.recursive),
+            Type::Mapping(Mapping { key, value, .. }) => key.is_recursive(ns) || value.is_recursive(ns),
+            Type::Array(ty, _) | Type::Ref(ty) | Type::Slice(ty) | Type::StorageRef(_, ty) => ty.is_recursive(ns),
             Type::UserType(no) => ns.user_types[*no].ty.is_recursive(ns),
             _ => false,
         }

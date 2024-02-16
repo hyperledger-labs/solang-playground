@@ -19,14 +19,7 @@ pub(super) fn array_subscript(
     symtable: &mut Symtable,
     diagnostics: &mut Diagnostics,
 ) -> Result<Expression, ()> {
-    let mut array = expression(
-        array,
-        context,
-        ns,
-        symtable,
-        diagnostics,
-        ResolveTo::Unknown,
-    )?;
+    let mut array = expression(array, context, ns, symtable, diagnostics, ResolveTo::Unknown)?;
     let array_ty = array.ty();
 
     if array.ty().is_mapping() {
@@ -63,7 +56,7 @@ pub(super) fn array_subscript(
                 ),
             ));
             return Err(());
-        }
+        },
     };
 
     if array_ty.is_storage_bytes() {
@@ -121,21 +114,18 @@ pub(super) fn array_subscript(
                     index: Box::new(index),
                 })
             }
-        }
+        },
         Type::String => {
             diagnostics.push(Diagnostic::error(
                 array.loc(),
                 "array subscript is not permitted on string".to_string(),
             ));
             Err(())
-        }
+        },
         _ => {
-            diagnostics.push(Diagnostic::error(
-                array.loc(),
-                "expression is not an array".to_string(),
-            ));
+            diagnostics.push(Diagnostic::error(array.loc(), "expression is not an array".to_string()));
             Err(())
-        }
+        },
     }
 }
 
@@ -153,15 +143,13 @@ fn mapping_subscript(
     let elem_ty = ty.storage_array_elem();
 
     if let Type::Mapping(Mapping { key, .. }) = ty.deref_any() {
-        let index_expr = expression(
-            index,
-            context,
+        let index_expr = expression(index, context, ns, symtable, diagnostics, ResolveTo::Type(key))?.cast(
+            &index.loc(),
+            key,
+            true,
             ns,
-            symtable,
             diagnostics,
-            ResolveTo::Type(key),
-        )?
-        .cast(&index.loc(), key, true, ns, diagnostics)?;
+        )?;
 
         Ok(Expression::Subscript {
             loc: *loc,

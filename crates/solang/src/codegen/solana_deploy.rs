@@ -1,16 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
-use super::{
-    cfg::ReturnCode, expression, Builtin, ControlFlowGraph, Expression, Instr, Options, Type,
-    Vartable,
-};
+use super::{cfg::ReturnCode, expression, Builtin, ControlFlowGraph, Expression, Instr, Options, Type, Vartable};
 use crate::codegen::revert::string_to_expr;
-use crate::codegen::solana_accounts::account_management::{
-    account_meta_literal, retrieve_key_from_account_info,
-};
+use crate::codegen::solana_accounts::account_management::{account_meta_literal, retrieve_key_from_account_info};
 use crate::sema::ast::{
-    self, ArrayLength, CallTy, ExternalCallAccounts, Function, FunctionAttributes, Namespace,
-    StructType,
+    self, ArrayLength, CallTy, ExternalCallAccounts, Function, FunctionAttributes, Namespace, StructType,
 };
 use crate::sema::diagnostics::Diagnostics;
 use crate::sema::eval::eval_const_number;
@@ -105,10 +99,7 @@ pub(super) fn solana_deploy(
     let tx_account_0 = Expression::Subscript {
         loc: Loc::Codegen,
         ty: Type::Struct(StructType::AccountInfo),
-        array_ty: Type::Array(
-            Type::Struct(StructType::AccountInfo).into(),
-            vec![ArrayLength::Dynamic],
-        ),
+        array_ty: Type::Array(Type::Struct(StructType::AccountInfo).into(), vec![ArrayLength::Dynamic]),
         expr: Expression::Builtin {
             loc: Loc::Codegen,
             tys: vec![Type::Array(
@@ -403,9 +394,8 @@ pub(super) fn solana_deploy(
             let space_runtime_constant = contract.fixed_layout_size.to_u64().unwrap();
 
             // https://github.com/solana-labs/solana/blob/718f433206c124da85a8aa2476c0753f351f9a28/sdk/program/src/rent.rs#L78-L82
-            let lamports_runtime_constant = (ACCOUNT_STORAGE_OVERHEAD + space_runtime_constant)
-                * LAMPORTS_PER_BYTE_YER
-                * EXEMPTION_THRESHOLD;
+            let lamports_runtime_constant =
+                (ACCOUNT_STORAGE_OVERHEAD + space_runtime_constant) * LAMPORTS_PER_BYTE_YER * EXEMPTION_THRESHOLD;
 
             (
                 Expression::NumberLiteral {

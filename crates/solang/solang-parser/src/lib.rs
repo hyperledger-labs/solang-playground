@@ -31,10 +31,7 @@ mod solidity {
 }
 
 /// Parses a Solidity file.
-pub fn parse(
-    src: &str,
-    file_no: usize,
-) -> Result<(pt::SourceUnit, Vec<pt::Comment>), Vec<Diagnostic>> {
+pub fn parse(src: &str, file_no: usize) -> Result<(pt::SourceUnit, Vec<pt::Comment>), Vec<Diagnostic>> {
     // parse phase
     let mut comments = Vec::new();
     let mut lexer_errors = Vec::new();
@@ -45,10 +42,7 @@ pub fn parse(
 
     let mut diagnostics = Vec::with_capacity(lex.errors.len() + parser_errors.len());
     for lexical_error in lex.errors {
-        diagnostics.push(Diagnostic::parser_error(
-            lexical_error.loc(),
-            lexical_error.to_string(),
-        ))
+        diagnostics.push(Diagnostic::parser_error(lexical_error.loc(), lexical_error.to_string()))
     }
 
     for e in parser_errors {
@@ -59,32 +53,24 @@ pub fn parse(
         Err(e) => {
             diagnostics.push(parser_error_to_diagnostic(&e, file_no));
             Err(diagnostics)
-        }
+        },
         _ if !diagnostics.is_empty() => Err(diagnostics),
         Ok(res) => Ok((res, comments)),
     }
 }
 
 /// Convert lalrop parser error to a Diagnostic
-fn parser_error_to_diagnostic(
-    error: &ParseError<usize, Token, LexicalError>,
-    file_no: usize,
-) -> Diagnostic {
+fn parser_error_to_diagnostic(error: &ParseError<usize, Token, LexicalError>, file_no: usize) -> Diagnostic {
     match error {
-        ParseError::InvalidToken { location } => Diagnostic::parser_error(
-            Loc::File(file_no, *location, *location),
-            "invalid token".to_string(),
-        ),
+        ParseError::InvalidToken { location } => {
+            Diagnostic::parser_error(Loc::File(file_no, *location, *location), "invalid token".to_string())
+        },
         ParseError::UnrecognizedToken {
             token: (l, token, r),
             expected,
         } => Diagnostic::parser_error(
             Loc::File(file_no, *l, *r),
-            format!(
-                "unrecognised token '{}', expected {}",
-                token,
-                expected.join(", ")
-            ),
+            format!("unrecognised token '{}', expected {}", token, expected.join(", ")),
         ),
         ParseError::User { error } => Diagnostic::parser_error(error.loc(), error.to_string()),
         ParseError::ExtraToken { token } => Diagnostic::parser_error(

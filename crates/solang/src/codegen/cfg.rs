@@ -11,8 +11,8 @@ use super::{
 use crate::codegen::subexpression_elimination::common_sub_expression_elimination;
 use crate::codegen::{undefined_variable, Expression, LLVMName};
 use crate::sema::ast::{
-    CallTy, Contract, ExternalCallAccounts, FunctionAttributes, Namespace, Parameter, RetrieveType,
-    Statement, StringLocation, StructType, Type,
+    CallTy, Contract, ExternalCallAccounts, FunctionAttributes, Namespace, Parameter, RetrieveType, Statement,
+    StringLocation, StructType, Type,
 };
 use crate::sema::{contracts::collect_base_args, diagnostics::Diagnostics, Recurse};
 use crate::{sema::ast, Target};
@@ -36,11 +36,7 @@ pub type ArrayLengthVars = IndexMap<usize, usize>;
 #[allow(clippy::large_enum_variant)]
 pub enum Instr {
     /// Set variable
-    Set {
-        loc: pt::Loc,
-        res: usize,
-        expr: Expression,
-    },
+    Set { loc: pt::Loc, res: usize, expr: Expression },
     /// Call internal function, either static dispatch or dynamic dispatch
     Call {
         res: Vec<usize>,
@@ -66,11 +62,7 @@ pub enum Instr {
     Print { expr: Expression },
     /// Load storage (this is an instruction rather than an expression
     /// so that it can be moved around by the dead storage pass
-    LoadStorage {
-        res: usize,
-        ty: Type,
-        storage: Expression,
-    },
+    LoadStorage { res: usize, ty: Type, storage: Expression },
     /// Clear storage at slot for ty (might span multiple slots)
     ClearStorage { ty: Type, storage: Expression },
     /// Set storage value at slot
@@ -78,7 +70,7 @@ pub enum Instr {
         ty: Type,
         value: Expression,
         storage: Expression,
-    }, 
+    },
     /// In storage slot, set the value at the offset
     SetStorageBytes {
         value: Expression,
@@ -178,10 +170,7 @@ pub enum Instr {
     /// Do nothing
     Nop,
     /// Return AbiEncoded data via an environment system call
-    ReturnData {
-        data: Expression,
-        data_len: Expression,
-    },
+    ReturnData { data: Expression, data_len: Expression },
     /// Return a code at the end of a function
     ReturnCode { code: ReturnCode },
     /// For unimplemented code, e.g. unsupported yul builtins. This instruction should
@@ -193,11 +182,7 @@ pub enum Instr {
     /// This instruction serves to track account accesses through 'tx.accounts.my_account'
     /// on Solana, and has no emit implementation. It is exchanged by the proper
     /// Expression::Subscript at solana_accounts/account_management.rs
-    AccountAccess {
-        loc: pt::Loc,
-        var_no: usize,
-        name: String,
-    },
+    AccountAccess { loc: pt::Loc, var_no: usize, name: String },
 }
 
 /// This struct defined the return codes that we send to the execution environment when we return
@@ -214,11 +199,7 @@ pub enum ReturnCode {
 }
 
 impl Instr {
-    pub fn recurse_expressions<T>(
-        &self,
-        cx: &mut T,
-        f: fn(expr: &Expression, ctx: &mut T) -> bool,
-    ) {
+    pub fn recurse_expressions<T>(&self, cx: &mut T, f: fn(expr: &Expression, ctx: &mut T) -> bool) {
         match self {
             Instr::BranchCond { cond: expr, .. }
             | Instr::LoadStorage { storage: expr, .. }
@@ -231,11 +212,11 @@ impl Instr {
             | Instr::SelfDestruct { recipient: expr }
             | Instr::Set { expr, .. } => {
                 expr.recurse(cx, f);
-            }
+            },
 
             Instr::PushMemory { value: expr, .. } => {
                 expr.recurse(cx, f);
-            }
+            },
 
             Instr::SetStorage {
                 value: item_1,
@@ -252,29 +233,25 @@ impl Instr {
             } => {
                 item_1.recurse(cx, f);
                 item_2.recurse(cx, f);
-            }
+            },
             Instr::PushStorage { value, storage, .. } => {
                 if let Some(value) = value {
                     value.recurse(cx, f);
                 }
                 storage.recurse(cx, f);
-            }
+            },
 
-            Instr::SetStorageBytes {
-                value,
-                storage,
-                offset,
-            } => {
+            Instr::SetStorageBytes { value, storage, offset } => {
                 value.recurse(cx, f);
                 storage.recurse(cx, f);
                 offset.recurse(cx, f);
-            }
+            },
 
             Instr::Return { value: exprs } | Instr::Call { args: exprs, .. } => {
                 for expr in exprs {
                     expr.recurse(cx, f);
                 }
-            }
+            },
 
             Instr::Constructor {
                 encoded_args,
@@ -302,7 +279,7 @@ impl Instr {
                 if let ExternalCallAccounts::Present(expr) = accounts {
                     expr.recurse(cx, f);
                 }
-            }
+            },
 
             Instr::ExternalCall {
                 address,
@@ -317,24 +294,24 @@ impl Instr {
                 payload.recurse(cx, f);
                 value.recurse(cx, f);
                 gas.recurse(cx, f);
-            }
+            },
 
             Instr::ValueTransfer { address, value, .. } => {
                 address.recurse(cx, f);
                 value.recurse(cx, f);
-            }
+            },
 
             Instr::EmitEvent { data, topics, .. } => {
                 data.recurse(cx, f);
                 for expr in topics {
                     expr.recurse(cx, f);
                 }
-            }
+            },
 
             Instr::WriteBuffer { offset, value, .. } => {
                 value.recurse(cx, f);
                 offset.recurse(cx, f);
-            }
+            },
 
             Instr::MemCopy {
                 source: from,
@@ -344,14 +321,14 @@ impl Instr {
                 from.recurse(cx, f);
                 to.recurse(cx, f);
                 bytes.recurse(cx, f);
-            }
+            },
 
             Instr::Switch { cond, cases, .. } => {
                 cond.recurse(cx, f);
                 for (case, _) in cases {
                     case.recurse(cx, f);
                 }
-            }
+            },
 
             Instr::AssertFailure { encoded_args: None }
             | Instr::Nop
@@ -359,7 +336,7 @@ impl Instr {
             | Instr::Branch { .. }
             | Instr::AccountAccess { .. }
             | Instr::PopMemory { .. }
-            | Instr::Unimplemented { .. } => {}
+            | Instr::Unimplemented { .. } => {},
         }
     }
 }
@@ -440,7 +417,7 @@ impl BasicBlock {
                 Instr::Branch { block } => {
                     assert_eq!(i, 0, "Branch is not last instruction in block");
                     out.push(*block);
-                }
+                },
                 Instr::BranchCond {
                     true_block,
                     false_block,
@@ -449,14 +426,14 @@ impl BasicBlock {
                     assert_eq!(i, 0, "BranchCond is not last instruction in block");
                     out.push(*true_block);
                     out.push(*false_block);
-                }
+                },
                 Instr::Switch { default, cases, .. } => {
                     assert_eq!(i, 0, "Switch is not last instruction in block");
                     out.push(*default);
                     for (_, goto) in cases {
                         out.push(*goto);
                     }
-                }
+                },
                 Instr::AssertFailure { .. }
                 | Instr::SelfDestruct { .. }
                 | Instr::ReturnCode { .. }
@@ -464,11 +441,11 @@ impl BasicBlock {
                 | Instr::Return { .. }
                 | Instr::Unimplemented { reachable: false } => {
                     assert_eq!(i, 0, "instruction should be last in block");
-                }
+                },
 
                 _ => {
                     assert_ne!(i, 0, "instruction should not be last in block");
-                }
+                },
             }
         }
 
@@ -630,7 +607,7 @@ impl ControlFlowGraph {
                 ..
             } => {
                 format!("{}", String::from_utf8_lossy(value))
-            }
+            },
             Expression::BytesLiteral { value, .. } => format!("hex\"{}\"", hex::encode(value)),
             Expression::NumberLiteral {
                 ty: ty @ Type::Address(_),
@@ -638,13 +615,13 @@ impl ControlFlowGraph {
                 ..
             } => {
                 format!("{} {:#x}", ty.to_string(ns), value)
-            }
+            },
             Expression::NumberLiteral { ty, value, .. } => {
                 format!("{} {}", ty.to_string(ns), value)
-            }
+            },
             Expression::RationalNumberLiteral { ty, rational, .. } => {
                 format!("{} {}", ty.to_string(ns), rational)
-            }
+            },
             Expression::StructLiteral { values, .. } => format!(
                 "struct {{ {} }}",
                 values
@@ -653,9 +630,7 @@ impl ControlFlowGraph {
                     .collect::<Vec<String>>()
                     .join(", ")
             ),
-            Expression::ConstArrayLiteral {
-                dimensions, values, ..
-            } => format!(
+            Expression::ConstArrayLiteral { dimensions, values, .. } => format!(
                 "constant {} [ {} ]",
                 dimensions.iter().fold(String::new(), |mut output, d| {
                     write!(output, "[{d}]").unwrap();
@@ -667,9 +642,7 @@ impl ControlFlowGraph {
                     .collect::<Vec<String>>()
                     .join(", ")
             ),
-            Expression::ArrayLiteral {
-                dimensions, values, ..
-            } => format!(
+            Expression::ArrayLiteral { dimensions, values, .. } => format!(
                 "{} [ {} ]",
                 dimensions.iter().fold(String::new(), |mut output, d| {
                     write!(output, "[{d}]").unwrap();
@@ -760,10 +733,7 @@ impl ControlFlowGraph {
                 self.expr_to_string(contract, ns, right)
             ),
             Expression::Power {
-                overflowing,
-                base,
-                exp,
-                ..
+                overflowing, base, exp, ..
             } => format!(
                 "({}{} ** {})",
                 if *overflowing { "overflowing " } else { "" },
@@ -776,10 +746,10 @@ impl ControlFlowGraph {
                 } else {
                     panic!("error: non-existing variable {var_no} in CFG");
                 }
-            }
+            },
             Expression::Load { expr, .. } => {
                 format!("(load {})", self.expr_to_string(contract, ns, expr))
-            }
+            },
             Expression::ZeroExt { ty, expr, .. } => format!(
                 "(zext {} {})",
                 ty.to_string(ns),
@@ -796,10 +766,7 @@ impl ControlFlowGraph {
                 self.expr_to_string(contract, ns, expr)
             ),
             Expression::More {
-                signed,
-                left,
-                right,
-                ..
+                signed, left, right, ..
             } => format!(
                 "({} more {} > {})",
                 if *signed { "signed" } else { "unsigned" },
@@ -807,10 +774,7 @@ impl ControlFlowGraph {
                 self.expr_to_string(contract, ns, right)
             ),
             Expression::Less {
-                signed,
-                left,
-                right,
-                ..
+                signed, left, right, ..
             } => format!(
                 "({} less {} < {})",
                 if *signed { "signed" } else { "unsigned" },
@@ -818,10 +782,7 @@ impl ControlFlowGraph {
                 self.expr_to_string(contract, ns, right)
             ),
             Expression::MoreEqual {
-                signed,
-                left,
-                right,
-                ..
+                signed, left, right, ..
             } => format!(
                 "({} {} >= {})",
                 if *signed { "signed" } else { "unsigned" },
@@ -829,10 +790,7 @@ impl ControlFlowGraph {
                 self.expr_to_string(contract, ns, right)
             ),
             Expression::LessEqual {
-                signed,
-                left,
-                right,
-                ..
+                signed, left, right, ..
             } => format!(
                 "({} {} <= {})",
                 if *signed { "signed" } else { "unsigned" },
@@ -865,20 +823,18 @@ impl ControlFlowGraph {
                 self.expr_to_string(contract, ns, array),
                 elem_ty.to_string(ns),
             ),
-            Expression::StructMember { expr, member, .. } => format!(
-                "(struct {} field {})",
-                self.expr_to_string(contract, ns, expr),
-                member
-            ),
+            Expression::StructMember { expr, member, .. } => {
+                format!("(struct {} field {})", self.expr_to_string(contract, ns, expr), member)
+            },
             Expression::Not { expr, .. } => {
                 format!("!{}", self.expr_to_string(contract, ns, expr))
-            }
+            },
             Expression::BitwiseNot { expr, .. } => {
                 format!("~{}", self.expr_to_string(contract, ns, expr))
-            }
+            },
             Expression::Negate { expr, .. } => {
                 format!("-{}", self.expr_to_string(contract, ns, expr))
-            }
+            },
             Expression::Poison => "☠".to_string(),
             Expression::AllocDynamicBytes {
                 ty,
@@ -892,12 +848,8 @@ impl ControlFlowGraph {
                     ty.to_string(ns)
                 };
 
-                format!(
-                    "(alloc {} len {})",
-                    ty,
-                    self.expr_to_string(contract, ns, size)
-                )
-            }
+                format!("(alloc {} len {})", ty, self.expr_to_string(contract, ns, size))
+            },
             Expression::AllocDynamicBytes {
                 ty,
                 size,
@@ -919,7 +871,7 @@ impl ControlFlowGraph {
                         Err(_) => format!("hex\"{}\"", hex::encode(init)),
                     }
                 )
-            }
+            },
             Expression::StringCompare { left, right, .. } => format!(
                 "(strcmp ({}) ({}))",
                 self.location_to_string(contract, ns, left),
@@ -935,13 +887,11 @@ impl ControlFlowGraph {
             ),
             Expression::InternalFunctionCfg { cfg_no, .. } => {
                 format!("function {}", contract.cfg[*cfg_no].name)
-            }
+            },
             Expression::ReturnData { .. } => "(external call return data)".to_string(),
-            Expression::Cast { ty, expr, .. } => format!(
-                "{}({})",
-                ty.to_string(ns),
-                self.expr_to_string(contract, ns, expr)
-            ),
+            Expression::Cast { ty, expr, .. } => {
+                format!("{}({})", ty.to_string(ns), self.expr_to_string(contract, ns, expr))
+            },
             Expression::BytesCast { ty, from, expr, .. } => format!(
                 "{} from:{} ({})",
                 ty.to_string(ns),
@@ -949,9 +899,7 @@ impl ControlFlowGraph {
                 self.expr_to_string(contract, ns, expr)
             ),
             Expression::Builtin {
-                kind: builtin,
-                args,
-                ..
+                kind: builtin, args, ..
             } => format!(
                 "(builtin {:?} ({}))",
                 builtin,
@@ -969,28 +917,20 @@ impl ControlFlowGraph {
                     .join(", ")
             ),
             Expression::Undefined { .. } => "undef".to_string(),
-            Expression::AdvancePointer {
-                pointer,
-                bytes_offset,
-            } => {
+            Expression::AdvancePointer { pointer, bytes_offset } => {
                 format!(
                     "(advance ptr: {}, by: {})",
                     self.expr_to_string(contract, ns, pointer),
                     self.expr_to_string(contract, ns, bytes_offset)
                 )
-            }
+            },
             Expression::GetRef { expr, .. } => {
                 format!("(deref {}", self.expr_to_string(contract, ns, expr))
-            }
+            },
         }
     }
 
-    fn location_to_string(
-        &self,
-        contract: &Contract,
-        ns: &Namespace,
-        l: &StringLocation<Expression>,
-    ) -> String {
+    fn location_to_string(&self, contract: &Contract, ns: &Namespace, l: &StringLocation<Expression>) -> String {
         match l {
             StringLocation::RunTime(e) => self.expr_to_string(contract, ns, e),
             StringLocation::CompileTime(literal) => match str::from_utf8(literal) {
@@ -1422,11 +1362,7 @@ impl ControlFlowGraph {
 }
 
 /// Checks whether there is a virtual fallback or receive function
-fn is_there_virtual_function(
-    ns: &Namespace,
-    contract_no: usize,
-    function_no: Option<usize>,
-) -> bool {
+fn is_there_virtual_function(ns: &Namespace, contract_no: usize, function_no: Option<usize>) -> bool {
     let default_constructor = &ns.default_constructor(contract_no);
 
     let func = match function_no {
@@ -1498,14 +1434,7 @@ pub fn generate_cfg(
 
                 all_cfgs.push(cfg);
 
-                cfg = generate_modifier_dispatch(
-                    contract_no,
-                    func_no,
-                    modifier_cfg_no,
-                    chain_no,
-                    ns,
-                    opt,
-                );
+                cfg = generate_modifier_dispatch(contract_no, func_no, modifier_cfg_no, chain_no, ns, opt);
                 optimize_and_check_cfg(&mut cfg, ns, ast_fn, opt);
             }
 
@@ -1520,23 +1449,15 @@ pub fn generate_cfg(
 }
 
 /// resolve modifier call
-fn resolve_modifier_call<'a>(
-    call: &'a ast::Expression,
-    contract: &Contract,
-) -> (usize, &'a Vec<ast::Expression>) {
+fn resolve_modifier_call<'a>(call: &'a ast::Expression, contract: &Contract) -> (usize, &'a Vec<ast::Expression>) {
     if let ast::Expression::InternalFunctionCall { function, args, .. } = call {
         if let ast::Expression::InternalFunction {
-            function_no,
-            signature,
-            ..
+            function_no, signature, ..
         } = function.as_ref()
         {
             // is it a virtual function call
             let function_no = if let Some(signature) = signature {
-                contract.virtual_functions[signature]
-                    .last()
-                    .copied()
-                    .unwrap()
+                contract.virtual_functions[signature].last().copied().unwrap()
             } else {
                 *function_no
             };
@@ -1549,12 +1470,7 @@ fn resolve_modifier_call<'a>(
 }
 
 /// Detect undefined variables and run codegen optimizer passess
-pub fn optimize_and_check_cfg(
-    cfg: &mut ControlFlowGraph,
-    ns: &mut Namespace,
-    func_no: ASTFunction,
-    opt: &Options,
-) {
+pub fn optimize_and_check_cfg(cfg: &mut ControlFlowGraph, ns: &mut Namespace, func_no: ASTFunction, opt: &Options) {
     reaching_definitions::find(cfg);
     if func_no != ASTFunction::None {
         // If there are undefined variables, we raise an error and don't run optimizations
@@ -1585,16 +1501,9 @@ pub fn optimize_and_check_cfg(
 
 /// Generate the CFG for a function. If function_no is None, generate the implicit default
 /// constructor
-fn function_cfg(
-    contract_no: usize,
-    function_no: Option<usize>,
-    ns: &mut Namespace,
-    opt: &Options,
-) -> ControlFlowGraph {
+fn function_cfg(contract_no: usize, function_no: Option<usize>, ns: &mut Namespace, opt: &Options) -> ControlFlowGraph {
     let mut vartab = match function_no {
-        Some(function_no) => {
-            Vartable::from_symbol_table(&ns.functions[function_no].symtable, ns.next_id)
-        }
+        Some(function_no) => Vartable::from_symbol_table(&ns.functions[function_no].symtable, ns.next_id),
         None => Vartable::new(ns.next_id),
     };
 
@@ -1618,7 +1527,7 @@ fn function_cfg(
     let name = match func.ty {
         pt::FunctionTy::Function => {
             format!("{}::function::{}", contract_name, func.llvm_symbol(ns))
-        }
+        },
         // There can be multiple constructors on Polkadot, give them an unique name
         pt::FunctionTy::Constructor => {
             format!(
@@ -1626,7 +1535,7 @@ fn function_cfg(
                 contract_name,
                 hex::encode(func.selector(ns, &contract_no))
             )
-        }
+        },
         _ => format!("{}::{}", contract_name, func.ty),
     };
 
@@ -1663,13 +1572,7 @@ fn function_cfg(
         // Find all the resolved arguments for base contracts. These can be attached
         // to the contract, or the constructor. Contracts can have multiple constructors
         // so this needs to follow the correct constructors all the way
-        collect_base_args(
-            contract_no,
-            function_no,
-            &mut all_base_args,
-            &mut diagnostics,
-            ns,
-        );
+        collect_base_args(contract_no, function_no, &mut all_base_args, &mut diagnostics, ns);
 
         // We shouldn't have problems. sema should have checked this
         assert!(diagnostics.is_empty());
@@ -1708,8 +1611,7 @@ fn function_cfg(
                     .iter()
                     .enumerate()
                     .map(|(i, a)| {
-                        let expr =
-                            expression(a, &mut cfg, contract_no, Some(func), ns, &mut vartab, opt);
+                        let expr = expression(a, &mut cfg, contract_no, Some(func), ns, &mut vartab, opt);
 
                         if let Some(id) = &func.symtable.arguments[i] {
                             let ty = expr.ty();
@@ -1723,11 +1625,7 @@ fn function_cfg(
                                     expr,
                                 },
                             );
-                            Expression::Variable {
-                                loc,
-                                ty,
-                                var_no: *id,
-                            }
+                            Expression::Variable { loc, ty, var_no: *id }
                         } else {
                             Expression::Poison
                         }
@@ -1824,11 +1722,7 @@ fn function_cfg(
 }
 
 /// Populate the arguments of a function
-pub(crate) fn populate_arguments<T: FunctionAttributes>(
-    func: &T,
-    cfg: &mut ControlFlowGraph,
-    vartab: &mut Vartable,
-) {
+pub(crate) fn populate_arguments<T: FunctionAttributes>(func: &T, cfg: &mut ControlFlowGraph, vartab: &mut Vartable) {
     for (i, arg) in func.get_symbol_table().arguments.iter().enumerate() {
         if let Some(pos) = arg {
             let var = &func.get_symbol_table().vars[pos];
@@ -1880,10 +1774,8 @@ fn generate_modifier_dispatch(
     ns: &mut Namespace,
     opt: &Options,
 ) -> ControlFlowGraph {
-    let (modifier_no, args) = resolve_modifier_call(
-        &ns.functions[func_no].modifiers[chain_no],
-        &ns.contracts[contract_no],
-    );
+    let (modifier_no, args) =
+        resolve_modifier_call(&ns.functions[func_no].modifiers[chain_no], &ns.contracts[contract_no]);
     let func = &ns.functions[func_no];
     let modifier = &ns.functions[modifier_no];
     let name = format!(
@@ -1927,15 +1819,7 @@ fn generate_modifier_dispatch(
     // now set the modifier args
     for (i, arg) in modifier.symtable.arguments.iter().enumerate() {
         if let Some(pos) = arg {
-            let expr = expression(
-                &args[i],
-                &mut cfg,
-                contract_no,
-                Some(func),
-                ns,
-                &mut vartab,
-                opt,
-            );
+            let expr = expression(&args[i], &mut cfg, contract_no, Some(func), ns, &mut vartab, opt);
             cfg.add(
                 &mut vartab,
                 Instr::Set {
@@ -1995,12 +1879,7 @@ fn generate_modifier_dispatch(
         );
     }
 
-    if modifier
-        .body
-        .last()
-        .map(Statement::reachable)
-        .unwrap_or(true)
-    {
+    if modifier.body.last().map(Statement::reachable).unwrap_or(true) {
         let loc = match func.body.last() {
             Some(ins) => ins.loc(),
             None => pt::Loc::Codegen,
@@ -2118,15 +1997,9 @@ impl Namespace {
     ///
     /// `function_no` is optional because default constructors require creating a CFG
     /// without any corresponding function definition.
-    pub fn function_externally_callable(
-        &self,
-        contract_no: usize,
-        function_no: Option<usize>,
-    ) -> bool {
+    pub fn function_externally_callable(&self, contract_no: usize, function_no: Option<usize>) -> bool {
         let default_constructor = &self.default_constructor(contract_no);
-        let func = function_no
-            .map(|n| &self.functions[n])
-            .unwrap_or(default_constructor);
+        let func = function_no.map(|n| &self.functions[n]).unwrap_or(default_constructor);
 
         // If a function is virtual, and it is overriden, do not make it public;
         // Otherwise the runtime function dispatch will have two identical functions to dispatch to.

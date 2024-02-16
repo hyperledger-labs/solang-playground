@@ -34,38 +34,30 @@ pub(crate) fn statement(
             let returns = process_function_call(*func_no, args, contract_no, vartab, cfg, ns, opt);
             assert_eq!(returns.len(), 1);
             assert_eq!(returns[0], Expression::Poison);
-        }
+        },
 
         YulStatement::BuiltInCall(loc, _, builtin_ty, args) => {
             let expr = process_builtin(loc, *builtin_ty, args, contract_no, ns, vartab, cfg, opt);
             assert_eq!(expr, Expression::Poison);
-        }
+        },
 
         YulStatement::Block(block) => {
             for item in &block.statements {
                 statement(item, contract_no, loops, ns, cfg, vartab, early_return, opt);
             }
-        }
+        },
 
         YulStatement::VariableDeclaration(loc, _, vars, init) => {
             process_variable_declaration(loc, vars, init, contract_no, ns, cfg, vartab, opt);
-        }
+        },
 
         YulStatement::Assignment(loc, _, lhs, rhs) => {
             process_assignment(loc, lhs, rhs, contract_no, ns, cfg, vartab, opt)
-        }
+        },
 
-        YulStatement::IfBlock(_, _, condition, block) => process_if_block(
-            condition,
-            block,
-            contract_no,
-            loops,
-            ns,
-            cfg,
-            vartab,
-            early_return,
-            opt,
-        ),
+        YulStatement::IfBlock(_, _, condition, block) => {
+            process_if_block(condition, block, contract_no, loops, ns, cfg, vartab, early_return, opt)
+        },
 
         YulStatement::Switch {
             condition,
@@ -113,7 +105,7 @@ pub(crate) fn statement(
             } else {
                 cfg.add(vartab, Instr::Return { value: vec![] });
             }
-        }
+        },
 
         YulStatement::Break(..) => {
             cfg.add(
@@ -122,7 +114,7 @@ pub(crate) fn statement(
                     block: loops.do_break(),
                 },
             );
-        }
+        },
 
         YulStatement::Continue(..) => {
             cfg.add(
@@ -131,7 +123,7 @@ pub(crate) fn statement(
                     block: loops.do_continue(),
                 },
             );
-        }
+        },
     }
 }
 
@@ -224,14 +216,9 @@ fn cfg_single_assigment(
                     expr: rhs,
                 },
             );
-        }
+        },
 
-        ast::YulExpression::SolidityLocalVariable(
-            _,
-            ty,
-            Some(StorageLocation::Memory(_)),
-            var_no,
-        ) => {
+        ast::YulExpression::SolidityLocalVariable(_, ty, Some(StorageLocation::Memory(_)), var_no) => {
             // This is an assignment to a pointer, so we make sure the rhs has a compatible size
             let rhs = rhs.cast(ty, ns);
             cfg.add(
@@ -242,48 +229,38 @@ fn cfg_single_assigment(
                     expr: rhs,
                 },
             )
-        }
+        },
 
         ast::YulExpression::SuffixAccess(_, member, suffix) => {
             match &**member {
-                ast::YulExpression::SolidityLocalVariable(
-                    _,
-                    _,
-                    Some(StorageLocation::Calldata(_)),
-                    var_no,
-                ) => match suffix {
-                    YulSuffix::Offset => {
-                        let rhs = rhs.cast(&lhs.ty(), ns);
-                        cfg.add(
-                            vartab,
-                            Instr::Set {
-                                loc: *loc,
-                                res: *var_no,
-                                expr: rhs,
-                            },
-                        );
-                    }
-                    YulSuffix::Length => {
-                        unimplemented!("Assignment to calldata array suffix is not implemented");
-                    }
+                ast::YulExpression::SolidityLocalVariable(_, _, Some(StorageLocation::Calldata(_)), var_no) => {
+                    match suffix {
+                        YulSuffix::Offset => {
+                            let rhs = rhs.cast(&lhs.ty(), ns);
+                            cfg.add(
+                                vartab,
+                                Instr::Set {
+                                    loc: *loc,
+                                    res: *var_no,
+                                    expr: rhs,
+                                },
+                            );
+                        },
+                        YulSuffix::Length => {
+                            unimplemented!("Assignment to calldata array suffix is not implemented");
+                        },
 
-                    _ => unreachable!(),
+                        _ => unreachable!(),
+                    }
                 },
-                ast::YulExpression::SolidityLocalVariable(
-                    _,
-                    ty @ Type::ExternalFunction { .. },
-                    _,
-                    var_no,
-                ) => {
+                ast::YulExpression::SolidityLocalVariable(_, ty @ Type::ExternalFunction { .. }, _, var_no) => {
                     let (member_no, casted_expr, member_ty) = match suffix {
                         YulSuffix::Selector => (
                             0,
                             rhs.cast(&Type::Bytes(ns.target.selector_length()), ns),
                             Type::Bytes(ns.target.selector_length()),
                         ),
-                        YulSuffix::Address => {
-                            (1, rhs.cast(&Type::Address(false), ns), Type::Address(false))
-                        }
+                        YulSuffix::Address => (1, rhs.cast(&Type::Address(false), ns), Type::Address(false)),
                         _ => unreachable!(),
                     };
 
@@ -305,14 +282,9 @@ fn cfg_single_assigment(
                             data: casted_expr,
                         },
                     );
-                }
+                },
 
-                ast::YulExpression::SolidityLocalVariable(
-                    _,
-                    _,
-                    Some(StorageLocation::Storage(_)),
-                    var_no,
-                ) => {
+                ast::YulExpression::SolidityLocalVariable(_, _, Some(StorageLocation::Storage(_)), var_no) => {
                     // This assignment changes the value of a pointer to storage
                     if matches!(suffix, YulSuffix::Slot) {
                         let rhs = rhs.cast(&lhs.ty(), ns);
@@ -325,11 +297,11 @@ fn cfg_single_assigment(
                             },
                         );
                     }
-                }
+                },
 
                 _ => unreachable!("There should not exist a suffix for the given expression"),
             }
-        }
+        },
 
         ast::YulExpression::BoolLiteral { .. }
         | ast::YulExpression::NumberLiteral(..)
@@ -340,7 +312,7 @@ fn cfg_single_assigment(
         | ast::YulExpression::FunctionCall(..)
         | ast::YulExpression::ConstantVariable(..) => {
             unreachable!("Cannot assign to this expression");
-        }
+        },
     }
 }
 
@@ -508,8 +480,7 @@ fn switch(
     vartab.new_dirty_tracker();
     let mut cases_cfg: Vec<(Expression, usize)> = Vec::with_capacity(cases.len());
     for (item_no, item) in cases.iter().enumerate() {
-        let case_cond =
-            expression(&item.condition, contract_no, ns, vartab, cfg, opt).cast(&cond.ty(), ns);
+        let case_cond = expression(&item.condition, contract_no, ns, vartab, cfg, opt).cast(&cond.ty(), ns);
         let case_block = cfg.new_basic_block(format!("case_{item_no}"));
         cfg.set_basic_block(case_block);
         for stmt in &item.block.statements {

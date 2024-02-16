@@ -21,12 +21,7 @@ pub(super) struct BorshEncoding {
 }
 
 impl AbiEncoding for BorshEncoding {
-    fn size_width(
-        &self,
-        _size: &Expression,
-        _vartab: &mut Vartable,
-        _cfg: &mut ControlFlowGraph,
-    ) -> Expression {
+    fn size_width(&self, _size: &Expression, _vartab: &mut Vartable, _cfg: &mut ControlFlowGraph) -> Expression {
         Expression::NumberLiteral {
             loc: Codegen,
             ty: Uint(32),

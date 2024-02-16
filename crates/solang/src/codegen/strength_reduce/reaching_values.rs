@@ -43,7 +43,7 @@ pub(super) fn reaching_values(
             Instr::Branch { block } => {
                 // must be last in the block
                 reaching_values(*block, cfg, vars, block_vars, ns);
-            }
+            },
             Instr::BranchCond {
                 cond,
                 true_block,
@@ -58,11 +58,7 @@ pub(super) fn reaching_values(
                     // if we know the value of the condition, follow that path
                     if v.known_bits[0] {
                         reaching_values(
-                            if v.value[0] {
-                                *true_block
-                            } else {
-                                *false_block
-                            },
+                            if v.value[0] { *true_block } else { *false_block },
                             cfg,
                             vars,
                             block_vars,
@@ -79,7 +75,7 @@ pub(super) fn reaching_values(
                 reaching_values(*true_block, cfg, &mut vars_copy, block_vars, ns);
 
                 reaching_values(*false_block, cfg, vars, block_vars, ns);
-            }
+            },
             _ => (),
         }
     }
@@ -148,10 +144,8 @@ pub(super) fn transfer(instr: &Instr, vars: &mut Variables, ns: &Namespace) {
             let v = expression_values(expr, vars, ns);
 
             vars.insert(*res, v);
-        }
-        Instr::Call {
-            res, return_tys, ..
-        } => {
+        },
+        Instr::Call { res, return_tys, .. } => {
             for (i, var_no) in res.iter().enumerate() {
                 let mut set = HashSet::new();
 
@@ -165,14 +159,14 @@ pub(super) fn transfer(instr: &Instr, vars: &mut Variables, ns: &Namespace) {
                     vars.insert(*var_no, set);
                 }
             }
-        }
+        },
         Instr::PopStorage { res: Some(res), .. } => {
             let mut set = HashSet::new();
 
             set.insert(Value::unknown(8));
 
             vars.insert(*res, set);
-        }
+        },
         Instr::PopMemory { res, ty, .. } => {
             if track(ty) {
                 let mut set = HashSet::new();
@@ -183,7 +177,7 @@ pub(super) fn transfer(instr: &Instr, vars: &mut Variables, ns: &Namespace) {
 
                 vars.insert(*res, set);
             }
-        }
+        },
         _ => (),
     }
 }

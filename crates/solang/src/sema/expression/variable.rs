@@ -69,10 +69,7 @@ pub(super) fn variable(
             } else if context.constant {
                 diagnostics.push(Diagnostic::error(
                     id.loc,
-                    format!(
-                        "cannot read contract variable '{}' in constant expression",
-                        id.name
-                    ),
+                    format!("cannot read contract variable '{}' in constant expression", id.name),
                 ));
                 Err(())
             } else {
@@ -83,7 +80,7 @@ pub(super) fn variable(
                     var_no,
                 })
             }
-        }
+        },
         Some(Symbol::Variable(_, None, var_no)) => {
             let var_no = *var_no;
 
@@ -95,14 +92,12 @@ pub(super) fn variable(
                 contract_no: None,
                 var_no,
             })
-        }
+        },
         Some(Symbol::Function(_)) => {
             let mut name_matches = 0;
             let mut expr = None;
 
-            for function_no in
-                available_functions(&id.name, true, context.file_no, context.contract_no, ns)
-            {
+            for function_no in available_functions(&id.name, true, context.file_no, context.contract_no, ns) {
                 let func = &ns.functions[function_no];
 
                 if func.ty != pt::FunctionTy::Function {
@@ -144,20 +139,15 @@ pub(super) fn variable(
                 ));
                 Err(())
             }
-        }
-        None if id.name == "now"
-            && matches!(
-                resolve_to,
-                ResolveTo::Type(Type::Uint(_)) | ResolveTo::Integer
-            ) =>
-        {
+        },
+        None if id.name == "now" && matches!(resolve_to, ResolveTo::Type(Type::Uint(_)) | ResolveTo::Integer) => {
             diagnostics.push(
                     Diagnostic::error(
                         id.loc,
                         "'now' not found. 'now' was an alias for 'block.timestamp' in older versions of the Solidity language. Please use 'block.timestamp' instead.".to_string(),
                     ));
             Err(())
-        }
+        },
         None if id.name == "this" => match context.contract_no {
             Some(contract_no) => Ok(Expression::Builtin {
                 loc: id.loc,
@@ -171,11 +161,11 @@ pub(super) fn variable(
                     "this not allowed outside contract".to_owned(),
                 ));
                 Err(())
-            }
+            },
         },
         sym => {
             diagnostics.push(Namespace::wrong_symbol(sym, id));
             Err(())
-        }
+        },
     }
 }

@@ -5,12 +5,7 @@ use solang_parser::diagnostics::Diagnostic;
 use solang_parser::pt;
 
 /// Unescape a string literal
-pub(crate) fn unescape(
-    literal: &str,
-    start: usize,
-    file_no: usize,
-    diagnostics: &mut Diagnostics,
-) -> (bool, Vec<u8>) {
+pub(crate) fn unescape(literal: &str, start: usize, file_no: usize, diagnostics: &mut Diagnostics) -> (bool, Vec<u8>) {
     let mut s: Vec<u8> = Vec::new();
     let mut indeces = literal.char_indices();
     let mut valid = true;
@@ -38,40 +33,32 @@ pub(crate) fn unescape(
                 Err(offset) => {
                     valid = false;
                     diagnostics.push(Diagnostic::error(
-                        pt::Loc::File(
-                            file_no,
-                            start + i,
-                            start + std::cmp::min(literal.len(), offset),
-                        ),
+                        pt::Loc::File(file_no, start + i, start + std::cmp::min(literal.len(), offset)),
                         "\\x escape should be followed by two hex digits".to_string(),
                     ));
-                }
+                },
             },
             Some((i, 'u')) => match get_digits(&mut indeces, 4) {
                 Ok(codepoint) => match char::from_u32(codepoint) {
                     Some(ch) => {
                         let mut buffer = [0; 4];
                         s.extend_from_slice(ch.encode_utf8(&mut buffer).as_bytes());
-                    }
+                    },
                     None => {
                         valid = false;
                         diagnostics.push(Diagnostic::error(
                             pt::Loc::File(file_no, start + i, start + i + 6),
                             "Found an invalid unicode character".to_string(),
                         ));
-                    }
+                    },
                 },
                 Err(offset) => {
                     valid = false;
                     diagnostics.push(Diagnostic::error(
-                        pt::Loc::File(
-                            file_no,
-                            start + i,
-                            start + std::cmp::min(literal.len(), offset),
-                        ),
+                        pt::Loc::File(file_no, start + i, start + std::cmp::min(literal.len(), offset)),
                         "\\u escape should be followed by four hex digits".to_string(),
                     ));
-                }
+                },
             },
             Some((i, ch)) => {
                 valid = false;
@@ -79,7 +66,7 @@ pub(crate) fn unescape(
                     pt::Loc::File(file_no, start + i, start + i + ch.len_utf8()),
                     format!("unknown escape character '{ch}'"),
                 ));
-            }
+            },
             None => unreachable!(),
         }
     }

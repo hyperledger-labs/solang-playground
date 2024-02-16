@@ -19,12 +19,7 @@ pub struct SideEffectsCheckParameters<'a> {
 
 /// Check if we should remove an assignment. The expression in the argument is the left-hand side
 /// of the assignment
-pub fn should_remove_assignment(
-    exp: &Expression,
-    func: &Function,
-    opt: &Options,
-    ns: &Namespace,
-) -> bool {
+pub fn should_remove_assignment(exp: &Expression, func: &Function, opt: &Options, ns: &Namespace) -> bool {
     if opt.opt_level == OptimizationLevel::None {
         return false;
     }
@@ -59,7 +54,7 @@ pub fn should_remove_assignment(
             }
 
             should_remove_assignment(&args[0], func, opt, ns)
-        }
+        },
 
         _ => false,
     }

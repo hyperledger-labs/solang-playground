@@ -18,36 +18,28 @@ static AVAILABLE_ACCOUNTS: Lazy<HashMap<BigInt, BuiltinAccounts>> = Lazy::new(||
         (
             BigInt::from_bytes_be(
                 Sign::Plus,
-                &"ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
-                    .from_base58()
-                    .unwrap(),
+                &"ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL".from_base58().unwrap(),
             ),
             BuiltinAccounts::AssociatedTokenProgram,
         ),
         (
             BigInt::from_bytes_be(
                 Sign::Plus,
-                &"SysvarRent111111111111111111111111111111111"
-                    .from_base58()
-                    .unwrap(),
+                &"SysvarRent111111111111111111111111111111111".from_base58().unwrap(),
             ),
             BuiltinAccounts::RentAccount,
         ),
         (
             BigInt::from_bytes_be(
                 Sign::Plus,
-                &"TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
-                    .from_base58()
-                    .unwrap(),
+                &"TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA".from_base58().unwrap(),
             ),
             BuiltinAccounts::TokenProgramId,
         ),
         (
             BigInt::from_bytes_be(
                 Sign::Plus,
-                &"SysvarC1ock11111111111111111111111111111111"
-                    .from_base58()
-                    .unwrap(),
+                &"SysvarC1ock11111111111111111111111111111111".from_base58().unwrap(),
             ),
             BuiltinAccounts::ClockAccount,
         ),

@@ -48,18 +48,16 @@ pub(super) fn string_literal(
             }),
             init: Some(result),
         },
-        ResolveTo::Type(Type::Slice(ty)) if ty.as_ref() == &Type::Bytes(1) => {
-            Expression::AllocDynamicBytes {
+        ResolveTo::Type(Type::Slice(ty)) if ty.as_ref() == &Type::Bytes(1) => Expression::AllocDynamicBytes {
+            loc,
+            ty: Type::Slice(ty.clone()),
+            length: Box::new(Expression::NumberLiteral {
                 loc,
-                ty: Type::Slice(ty.clone()),
-                length: Box::new(Expression::NumberLiteral {
-                    loc,
-                    ty: Type::Uint(32),
-                    value: BigInt::from(length),
-                }),
-                init: Some(result),
-            }
-        }
+                ty: Type::Uint(32),
+                value: BigInt::from(length),
+            }),
+            init: Some(result),
+        },
         _ => Expression::BytesLiteral {
             loc,
             ty: Type::Bytes(length as u8),
@@ -92,18 +90,16 @@ pub(super) fn hex_literal(
     let length = result.len();
 
     match resolve_to {
-        ResolveTo::Type(Type::Slice(ty)) if ty.as_ref() == &Type::Bytes(1) => {
-            Ok(Expression::AllocDynamicBytes {
+        ResolveTo::Type(Type::Slice(ty)) if ty.as_ref() == &Type::Bytes(1) => Ok(Expression::AllocDynamicBytes {
+            loc,
+            ty: Type::Slice(ty.clone()),
+            length: Box::new(Expression::NumberLiteral {
                 loc,
-                ty: Type::Slice(ty.clone()),
-                length: Box::new(Expression::NumberLiteral {
-                    loc,
-                    ty: Type::Uint(32),
-                    value: BigInt::from(length),
-                }),
-                init: Some(result),
-            })
-        }
+                ty: Type::Uint(32),
+                value: BigInt::from(length),
+            }),
+            init: Some(result),
+        }),
         ResolveTo::Type(Type::DynamicBytes) => Ok(Expression::AllocDynamicBytes {
             loc,
             ty: Type::DynamicBytes,
@@ -153,10 +149,7 @@ pub(crate) fn hex_number_literal(
             // looks like ethereum address
             diagnostics.push(Diagnostic::error(
                 *loc,
-                format!(
-                    "ethereum address literal '{}' not supported on target {}",
-                    n, ns.target
-                ),
+                format!("ethereum address literal '{}' not supported on target {}", n, ns.target),
             ));
             return Err(());
         }
@@ -173,9 +166,7 @@ pub(crate) fn hex_number_literal(
         return if !val.is_zero() && s.len() != expected_length {
             diagnostics.push(Diagnostic::cast_error(
                 *loc,
-                format!(
-                    "hex literal {n} must be {expected_length} digits for type 'bytes{length}'"
-                ),
+                format!("hex literal {n} must be {expected_length} digits for type 'bytes{length}'"),
             ));
             Err(())
         } else {
@@ -209,11 +200,7 @@ pub(super) fn address_literal(
                 if v.len() != ns.address_length + 3 {
                     diagnostics.push(Diagnostic::error(
                         *loc,
-                        format!(
-                            "address literal {} incorrect length of {}",
-                            address,
-                            v.len()
-                        ),
+                        format!("address literal {} incorrect length of {}", address, v.len()),
                     ));
                     return Err(());
                 }
@@ -240,14 +227,14 @@ pub(super) fn address_literal(
                     ty: Type::Address(false),
                     value: BigInt::from_bytes_be(Sign::Plus, &v[1..ns.address_length + 1]),
                 })
-            }
+            },
             Err(FromBase58Error::InvalidBase58Length) => {
                 diagnostics.push(Diagnostic::error(
                     *loc,
                     format!("address literal {address} invalid base58 length"),
                 ));
                 Err(())
-            }
+            },
             Err(FromBase58Error::InvalidBase58Character(ch, pos)) => {
                 let mut loc = *loc;
                 if let pt::Loc::File(_, start, end) = &mut loc {
@@ -259,7 +246,7 @@ pub(super) fn address_literal(
                     format!("address literal {address} invalid character '{ch}'"),
                 ));
                 Err(())
-            }
+            },
         }
     } else if ns.target == Target::Solana {
         match address.from_base58() {
@@ -267,11 +254,7 @@ pub(super) fn address_literal(
                 if v.len() != ns.address_length {
                     diagnostics.push(Diagnostic::error(
                         *loc,
-                        format!(
-                            "address literal {} incorrect length of {}",
-                            address,
-                            v.len()
-                        ),
+                        format!("address literal {} incorrect length of {}", address, v.len()),
                     ));
                     Err(())
                 } else {
@@ -281,14 +264,14 @@ pub(super) fn address_literal(
                         value: BigInt::from_bytes_be(Sign::Plus, &v),
                     })
                 }
-            }
+            },
             Err(FromBase58Error::InvalidBase58Length) => {
                 diagnostics.push(Diagnostic::error(
                     *loc,
                     format!("address literal {address} invalid base58 length"),
                 ));
                 Err(())
-            }
+            },
             Err(FromBase58Error::InvalidBase58Character(ch, pos)) => {
                 let mut loc = *loc;
                 if let pt::Loc::File(_, start, end) = &mut loc {
@@ -300,7 +283,7 @@ pub(super) fn address_literal(
                     format!("address literal {address} invalid character '{ch}'"),
                 ));
                 Err(())
-            }
+            },
         }
     } else {
         diagnostics.push(Diagnostic::error(
@@ -350,19 +333,13 @@ pub(crate) fn number_literal(
                     });
                 }
             } else {
-                diagnostics.push(Diagnostic::error(
-                    *loc,
-                    format!("exponent '{exp}' too large"),
-                ));
+                diagnostics.push(Diagnostic::error(*loc, format!("exponent '{exp}' too large")));
                 return Err(());
             }
         } else if let Ok(exp) = u8::from_str(exp) {
             integer.mul(base10.pow(exp.into()))
         } else {
-            diagnostics.push(Diagnostic::error(
-                *loc,
-                format!("exponent '{exp}' too large"),
-            ));
+            diagnostics.push(Diagnostic::error(*loc, format!("exponent '{exp}' too large")));
             return Err(());
         }
     };
@@ -381,9 +358,7 @@ pub(super) fn rational_number_literal(
     diagnostics: &mut Diagnostics,
     resolve_to: ResolveTo,
 ) -> Result<Expression, ()> {
-    if integer.starts_with("-0") && integer.len() > 2
-        || integer.starts_with('0') && integer.len() > 1
-    {
+    if integer.starts_with("-0") && integer.len() > 2 || integer.starts_with('0') && integer.len() > 1 {
         diagnostics.push(Diagnostic::error(
             *loc,
             "leading zeros not permitted, can be confused with octal".into(),
@@ -396,17 +371,11 @@ pub(super) fn rational_number_literal(
     let exp_negative = exp.starts_with('-');
 
     let denominator = BigInt::from_str("10").unwrap().pow(len);
-    let zero_index = fraction
-        .chars()
-        .position(|c| c != '0')
-        .unwrap_or(usize::MAX);
+    let zero_index = fraction.chars().position(|c| c != '0').unwrap_or(usize::MAX);
     let n = if exp.is_empty() {
         if integer.is_empty() || integer == "0" {
             if zero_index < usize::MAX {
-                BigRational::new(
-                    BigInt::from_str(&fraction[zero_index..]).unwrap(),
-                    denominator,
-                )
+                BigRational::new(BigInt::from_str(&fraction[zero_index..]).unwrap(), denominator)
             } else {
                 BigRational::from(BigInt::zero())
             }
@@ -418,10 +387,7 @@ pub(super) fn rational_number_literal(
         let exp = if let Ok(exp) = u8::from_str(if exp_negative { &exp[1..] } else { exp }) {
             exp
         } else {
-            diagnostics.push(Diagnostic::error(
-                *loc,
-                format!("exponent '{exp}' too large"),
-            ));
+            diagnostics.push(Diagnostic::error(*loc, format!("exponent '{exp}' too large")));
             return Err(());
         };
         let exp_result = BigInt::from_str("10").unwrap().pow(exp.into());
@@ -435,9 +401,7 @@ pub(super) fn rational_number_literal(
                     )
                 } else {
                     BigRational::new(
-                        BigInt::from_str(&fraction[zero_index..])
-                            .unwrap()
-                            .mul(exp_result),
+                        BigInt::from_str(&fraction[zero_index..]).unwrap().mul(exp_result),
                         denominator,
                     )
                 }
@@ -447,15 +411,9 @@ pub(super) fn rational_number_literal(
         } else {
             integer.push_str(fraction);
             if exp_negative {
-                BigRational::new(
-                    BigInt::from_str(&integer).unwrap(),
-                    denominator.mul(exp_result),
-                )
+                BigRational::new(BigInt::from_str(&integer).unwrap(), denominator.mul(exp_result))
             } else {
-                BigRational::new(
-                    BigInt::from_str(&integer).unwrap().mul(exp_result),
-                    denominator,
-                )
+                BigRational::new(BigInt::from_str(&integer).unwrap().mul(exp_result), denominator)
             }
         }
     };
@@ -521,10 +479,7 @@ pub(super) fn struct_literal(
                 ResolveTo::Type(&struct_def.fields[i].ty),
             )?;
             used_variable(ns, &expr, symtable);
-            fields.push((
-                None,
-                expr.cast(loc, &struct_def.fields[i].ty, true, ns, diagnostics)?,
-            ));
+            fields.push((None, expr.cast(loc, &struct_def.fields[i].ty, true, ns, diagnostics)?));
         }
 
         Ok(Expression::StructLiteral {
@@ -549,13 +504,13 @@ pub(crate) fn unit_literal(
                     *loc,
                     format!("ethereum currency unit used while targeting {}", ns.target),
                 ));
-            }
+            },
             "sol" | "lamports" if ns.target != crate::Target::Solana => {
                 diagnostics.push(Diagnostic::warning(
                     *loc,
                     format!("solana currency unit used while targeting {}", ns.target),
                 ));
-            }
+            },
             _ => (),
         }
 
@@ -571,12 +526,9 @@ pub(crate) fn unit_literal(
             "sol" => BigInt::from(10).pow(9u32),
             "lamports" => BigInt::from(1),
             _ => {
-                diagnostics.push(Diagnostic::error(
-                    *loc,
-                    format!("unknown unit '{}'", unit.name),
-                ));
+                diagnostics.push(Diagnostic::error(*loc, format!("unknown unit '{}'", unit.name)));
                 BigInt::from(1)
-            }
+            },
         }
     } else {
         BigInt::from(1)
@@ -630,31 +582,24 @@ pub(super) fn named_struct_literal(
             ),
         );
         for a in args {
-            match struct_def.fields.iter().enumerate().find(|(_, f)| {
-                f.id.as_ref().map(|id| id.name.as_str()) == Some(a.name.name.as_str())
-            }) {
+            match struct_def
+                .fields
+                .iter()
+                .enumerate()
+                .find(|(_, f)| f.id.as_ref().map(|id| id.name.as_str()) == Some(a.name.name.as_str()))
+            {
                 Some((i, f)) => {
-                    let expr = expression(
-                        &a.expr,
-                        context,
-                        ns,
-                        symtable,
-                        diagnostics,
-                        ResolveTo::Type(&f.ty),
-                    )?;
+                    let expr = expression(&a.expr, context, ns, symtable, diagnostics, ResolveTo::Type(&f.ty))?;
                     used_variable(ns, &expr, symtable);
-                    fields[i] = (
-                        Some(a.name.clone()),
-                        expr.cast(loc, &f.ty, true, ns, diagnostics)?,
-                    );
-                }
+                    fields[i] = (Some(a.name.clone()), expr.cast(loc, &f.ty, true, ns, diagnostics)?);
+                },
                 None => {
                     diagnostics.push(Diagnostic::error(
                         a.name.loc,
                         format!("struct '{}' has no field '{}'", struct_def.id, a.name.name,),
                     ));
                     return Err(());
-                }
+                },
             }
         }
         Ok(Expression::StructLiteral {
@@ -716,10 +661,7 @@ pub(super) fn array_literal(
                 };
 
                 if let Type::Array(elem, _) = deref_ty {
-                    if expr
-                        .cast(loc, slice, true, ns, &mut Diagnostics::default())
-                        .is_err()
-                    {
+                    if expr.cast(loc, slice, true, ns, &mut Diagnostics::default()).is_err() {
                         diagnostics.push(Diagnostic::error(
                             expr.loc(),
                             format!(
@@ -745,10 +687,7 @@ pub(super) fn array_literal(
             return if has_errors {
                 Err(())
             } else {
-                let aty = Type::Array(
-                    slice.clone(),
-                    vec![ArrayLength::Fixed(BigInt::from(exprs.len()))],
-                );
+                let aty = Type::Array(slice.clone(), vec![ArrayLength::Fixed(BigInt::from(exprs.len()))]);
 
                 Ok(Expression::ArrayLiteral {
                     loc: *loc,
@@ -757,16 +696,11 @@ pub(super) fn array_literal(
                     values: res,
                 })
             };
-        }
+        },
         _ => resolve_to,
     };
 
-    check_subarrays(
-        exprs,
-        &mut Some(&mut dimensions),
-        &mut flattened,
-        diagnostics,
-    )?;
+    check_subarrays(exprs, &mut Some(&mut dimensions), &mut flattened, diagnostics)?;
 
     if flattened.is_empty() {
         diagnostics.push(Diagnostic::error(
@@ -854,7 +788,10 @@ fn check_subarrays<'a>(
                     diagnostics.push(Diagnostic::error(
                         e.loc(),
                         format!(
-                            "array elements should be identical, sub array {} has {} elements rather than {}", i + 1, other.len(), first.len()
+                            "array elements should be identical, sub array {} has {} elements rather than {}",
+                            i + 1,
+                            other.len(),
+                            first.len()
                         ),
                     ));
                     return Err(());

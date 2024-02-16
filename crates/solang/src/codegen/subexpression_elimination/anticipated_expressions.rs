@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::codegen::cfg::{ControlFlowGraph, Instr};
-use crate::codegen::subexpression_elimination::{
-    kill_loop_variables, AvailableExpression, AvailableExpressionSet,
-};
+use crate::codegen::subexpression_elimination::{kill_loop_variables, AvailableExpression, AvailableExpressionSet};
 use crate::codegen::Expression;
 use num_rational::BigRational;
 use num_traits::Zero;
@@ -122,8 +120,8 @@ impl<'a> AnticipatedExpressions<'a> {
 
         for (block_no, _) in &self.traversing_order {
             if !self.reverse_dag[*block_no].is_empty() {
-                let divided_flow = &flow[*block_no]
-                    / (BigRational::from_integer(self.reverse_dag[*block_no].len().into()));
+                let divided_flow =
+                    &flow[*block_no] / (BigRational::from_integer(self.reverse_dag[*block_no].len().into()));
                 for child in &self.reverse_dag[*block_no] {
                     flow[*child] += &divided_flow;
                 }
@@ -135,12 +133,7 @@ impl<'a> AnticipatedExpressions<'a> {
 
     /// This function find the correct block to place the evaluation of the common subexpression
     /// 'expr', considering flow, depth and its anticipated availability.
-    pub(super) fn find_ancestor(
-        &self,
-        block_1: usize,
-        block_2: usize,
-        expr: &Expression,
-    ) -> Option<usize> {
+    pub(super) fn find_ancestor(&self, block_1: usize, block_2: usize, expr: &Expression) -> Option<usize> {
         if block_1 == block_2 {
             return Some(block_1);
         }

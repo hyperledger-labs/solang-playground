@@ -72,16 +72,9 @@ impl FunctionsTable {
         None
     }
 
-    pub fn get_params_returns_func_no(
-        &self,
-        name: &str,
-    ) -> (Arc<Vec<Parameter>>, Arc<Vec<Parameter>>, usize) {
+    pub fn get_params_returns_func_no(&self, name: &str) -> (Arc<Vec<Parameter>>, Arc<Vec<Parameter>>, usize) {
         let header = self.find(name).unwrap();
-        (
-            header.params.clone(),
-            header.returns.clone(),
-            header.function_no,
-        )
+        (header.params.clone(), header.returns.clone(), header.function_no)
     }
 
     pub fn get(&self, index: usize) -> Option<&FunctionHeader> {
@@ -136,18 +129,12 @@ impl FunctionsTable {
     }
 
     pub fn function_called(&mut self, func_no: usize) {
-        self.lookup
-            .get_index_mut(func_no - self.offset)
-            .unwrap()
-            .1
-            .called = true;
+        self.lookup.get_index_mut(func_no - self.offset).unwrap().1.called = true;
     }
 
     /// This function returns a yul function's index in the resolved_functions vector
     pub fn function_index(&self, name: &String) -> Option<usize> {
-        self.lookup
-            .get(name)
-            .map(|header| header.function_no - self.offset)
+        self.lookup.get(name).map(|header| header.function_no - self.offset)
     }
 }
 
@@ -167,7 +154,7 @@ fn process_parameters(parameters: &[pt::YulTypedIdentifier], ns: &mut Namespace)
 
                     Type::Uint(256)
                 }
-            }
+            },
             None => Type::Uint(256),
         };
 
@@ -205,9 +192,7 @@ pub(crate) fn process_function_header(
             }],
         });
         return;
-    } else if parse_builtin_keyword(&func_def.id.name).is_some()
-        || yul_unsupported_builtin(&func_def.id.name)
-    {
+    } else if parse_builtin_keyword(&func_def.id.name).is_some() || yul_unsupported_builtin(&func_def.id.name) {
         ns.diagnostics.push(Diagnostic::error(
             func_def.loc,
             format!(

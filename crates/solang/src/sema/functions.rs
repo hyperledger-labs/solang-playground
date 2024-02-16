@@ -51,7 +51,7 @@ pub fn contract_function(
                 ));
                 return None;
             }
-        }
+        },
         pt::FunctionTy::Constructor => {
             if !func.returns.is_empty() {
                 ns.diagnostics.push(Diagnostic::error(
@@ -68,7 +68,7 @@ pub fn contract_function(
                 ));
                 return None;
             }
-        }
+        },
         pt::FunctionTy::Fallback | pt::FunctionTy::Receive => {
             if !func.returns.is_empty() {
                 ns.diagnostics.push(Diagnostic::error(
@@ -91,7 +91,7 @@ pub fn contract_function(
                 ));
                 return None;
             }
-        }
+        },
         pt::FunctionTy::Modifier => {
             if !func.returns.is_empty() {
                 ns.diagnostics.push(Diagnostic::error(
@@ -100,7 +100,7 @@ pub fn contract_function(
                 ));
                 return None;
             }
-        }
+        },
     }
 
     if let Some(loc) = func.return_not_returns {
@@ -125,7 +125,7 @@ pub fn contract_function(
                 ));
                 success = false;
                 continue;
-            }
+            },
             pt::FunctionAttribute::Mutability(m) => {
                 if let Some(e) = &mutability {
                     ns.diagnostics.push(Diagnostic::error_with_note(
@@ -148,7 +148,7 @@ pub fn contract_function(
                 } else {
                     mutability = Some(m.clone());
                 }
-            }
+            },
             pt::FunctionAttribute::Visibility(v) => {
                 if let Some(e) = &visibility {
                     ns.diagnostics.push(Diagnostic::error_with_note(
@@ -162,7 +162,7 @@ pub fn contract_function(
                 }
 
                 visibility = Some(v.clone());
-            }
+            },
             pt::FunctionAttribute::Virtual(loc) => {
                 if let Some(prev_loc) = &is_virtual {
                     ns.diagnostics.push(Diagnostic::error_with_note(
@@ -176,7 +176,7 @@ pub fn contract_function(
                 }
 
                 is_virtual = Some(*loc);
-            }
+            },
             pt::FunctionAttribute::Override(loc, bases) => {
                 if let Some((prev_loc, _)) = &is_override {
                     ns.diagnostics.push(Diagnostic::error_with_note(
@@ -193,9 +193,7 @@ pub fn contract_function(
                 let mut diagnostics = Diagnostics::default();
 
                 for name in bases {
-                    if let Ok(no) =
-                        ns.resolve_contract_with_namespace(file_no, name, &mut diagnostics)
-                    {
+                    if let Ok(no) = ns.resolve_contract_with_namespace(file_no, name, &mut diagnostics) {
                         if list.contains(&no) {
                             diagnostics.push(Diagnostic::error(
                                 name.loc,
@@ -218,7 +216,7 @@ pub fn contract_function(
                 ns.diagnostics.extend(diagnostics);
 
                 is_override = Some((*loc, list));
-            }
+            },
             pt::FunctionAttribute::BaseOrModifier(loc, _) => {
                 // We can only fully resolve the base constructors arguments
                 // once we have resolved all the constructors, this is not done here yet
@@ -226,13 +224,10 @@ pub fn contract_function(
                 if func.ty != pt::FunctionTy::Constructor && func.ty != pt::FunctionTy::Function {
                     ns.diagnostics.push(Diagnostic::error(
                         *loc,
-                        format!(
-                            "function modifiers or base contracts are not allowed on {}",
-                            func.ty
-                        ),
+                        format!("function modifiers or base contracts are not allowed on {}", func.ty),
                     ));
                 }
-            }
+            },
             pt::FunctionAttribute::Error(_) => unreachable!(),
         }
     }
@@ -256,7 +251,7 @@ pub fn contract_function(
             } else {
                 v
             }
-        }
+        },
         None => {
             match func.ty {
                 pt::FunctionTy::Constructor => pt::Visibility::Public(None),
@@ -270,9 +265,9 @@ pub fn contract_function(
                     success = false;
                     // continue processing while assuming it's a public
                     pt::Visibility::Public(None)
-                }
+                },
             }
-        }
+        },
     };
 
     if let Some(m) = &mutability {
@@ -298,11 +293,11 @@ pub fn contract_function(
                 success = false;
             }
             true
-        }
+        },
         pt::Visibility::Public(_) | pt::Visibility::External(_) => {
             // library function abi is special. Storage vars are allowed
             ns.contracts[contract_no].is_library()
-        }
+        },
     };
 
     let mut diagnostics = Diagnostics::default();
@@ -527,14 +522,14 @@ pub fn contract_function(
                     "constructor cannot be declared pure".to_string(),
                 ));
                 return None;
-            }
+            },
             Mutability::View(loc) => {
                 ns.diagnostics.push(Diagnostic::error(
                     loc,
                     "constructor cannot be declared view".to_string(),
                 ));
                 return None;
-            }
+            },
             _ => (),
         }
 
@@ -595,9 +590,12 @@ pub fn contract_function(
             if fdecl.is_payable() {
                 if func.ty == pt::FunctionTy::Fallback {
                     ns.diagnostics.push(Diagnostic::error(
-                    func.loc_prototype,
-                    format!("{} function must not be declare payable, use 'receive() external payable' instead", func.ty),
-                ));
+                        func.loc_prototype,
+                        format!(
+                            "{} function must not be declare payable, use 'receive() external payable' instead",
+                            func.ty
+                        ),
+                    ));
                     return None;
                 }
             } else if func.ty == pt::FunctionTy::Receive {
@@ -618,15 +616,11 @@ pub fn contract_function(
     } else {
         let id = func.name.as_ref().unwrap();
 
-        if let Some(func_no) = ns.contracts[contract_no]
-            .all_functions
-            .keys()
-            .find(|func_no| {
-                let func = &ns.functions[**func_no];
+        if let Some(func_no) = ns.contracts[contract_no].all_functions.keys().find(|func_no| {
+            let func = &ns.functions[**func_no];
 
-                func.signature == fdecl.signature
-            })
-        {
+            func.signature == fdecl.signature
+        }) {
             ns.diagnostics.push(Diagnostic::error_with_note(
                 func.loc_prototype,
                 format!("overloaded {} with this signature already exist", func.ty),
@@ -680,7 +674,7 @@ pub fn function(
                 ));
                 success = false;
                 continue;
-            }
+            },
             pt::FunctionAttribute::Mutability(m) => {
                 if let Some(e) = &mutability {
                     ns.diagnostics.push(Diagnostic::error_with_note(
@@ -703,60 +697,49 @@ pub fn function(
                 } else {
                     mutability = Some(m.clone());
                 }
-            }
+            },
             pt::FunctionAttribute::Visibility(v) => {
                 ns.diagnostics.push(Diagnostic::error(
                     v.loc_opt().unwrap(),
                     format!("'{v}': only functions in contracts can have a visibility specifier"),
                 ));
                 success = false;
-            }
+            },
             pt::FunctionAttribute::Virtual(loc) => {
                 ns.diagnostics.push(Diagnostic::error(
                     *loc,
                     String::from("only functions in contracts can be virtual"),
                 ));
                 success = false;
-            }
+            },
             pt::FunctionAttribute::Override(loc, _) => {
                 ns.diagnostics.push(Diagnostic::error(
                     *loc,
                     String::from("only functions in contracts can override"),
                 ));
                 success = false;
-            }
+            },
             pt::FunctionAttribute::BaseOrModifier(loc, _) => {
                 // We can only fully resolve the base constructors arguments
                 // once we have resolved all the constructors, this is not done here yet
                 // so we fully resolve these along with the constructor body
                 ns.diagnostics.push(Diagnostic::error(
                     *loc,
-                    String::from(
-                        "function modifiers or base contracts are only allowed on functions in contracts",
-                    ),
+                    String::from("function modifiers or base contracts are only allowed on functions in contracts"),
                 ));
                 success = false;
-            }
+            },
             pt::FunctionAttribute::Error(_) => {
                 success = false;
-            }
+            },
         }
     }
 
     let mut diagnostics = Diagnostics::default();
 
-    let (params, params_success) = resolve_params(
-        &func.params,
-        &func.ty,
-        true,
-        file_no,
-        None,
-        ns,
-        &mut diagnostics,
-    );
+    let (params, params_success) = resolve_params(&func.params, &func.ty, true, file_no, None, ns, &mut diagnostics);
 
-    let (returns, returns_success) =
-        resolve_returns(&func.returns, true, file_no, None, ns, &mut diagnostics);
+    let (returns, returns_success) = resolve_returns(&func.returns, true, file_no, None, ns, &mut diagnostics);
 
     ns.diagnostics.extend(diagnostics);
 
@@ -780,7 +763,7 @@ pub fn function(
                 String::from("missing function name"),
             ));
             return None;
-        }
+        },
     };
 
     let doc = resolve_tags(
@@ -826,10 +809,7 @@ pub fn function(
 
     ns.functions.push(fdecl);
 
-    if let Some(Symbol::Function(ref mut v)) =
-        ns.function_symbols
-            .get_mut(&(file_no, None, id.name.to_owned()))
-    {
+    if let Some(Symbol::Function(ref mut v)) = ns.function_symbols.get_mut(&(file_no, None, id.name.to_owned())) {
         v.push((func.loc_prototype, func_no));
     } else {
         ns.add_symbol(file_no, None, id, Symbol::Function(vec![(id.loc, func_no)]));
@@ -854,10 +834,7 @@ pub fn resolve_params(
     for (loc, p) in parameters {
         let p = match p {
             Some(p @ pt::Parameter { ref annotation, .. }) => {
-                if annotation.is_some()
-                    && *func_ty != FunctionTy::Constructor
-                    && ns.target == Target::Solana
-                {
+                if annotation.is_some() && *func_ty != FunctionTy::Constructor && ns.target == Target::Solana {
                     diagnostics.push(Diagnostic::error(
                         annotation.as_ref().unwrap().loc,
                         "parameter annotations are only allowed in constructors".to_string(),
@@ -865,38 +842,31 @@ pub fn resolve_params(
                     success = false;
                     continue;
                 } else if annotation.is_some() && ns.target != Target::Solana {
-                    diagnostics.push(unexpected_parameter_annotation(
-                        annotation.as_ref().unwrap().loc,
-                    ));
+                    diagnostics.push(unexpected_parameter_annotation(annotation.as_ref().unwrap().loc));
                     success = false;
                     continue;
                 }
 
                 p
-            }
+            },
             None => {
                 diagnostics.push(Diagnostic::error(*loc, "missing parameter type".to_owned()));
                 success = false;
                 continue;
-            }
+            },
         };
 
         let mut ty_loc = p.ty.loc();
 
-        match ns.resolve_type(
-            file_no,
-            contract_no,
-            ResolveTypeContext::None,
-            &p.ty,
-            diagnostics,
-        ) {
+        match ns.resolve_type(file_no, contract_no, ResolveTypeContext::None, &p.ty, diagnostics) {
             Ok(ty) => {
                 if !is_internal {
                     if ty.contains_internal_function(ns) {
                         diagnostics.push(Diagnostic::error(
-                        p.ty.loc(),
-                        "parameter of type 'function internal' not allowed public or external functions".to_string(),
-                    ));
+                            p.ty.loc(),
+                            "parameter of type 'function internal' not allowed public or external functions"
+                                .to_string(),
+                        ));
                         success = false;
                     }
 
@@ -914,9 +884,8 @@ pub fn resolve_params(
                     if let Some(storage) = &p.storage {
                         diagnostics.push(Diagnostic::error(
                             storage.loc(),
-                                format!("data location '{storage}' can only be specified for array, struct or mapping"
-                                )
-                            ));
+                            format!("data location '{storage}' can only be specified for array, struct or mapping"),
+                        ));
                         success = false;
                     }
 
@@ -925,8 +894,7 @@ pub fn resolve_params(
                     if !is_internal {
                         diagnostics.push(Diagnostic::error(
                             loc,
-                            "parameter of type 'storage' not allowed public or external functions"
-                                .to_string(),
+                            "parameter of type 'storage' not allowed public or external functions".to_string(),
                         ));
                         success = false;
                     }
@@ -970,7 +938,7 @@ pub fn resolve_params(
                     recursive: false,
                     annotation,
                 });
-            }
+            },
             Err(()) => success = false,
         }
     }
@@ -999,32 +967,25 @@ pub fn resolve_returns(
                 diagnostics.push(unexpected_parameter_annotation(annotation.loc));
                 success = false;
                 continue;
-            }
+            },
             Some(r) => r,
             None => {
                 diagnostics.push(Diagnostic::error(*loc, "missing return type".to_owned()));
                 success = false;
                 continue;
-            }
+            },
         };
 
         let mut ty_loc = r.ty.loc();
 
-        match ns.resolve_type(
-            file_no,
-            contract_no,
-            ResolveTypeContext::None,
-            &r.ty,
-            diagnostics,
-        ) {
+        match ns.resolve_type(file_no, contract_no, ResolveTypeContext::None, &r.ty, diagnostics) {
             Ok(ty) => {
                 if !is_internal {
                     if ty.contains_internal_function(ns) {
                         diagnostics.push(Diagnostic::error(
-                        r.ty.loc(),
-                        "return type 'function internal' not allowed in public or external functions"
-                            .to_string(),
-                    ));
+                            r.ty.loc(),
+                            "return type 'function internal' not allowed in public or external functions".to_string(),
+                        ));
                         success = false;
                     }
 
@@ -1041,9 +1002,8 @@ pub fn resolve_returns(
                     if let Some(storage) = &r.storage {
                         diagnostics.push(Diagnostic::error(
                             storage.loc(),
-                                format!("data location '{storage}' can only be specified for array, struct or mapping"
-                                )
-                            ));
+                            format!("data location '{storage}' can only be specified for array, struct or mapping"),
+                        ));
                         success = false;
                     }
 
@@ -1063,13 +1023,12 @@ pub fn resolve_returns(
                             ty_loc.use_end_from(&loc);
 
                             Type::StorageRef(false, Box::new(ty))
-                        }
+                        },
                         _ => {
                             if ty.contains_mapping(ns) {
                                 diagnostics.push(Diagnostic::error(
                                     r.ty.loc(),
-                                    "return type containing mapping must be of type 'storage'"
-                                        .to_string(),
+                                    "return type containing mapping must be of type 'storage'".to_string(),
                                 ));
                                 success = false;
                             }
@@ -1083,7 +1042,7 @@ pub fn resolve_returns(
                             }
 
                             ty
-                        }
+                        },
                     }
                 };
 
@@ -1098,7 +1057,7 @@ pub fn resolve_returns(
                     recursive: false,
                     annotation: None,
                 });
-            }
+            },
             Err(()) => success = false,
         }
     }

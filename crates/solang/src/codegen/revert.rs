@@ -41,10 +41,7 @@ pub enum SolidityError {
     /// The `Panic(uint256)` selector
     Panic(PanicCode),
     /// User defined errors
-    Custom {
-        error_no: usize,
-        exprs: Vec<Expression>,
-    },
+    Custom { error_no: usize, exprs: Vec<Expression> },
 }
 
 impl SolidityError {
@@ -66,12 +63,11 @@ impl SolidityError {
             Self::Custom { error_no, .. } => {
                 let mut buf = [0u8; 32];
                 let mut hasher = Keccak::v256();
-                let signature =
-                    ns.signature(&ns.errors[*error_no].name, &ns.errors[*error_no].fields);
+                let signature = ns.signature(&ns.errors[*error_no].name, &ns.errors[*error_no].fields);
                 hasher.update(signature.as_bytes());
                 hasher.finalize(&mut buf);
                 [buf[0], buf[1], buf[2], buf[3]]
-            }
+            },
         }
     }
 
@@ -105,7 +101,7 @@ impl SolidityError {
                         }
                     })
                     .or_else(|| abi_encode(loc, args, ns, vartab, cfg, false).0.into())
-            }
+            },
             Self::Custom { exprs, .. } => {
                 let mut args = exprs.to_owned();
                 args.insert(0, self.selector_expression(ns));
@@ -125,7 +121,7 @@ impl SolidityError {
                         }
                     })
                     .or_else(|| abi_encode(loc, args, ns, vartab, cfg, false).0.into())
-            }
+            },
             Self::Panic(code) => {
                 let code = Expression::NumberLiteral {
                     loc: Codegen,
@@ -147,7 +143,7 @@ impl SolidityError {
                             initializer: bytes.into(),
                         }
                     })
-            }
+            },
         }
     }
 }
@@ -217,14 +213,7 @@ pub(super) fn expr_assert(
         },
     );
     cfg.set_basic_block(false_);
-    log_runtime_error(
-        opt.log_runtime_errors,
-        "assert failure",
-        args.loc(),
-        cfg,
-        vartab,
-        ns,
-    );
+    log_runtime_error(opt.log_runtime_errors, "assert failure", args.loc(), cfg, vartab, ns);
     let error = SolidityError::Panic(PanicCode::Assertion);
     assert_failure(&Codegen, error, ns, cfg, vartab);
     cfg.set_basic_block(true_);
@@ -289,20 +278,11 @@ pub(super) fn require(
             };
             cfg.add(vartab, Instr::Print { expr: print_expr });
         } else {
-            log_runtime_error(
-                opt.log_runtime_errors,
-                "require condition failed",
-                loc,
-                cfg,
-                vartab,
-                ns,
-            );
+            log_runtime_error(opt.log_runtime_errors, "require condition failed", loc, cfg, vartab, ns);
         }
     }
 
-    let error = expr
-        .map(SolidityError::String)
-        .unwrap_or(SolidityError::Empty);
+    let error = expr.map(SolidityError::String).unwrap_or(SolidityError::Empty);
     assert_failure(&Codegen, error, ns, cfg, vartab);
 
     cfg.set_basic_block(true_);
@@ -357,15 +337,13 @@ pub(super) fn revert(
                     ],
                 };
                 cfg.add(vartab, Instr::Print { expr: print_expr });
-            }
+            },
             // Else: Not all fields might be formattable, just print the error type
             _ => {
-                let error_ty = error_no
-                    .map(|n| ns.errors[n].name.as_str())
-                    .unwrap_or("unspecified");
+                let error_ty = error_no.map(|n| ns.errors[n].name.as_str()).unwrap_or("unspecified");
                 let reason = format!("{} revert encountered", error_ty);
                 log_runtime_error(opt.log_runtime_errors, &reason, *loc, cfg, vartab, ns);
-            }
+            },
         }
     }
 
@@ -400,7 +378,7 @@ pub(crate) fn error_msg_with_loc(ns: &Namespace, error: String, loc: Option<Loc>
         Some(loc @ Loc::File(..)) => {
             let loc_from_file = ns.loc_to_string(PathDisplay::Filename, loc);
             format!("runtime_error: {error} in {loc_from_file},\n")
-        }
+        },
         _ => error + ",\n",
     }
 }
@@ -447,14 +425,8 @@ mod tests {
     #[test]
     fn default_error_selector_expression() {
         let ns = Namespace::new(Target::default_polkadot());
-        assert_eq!(
-            ERROR_SELECTOR,
-            SolidityError::String(Expression::Poison).selector(&ns),
-        );
-        assert_eq!(
-            PANIC_SELECTOR,
-            SolidityError::Panic(PanicCode::Generic).selector(&ns),
-        );
+        assert_eq!(ERROR_SELECTOR, SolidityError::String(Expression::Poison).selector(&ns),);
+        assert_eq!(PANIC_SELECTOR, SolidityError::Panic(PanicCode::Generic).selector(&ns),);
     }
 
     /// Error selector calculation uses the same signature algorithm used for message selectors.

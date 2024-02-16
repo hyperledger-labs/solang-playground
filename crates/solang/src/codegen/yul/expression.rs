@@ -31,18 +31,14 @@ pub(crate) fn expression(
             }
 
             // If the user has coerced a type for bool, it is a number literal.
-            let num = if *value {
-                BigInt::from(1)
-            } else {
-                BigInt::from(0)
-            };
+            let num = if *value { BigInt::from(1) } else { BigInt::from(0) };
 
             Expression::NumberLiteral {
                 loc: *loc,
                 ty: ty.clone(),
                 value: num,
             }
-        }
+        },
         ast::YulExpression::NumberLiteral(loc, value, ty) => Expression::NumberLiteral {
             loc: *loc,
             ty: ty.clone(),
@@ -58,20 +54,18 @@ pub(crate) fn expression(
             ty: ty.clone(),
             var_no: *var_no,
         },
-        ast::YulExpression::ConstantVariable(_, _, Some(var_contract_no), var_no) => {
-            codegen::expression(
-                ns.contracts[*var_contract_no].variables[*var_no]
-                    .initializer
-                    .as_ref()
-                    .unwrap(),
-                cfg,
-                contract_no,
-                None,
-                ns,
-                vartab,
-                opt,
-            )
-        }
+        ast::YulExpression::ConstantVariable(_, _, Some(var_contract_no), var_no) => codegen::expression(
+            ns.contracts[*var_contract_no].variables[*var_no]
+                .initializer
+                .as_ref()
+                .unwrap(),
+            cfg,
+            contract_no,
+            None,
+            ns,
+            vartab,
+            opt,
+        ),
         ast::YulExpression::ConstantVariable(_, _, None, var_no) => codegen::expression(
             ns.constants[*var_no].initializer.as_ref().unwrap(),
             cfg,
@@ -84,7 +78,7 @@ pub(crate) fn expression(
         ast::YulExpression::StorageVariable(..)
         | ast::YulExpression::SolidityLocalVariable(_, _, Some(StorageLocation::Storage(_)), ..) => {
             panic!("Storage variables cannot be accessed without suffixed in yul");
-        }
+        },
         ast::YulExpression::SolidityLocalVariable(loc, ty, _, var_no) => Expression::Variable {
             loc: *loc,
             ty: ty.clone(),
@@ -92,17 +86,16 @@ pub(crate) fn expression(
         },
         ast::YulExpression::SuffixAccess(loc, expr, suffix) => {
             process_suffix_access(loc, expr, suffix, contract_no, vartab, cfg, ns, opt)
-        }
+        },
         ast::YulExpression::FunctionCall(_, function_no, args, _) => {
-            let mut returns =
-                process_function_call(*function_no, args, contract_no, vartab, cfg, ns, opt);
+            let mut returns = process_function_call(*function_no, args, contract_no, vartab, cfg, ns, opt);
             assert_eq!(returns.len(), 1);
             returns.remove(0)
-        }
+        },
 
         ast::YulExpression::BuiltInCall(loc, builtin_ty, args) => {
             process_builtin(loc, *builtin_ty, args, contract_no, ns, vartab, cfg, opt)
-        }
+        },
     }
 }
 
@@ -127,36 +120,26 @@ fn process_suffix_access(
                     ns,
                     Some(Type::Uint(256)),
                 );
-            }
-            ast::YulExpression::SolidityLocalVariable(
-                loc,
-                _,
-                Some(StorageLocation::Storage(_)),
-                var_no,
-            ) => {
+            },
+            ast::YulExpression::SolidityLocalVariable(loc, _, Some(StorageLocation::Storage(_)), var_no) => {
                 return Expression::Variable {
                     loc: *loc,
                     ty: Type::Uint(256),
                     var_no: *var_no,
                 };
-            }
+            },
 
             _ => (),
         },
         YulSuffix::Offset => match expr {
             ast::YulExpression::StorageVariable(..)
-            | ast::YulExpression::SolidityLocalVariable(
-                _,
-                _,
-                Some(StorageLocation::Storage(_)),
-                ..,
-            ) => {
+            | ast::YulExpression::SolidityLocalVariable(_, _, Some(StorageLocation::Storage(_)), ..) => {
                 return Expression::NumberLiteral {
                     loc: Loc::Codegen,
                     ty: Type::Uint(256),
                     value: BigInt::from(0),
                 };
-            }
+            },
 
             ast::YulExpression::SolidityLocalVariable(
                 _,
@@ -175,7 +158,7 @@ fn process_suffix_access(
                         }),
                     };
                 }
-            }
+            },
 
             _ => (),
         },
@@ -197,25 +180,21 @@ fn process_suffix_access(
                     };
                 }
             }
-        }
+        },
 
         YulSuffix::Address => {
-            if let ast::YulExpression::SolidityLocalVariable(_, Type::ExternalFunction { .. }, ..) =
-                expr
-            {
+            if let ast::YulExpression::SolidityLocalVariable(_, Type::ExternalFunction { .. }, ..) = expr {
                 let func_expr = expression(expr, contract_no, ns, vartab, cfg, opt);
                 return func_expr.external_function_address();
             }
-        }
+        },
 
         YulSuffix::Selector => {
-            if let ast::YulExpression::SolidityLocalVariable(_, Type::ExternalFunction { .. }, ..) =
-                expr
-            {
+            if let ast::YulExpression::SolidityLocalVariable(_, Type::ExternalFunction { .. }, ..) = expr {
                 let func_expr = expression(expr, contract_no, ns, vartab, cfg, opt);
                 return func_expr.external_function_selector();
             }
-        }
+        },
     }
 
     unreachable!("Expression does not support suffixes");
@@ -233,9 +212,7 @@ pub(crate) fn process_function_call(
 ) -> Vec<Expression> {
     let mut codegen_args: Vec<Expression> = Vec::with_capacity(args.len());
     for (param_no, item) in ns.yul_functions[function_no].params.iter().enumerate() {
-        codegen_args.push(
-            expression(&args[param_no], contract_no, ns, vartab, cfg, opt).cast(&item.ty, ns),
-        );
+        codegen_args.push(expression(&args[param_no], contract_no, ns, vartab, cfg, opt).cast(&item.ty, ns));
     }
 
     let cfg_no = ns.yul_functions[function_no].cfg_no;

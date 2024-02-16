@@ -57,11 +57,7 @@ fn test_statement_reachable() {
             true,
         ),
         (
-            Statement::Delete(
-                loc,
-                Type::Bool,
-                Expression::BoolLiteral { loc, value: true },
-            ),
+            Statement::Delete(loc, Type::Bool, Expression::BoolLiteral { loc, value: true }),
             true,
         ),
         (Statement::Continue(loc), false),
@@ -78,21 +74,11 @@ fn test_statement_reachable() {
             false,
         ),
         (
-            Statement::While(
-                loc,
-                true,
-                Expression::BoolLiteral { loc, value: false },
-                vec![],
-            ),
+            Statement::While(loc, true, Expression::BoolLiteral { loc, value: false }, vec![]),
             true,
         ),
         (
-            Statement::DoWhile(
-                loc,
-                false,
-                vec![],
-                Expression::BoolLiteral { loc, value: true },
-            ),
+            Statement::DoWhile(loc, false, vec![], Expression::BoolLiteral { loc, value: true }),
             false,
         ),
         (
@@ -261,64 +247,52 @@ fn constant_overflow_checks() {
     let warnings = ns.diagnostics.warnings();
 
     assert_eq!(errors[0].message, "value 133 does not fit into type int8.");
-    assert_eq!(errors[1].message, "negative value -1 does not fit into type uint8. Cannot implicitly convert signed literal to unsigned type.");
+    assert_eq!(
+        errors[1].message,
+        "negative value -1 does not fit into type uint8. Cannot implicitly convert signed literal to unsigned type."
+    );
     assert_eq!(errors[2].message, "value 133 does not fit into type int8.");
-    assert_eq!(errors[3].message, "negative value -1 does not fit into type uint8. Cannot implicitly convert signed literal to unsigned type.");
+    assert_eq!(
+        errors[3].message,
+        "negative value -1 does not fit into type uint8. Cannot implicitly convert signed literal to unsigned type."
+    );
     assert_eq!(errors[4].message, "value 762 does not fit into type int8.");
     assert_eq!(errors[5].message, "value 882 does not fit into type int8.");
     assert_eq!(errors[6].message, "value 128 does not fit into type int8.");
     assert_eq!(errors[7].message, "value 128 does not fit into type int8.");
-    assert_eq!(errors[8].message, "negative value -1 does not fit into type uint8. Cannot implicitly convert signed literal to unsigned type.");
+    assert_eq!(
+        errors[8].message,
+        "negative value -1 does not fit into type uint8. Cannot implicitly convert signed literal to unsigned type."
+    );
     assert_eq!(errors[9].message, "value 129 does not fit into type int8.");
-    assert_eq!(errors[10].message, "negative value -1 does not fit into type uint8. Cannot implicitly convert signed literal to unsigned type.");
+    assert_eq!(
+        errors[10].message,
+        "negative value -1 does not fit into type uint8. Cannot implicitly convert signed literal to unsigned type."
+    );
     assert_eq!(errors[11].message, "value 129 does not fit into type int8.");
-    assert_eq!(
-        errors[12].message,
-        "value 4294967296 does not fit into type uint32."
-    );
+    assert_eq!(errors[12].message, "value 4294967296 does not fit into type uint32.");
     assert_eq!(errors[13].message, "value 130 does not fit into type int8.");
-    assert_eq!(
-        errors[14].message,
-        "value 300 does not fit into type uint8."
-    );
-    assert_eq!(
-        errors[15].message,
-        "value 301 does not fit into type uint8."
-    );
-    assert_eq!(
-        errors[16].message,
-        "value 4294967296 does not fit into type uint32."
-    );
+    assert_eq!(errors[14].message, "value 300 does not fit into type uint8.");
+    assert_eq!(errors[15].message, "value 301 does not fit into type uint8.");
+    assert_eq!(errors[16].message, "value 4294967296 does not fit into type uint32.");
     assert_eq!(errors[17].message, "value 240 does not fit into type int8.");
     assert_eq!(errors[18].message, "value 245 does not fit into type int8.");
-    assert_eq!(
-        errors[19].message,
-        "value 260 does not fit into type uint8."
-    );
-    assert_eq!(
-        errors[20].message,
-        "value 261 does not fit into type uint8."
-    );
-    assert_eq!(
-        errors[21].message,
-        "value 269 does not fit into type uint8."
-    );
+    assert_eq!(errors[19].message, "value 260 does not fit into type uint8.");
+    assert_eq!(errors[20].message, "value 261 does not fit into type uint8.");
+    assert_eq!(errors[21].message, "value 269 does not fit into type uint8.");
     assert_eq!(errors[22].message, "value 155 does not fit into type int8.");
-    assert_eq!(
-        errors[23].message,
-        "value 262 does not fit into type uint8."
-    );
+    assert_eq!(errors[23].message, "value 262 does not fit into type uint8.");
 
-    assert_eq!(
-        errors[24].message,
-        "value 744 does not fit into type uint8."
-    );
+    assert_eq!(errors[24].message, "value 744 does not fit into type uint8.");
     assert_eq!(errors[25].message, "divide by zero");
     assert_eq!(errors[26].message, "divide by zero");
     assert_eq!(errors[27].message, "left shift by -1 is not possible");
     assert_eq!(errors[28].message, "right shift by -1 is not possible");
     assert_eq!(errors[29].message, "power by -1 is not possible");
-    assert_eq!(errors[30].message, "right shift by 14676683207225698178084221555689649093015162623576402558976 is not possible");
+    assert_eq!(
+        errors[30].message,
+        "right shift by 14676683207225698178084221555689649093015162623576402558976 is not possible"
+    );
 
     assert_eq!(errors.len(), 31);
 
@@ -389,14 +363,8 @@ fn test_types() {
     let ns = parse(file);
     let errors = ns.diagnostics.errors();
 
-    assert_eq!(
-        errors[0].message,
-        "value 2147483648 does not fit into type int32."
-    );
-    assert_eq!(
-        errors[1].message,
-        "value 2147483648 does not fit into type int32."
-    );
+    assert_eq!(errors[0].message, "value 2147483648 does not fit into type int32.");
+    assert_eq!(errors[1].message, "value 2147483648 does not fit into type int32.");
     assert_eq!(
         errors[2].message,
         "value 9223372036854775808 does not fit into type int64."
@@ -413,7 +381,10 @@ fn test_types() {
         errors[5].message,
         "value 340282366920938463463374607431768211456 does not fit into type uint128."
     );
-    assert_eq!(errors[6].message, "negative value -1 does not fit into type uint32. Cannot implicitly convert signed literal to unsigned type.");
+    assert_eq!(
+        errors[6].message,
+        "negative value -1 does not fit into type uint32. Cannot implicitly convert signed literal to unsigned type."
+    );
     assert_eq!(
         errors[7].message,
         "value 340282366920938463463374607431768211456 does not fit into type uint128."
@@ -422,26 +393,11 @@ fn test_types() {
     assert_eq!(errors[8].message, "value 3000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 does not fit into type uint256.");
 
     assert_eq!(errors[9].message, "value 463168356949264781694283940034751631413079938662562256157830336031652518559740 does not fit into type uint256.");
-    assert_eq!(
-        errors[10].message,
-        "value 450000 does not fit into type uint16."
-    );
-    assert_eq!(
-        errors[11].message,
-        "value 65546 does not fit into type uint16."
-    );
-    assert_eq!(
-        errors[12].message,
-        "value 370 does not fit into type uint8."
-    );
-    assert_eq!(
-        errors[13].message,
-        "value 500 does not fit into type uint8."
-    );
-    assert_eq!(
-        errors[14].message,
-        "value 300 does not fit into type uint8."
-    );
+    assert_eq!(errors[10].message, "value 450000 does not fit into type uint16.");
+    assert_eq!(errors[11].message, "value 65546 does not fit into type uint16.");
+    assert_eq!(errors[12].message, "value 370 does not fit into type uint8.");
+    assert_eq!(errors[13].message, "value 500 does not fit into type uint8.");
+    assert_eq!(errors[14].message, "value 300 does not fit into type uint8.");
     assert_eq!(errors.len(), 15);
 }
 
@@ -481,9 +437,11 @@ contract runner {
     assert_eq!(ns.diagnostics.len(), 3);
     assert!(ns.diagnostics.contains_message("found contract 'runner'"));
     assert!(ns.diagnostics.contains_message("found contract 'aborting'"));
-    assert!(ns.diagnostics.contains_message("The try-catch statement is not \
+    assert!(ns.diagnostics.contains_message(
+        "The try-catch statement is not \
      supported on Solana. Please, go to \
-     https://solang.readthedocs.io/en/latest/language/statements.html#try-catch-statement for more information"));
+     https://solang.readthedocs.io/en/latest/language/statements.html#try-catch-statement for more information"
+    ));
 }
 
 #[test]
@@ -513,9 +471,9 @@ fn solana_discriminator_type() {
 
     assert_eq!(ns.diagnostics.len(), 5);
     assert!(ns.diagnostics.contains_message("found contract 'test'"));
-    assert!(ns.diagnostics.contains_message(
-        "function selector needs an integer of at least 64 bits to avoid being truncated"
-    ));
+    assert!(ns
+        .diagnostics
+        .contains_message("function selector needs an integer of at least 64 bits to avoid being truncated"));
     assert!(ns
         .diagnostics
         .contains_message("implicit conversion to uint32 from bytes8 not allowed"));

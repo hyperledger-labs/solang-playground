@@ -8,8 +8,8 @@ use crate::file_resolver::FileResolver;
 use crate::sema::ast::Namespace;
 use crate::{codegen, parse_and_resolve, Target};
 use anchor_syn::idl::types::{
-    IdlAccount, IdlAccountItem, IdlEnumVariant, IdlEvent, IdlEventField, IdlField, IdlType,
-    IdlTypeDefinition, IdlTypeDefinitionTy,
+    IdlAccount, IdlAccountItem, IdlEnumVariant, IdlEvent, IdlEventField, IdlField, IdlType, IdlTypeDefinition,
+    IdlTypeDefinitionTy,
 };
 use semver::Version;
 use serde_json::json;
@@ -244,10 +244,7 @@ fn instructions_and_types() {
     assert_eq!(idl.instructions[3].returns, Some(IdlType::I256));
 
     assert_eq!(idl.instructions[4].name, "setString");
-    assert_eq!(
-        idl.instructions[4].docs,
-        Some(vec!["param: input".to_string()])
-    );
+    assert_eq!(idl.instructions[4].docs, Some(vec!["param: input".to_string()]));
     assert_eq!(
         idl.instructions[4].accounts,
         vec![idl_account("dataAccount", true, false)]
@@ -263,10 +260,7 @@ fn instructions_and_types() {
     assert!(idl.instructions[4].returns.is_none());
 
     assert_eq!(idl.instructions[5].name, "getString");
-    assert_eq!(
-        idl.instructions[5].docs,
-        Some(vec!["return: the string".to_string()])
-    );
+    assert_eq!(idl.instructions[5].docs, Some(vec!["return: the string".to_string()]));
     assert_eq!(
         idl.instructions[5].accounts,
         vec![idl_account("dataAccount", false, false)]
@@ -295,8 +289,7 @@ fn instructions_and_types() {
         IdlTypeDefinition {
             name: "multipleReturns_returns".to_string(),
             docs: Some(vec![
-                "Data structure to hold the multiple returns of function multipleReturns"
-                    .to_string()
+                "Data structure to hold the multiple returns of function multipleReturns".to_string()
             ]),
             ty: IdlTypeDefinitionTy::Struct {
                 fields: vec![
@@ -1501,10 +1494,7 @@ fn accounts_call_chain() {
     );
 
     assert_eq!(idl.instructions[1].name, "call_1");
-    assert_eq!(
-        idl.instructions[1].accounts,
-        vec![idl_account("clock", false, false)]
-    );
+    assert_eq!(idl.instructions[1].accounts, vec![idl_account("clock", false, false)]);
 
     assert_eq!(idl.instructions[2].name, "call_2");
     assert_eq!(idl.instructions[2].accounts, idl.instructions[1].accounts);
@@ -1568,18 +1558,9 @@ fn accounts_on_recursion() {
     assert_eq!(idl.instructions[2].accounts, idl.instructions[1].accounts);
 
     assert_eq!(idl.instructions[3].name, "call_3");
-    assert_eq!(
-        idl.instructions[3].accounts[0],
-        idl.instructions[1].accounts[0]
-    );
-    assert_eq!(
-        idl.instructions[3].accounts[1],
-        idl.instructions[1].accounts[2]
-    );
-    assert_eq!(
-        idl.instructions[3].accounts[2],
-        idl.instructions[1].accounts[1]
-    );
+    assert_eq!(idl.instructions[3].accounts[0], idl.instructions[1].accounts[0]);
+    assert_eq!(idl.instructions[3].accounts[1], idl.instructions[1].accounts[2]);
+    assert_eq!(idl.instructions[3].accounts[2], idl.instructions[1].accounts[1]);
 }
 
 #[test]

@@ -131,8 +131,7 @@ pub(super) fn abi_decode(
     for (item_no, item) in types.iter().enumerate() {
         validator.set_argument_number(item_no);
         validator.validate_buffer(&offset, ns, vartab, cfg);
-        let (read_item, advance) =
-            encoder.read_from_buffer(buffer, &offset, item, &mut validator, ns, vartab, cfg);
+        let (read_item, advance) = encoder.read_from_buffer(buffer, &offset, item, &mut validator, ns, vartab, cfg);
         read_items[item_no] = read_item;
         offset = Expression::Add {
             loc: *loc,
@@ -182,12 +181,7 @@ fn calculate_size_args(
 /// which effectively means implementing the encoding logic for any given sema `Type` on your own.
 pub(crate) trait AbiEncoding {
     /// The width (in bits) used in size hints for dynamic size types.
-    fn size_width(
-        &self,
-        size: &Expression,
-        vartab: &mut Vartable,
-        cfg: &mut ControlFlowGraph,
-    ) -> Expression;
+    fn size_width(&self, size: &Expression, vartab: &mut Vartable, cfg: &mut ControlFlowGraph) -> Expression;
 
     /// Provide generic encoding for any given `expr` into `buffer`, depending on its `Type`.
     /// Relies on the methods encoding individual expressions (`encode_*`) to return the encoded size.
@@ -205,53 +199,30 @@ pub(crate) trait AbiEncoding {
         match expr_ty {
             Type::Contract(_) | Type::Address(_) => {
                 self.encode_directly(expr, buffer, offset, vartab, cfg, ns.address_length.into())
-            }
+            },
             Type::Bool => self.encode_directly(expr, buffer, offset, vartab, cfg, 1.into()),
-            Type::Uint(width) | Type::Int(width) => {
-                self.encode_int(expr, buffer, offset, ns, vartab, cfg, *width)
-            }
-            Type::Value => {
-                self.encode_directly(expr, buffer, offset, vartab, cfg, ns.value_length.into())
-            }
-            Type::Bytes(length) => {
-                self.encode_directly(expr, buffer, offset, vartab, cfg, (*length).into())
-            }
-            Type::String | Type::DynamicBytes => {
-                self.encode_bytes(expr, buffer, offset, ns, vartab, cfg)
-            }
+            Type::Uint(width) | Type::Int(width) => self.encode_int(expr, buffer, offset, ns, vartab, cfg, *width),
+            Type::Value => self.encode_directly(expr, buffer, offset, vartab, cfg, ns.value_length.into()),
+            Type::Bytes(length) => self.encode_directly(expr, buffer, offset, vartab, cfg, (*length).into()),
+            Type::String | Type::DynamicBytes => self.encode_bytes(expr, buffer, offset, ns, vartab, cfg),
             Type::Enum(_) => self.encode_directly(expr, buffer, offset, vartab, cfg, 1.into()),
-            Type::Struct(ty) => {
-                self.encode_struct(expr, buffer, offset.clone(), ty, arg_no, ns, vartab, cfg)
-            }
+            Type::Struct(ty) => self.encode_struct(expr, buffer, offset.clone(), ty, arg_no, ns, vartab, cfg),
             Type::Slice(ty) => {
                 let dims = &[ArrayLength::Dynamic];
-                self.encode_array(
-                    expr, expr_ty, ty, dims, arg_no, buffer, offset, ns, vartab, cfg,
-                )
-            }
-            Type::Array(ty, dims) => self.encode_array(
-                expr, expr_ty, ty, dims, arg_no, buffer, offset, ns, vartab, cfg,
-            ),
-            Type::ExternalFunction { .. } => {
-                self.encode_external_function(expr, buffer, offset, ns, vartab, cfg)
-            }
+                self.encode_array(expr, expr_ty, ty, dims, arg_no, buffer, offset, ns, vartab, cfg)
+            },
+            Type::Array(ty, dims) => {
+                self.encode_array(expr, expr_ty, ty, dims, arg_no, buffer, offset, ns, vartab, cfg)
+            },
+            Type::ExternalFunction { .. } => self.encode_external_function(expr, buffer, offset, ns, vartab, cfg),
             Type::FunctionSelector => {
                 let size = ns.target.selector_length().into();
                 self.encode_directly(expr, buffer, offset, vartab, cfg, size)
-            }
+            },
             Type::Ref(r) => {
                 if let Type::Struct(ty) = &**r {
                     // Structs references should not be dereferenced
-                    return self.encode_struct(
-                        expr,
-                        buffer,
-                        offset.clone(),
-                        ty,
-                        arg_no,
-                        ns,
-                        vartab,
-                        cfg,
-                    );
+                    return self.encode_struct(expr, buffer, offset.clone(), ty, arg_no, ns, vartab, cfg);
                 }
                 let loaded = Expression::Load {
                     loc: Codegen,
@@ -259,18 +230,17 @@ pub(crate) trait AbiEncoding {
                     expr: expr.clone().into(),
                 };
                 self.encode(&loaded, buffer, offset, arg_no, ns, vartab, cfg)
-            }
+            },
             Type::StorageRef(..) => {
                 let loaded = self.storage_cache_remove(arg_no).unwrap();
                 self.encode(&loaded, buffer, offset, arg_no, ns, vartab, cfg)
-            }
+            },
             Type::UserType(_) | Type::Unresolved | Type::Rational | Type::Unreachable => {
                 unreachable!("Type should not exist in codegen")
-            }
-            Type::InternalFunction { .. }
-            | Type::Void
-            | Type::BufferPointer
-            | Type::Mapping(..) => unreachable!("This type cannot be encoded"),
+            },
+            Type::InternalFunction { .. } | Type::Void | Type::BufferPointer | Type::Mapping(..) => {
+                unreachable!("This type cannot be encoded")
+            },
         }
     }
 
@@ -407,9 +377,10 @@ pub(crate) trait AbiEncoding {
     ) -> Expression {
         let size = ns.calculate_struct_non_padded_size(struct_ty);
         // If the size without padding equals the size with padding, memcpy this struct directly.
-        if let Some(no_padding_size) = size.as_ref().filter(|no_pad| {
-            *no_pad == &struct_ty.struct_padded_size(ns) && allow_memcpy(&expr.ty(), ns)
-        }) {
+        if let Some(no_padding_size) = size
+            .as_ref()
+            .filter(|no_pad| *no_pad == &struct_ty.struct_padded_size(ns) && allow_memcpy(&expr.ty(), ns))
+        {
             let size = Expression::NumberLiteral {
                 loc: Codegen,
                 ty: Uint(32),
@@ -483,42 +454,34 @@ pub(crate) trait AbiEncoding {
 
         if allow_memcpy(array_ty, ns) {
             // Calculate number of elements
-            let (bytes_size, offset, size_length) =
-                if matches!(dims.last(), Some(&ArrayLength::Fixed(_))) {
-                    let elem_no = calculate_direct_copy_bytes_size(dims, elem_ty, ns);
-                    (
-                        Expression::NumberLiteral {
-                            loc: Codegen,
-                            ty: Uint(32),
-                            value: elem_no,
-                        },
-                        offset.clone(),
-                        None,
-                    )
+            let (bytes_size, offset, size_length) = if matches!(dims.last(), Some(&ArrayLength::Fixed(_))) {
+                let elem_no = calculate_direct_copy_bytes_size(dims, elem_ty, ns);
+                (
+                    Expression::NumberLiteral {
+                        loc: Codegen,
+                        ty: Uint(32),
+                        value: elem_no,
+                    },
+                    offset.clone(),
+                    None,
+                )
+            } else {
+                let value = array_outer_length(array, vartab, cfg);
+
+                let (new_offset, size_length) = if self.is_packed() {
+                    (offset.clone(), None)
                 } else {
-                    let value = array_outer_length(array, vartab, cfg);
-
-                    let (new_offset, size_length) = if self.is_packed() {
-                        (offset.clone(), None)
-                    } else {
-                        let encoded_size =
-                            self.encode_size(&value, buffer, offset, ns, vartab, cfg);
-                        (
-                            offset.clone().add_u32(encoded_size.clone()),
-                            Some(encoded_size),
-                        )
-                    };
-
-                    if let Expression::Variable {
-                        var_no: size_temp, ..
-                    } = value
-                    {
-                        let size = calculate_array_bytes_size(size_temp, elem_ty, ns);
-                        (size, new_offset, size_length)
-                    } else {
-                        unreachable!()
-                    }
+                    let encoded_size = self.encode_size(&value, buffer, offset, ns, vartab, cfg);
+                    (offset.clone().add_u32(encoded_size.clone()), Some(encoded_size))
                 };
+
+                if let Expression::Variable { var_no: size_temp, .. } = value {
+                    let size = calculate_array_bytes_size(size_temp, elem_ty, ns);
+                    (size, new_offset, size_length)
+                } else {
+                    unreachable!()
+                }
+            };
 
             let dest_address = Expression::AdvancePointer {
                 pointer: buffer.clone().into(),
@@ -755,14 +718,9 @@ pub(crate) trait AbiEncoding {
                     var_no: read_var,
                 };
                 (read_expr, size)
-            }
+            },
 
-            Type::Bool
-            | Type::Address(_)
-            | Type::Contract(_)
-            | Type::Enum(_)
-            | Type::Value
-            | Type::Bytes(_) => {
+            Type::Bool | Type::Address(_) | Type::Contract(_) | Type::Enum(_) | Type::Value | Type::Bytes(_) => {
                 let read_bytes = ty.memory_size_of(ns);
 
                 let size = Expression::NumberLiteral {
@@ -796,12 +754,11 @@ pub(crate) trait AbiEncoding {
                 };
 
                 (read_expr, size)
-            }
+            },
 
             Type::DynamicBytes | Type::String => {
                 // String and Dynamic bytes are encoded as size + elements
-                let (array_length_var, size_length) =
-                    self.retrieve_array_length(buffer, offset, vartab, cfg);
+                let (array_length_var, size_length) = self.retrieve_array_length(buffer, offset, vartab, cfg);
                 let array_start = offset.clone().add_u32(size_length.clone());
                 validator.validate_offset(array_start.clone(), ns, vartab, cfg);
                 let array_length = Expression::Variable {
@@ -810,12 +767,7 @@ pub(crate) trait AbiEncoding {
                     var_no: array_length_var,
                 };
                 let total_size = array_length.clone().add_u32(size_length);
-                validator.validate_offset(
-                    offset.clone().add_u32(total_size.clone()),
-                    ns,
-                    vartab,
-                    cfg,
-                );
+                validator.validate_offset(offset.clone().add_u32(total_size.clone()), ns, vartab, cfg);
 
                 let allocated_array = allocate_array(ty, array_length_var, vartab, cfg);
                 let advanced_pointer = Expression::AdvancePointer {
@@ -842,38 +794,29 @@ pub(crate) trait AbiEncoding {
                     },
                     total_size,
                 )
-            }
+            },
 
             Type::UserType(type_no) => {
                 let usr_type = ns.user_types[*type_no].ty.clone();
                 self.read_from_buffer(buffer, offset, &usr_type, validator, ns, vartab, cfg)
-            }
+            },
 
             Type::ExternalFunction { .. } => {
                 self.decode_external_function(buffer, offset, ty, validator, ns, vartab, cfg)
-            }
+            },
 
-            Type::Array(elem_ty, dims) => self.decode_array(
-                buffer, offset, ty, elem_ty, dims, validator, ns, vartab, cfg,
-            ),
+            Type::Array(elem_ty, dims) => {
+                self.decode_array(buffer, offset, ty, elem_ty, dims, validator, ns, vartab, cfg)
+            },
 
             Type::Slice(elem_ty) => {
                 let dims = vec![ArrayLength::Dynamic];
-                self.decode_array(
-                    buffer, offset, ty, elem_ty, &dims, validator, ns, vartab, cfg,
-                )
-            }
+                self.decode_array(buffer, offset, ty, elem_ty, &dims, validator, ns, vartab, cfg)
+            },
 
-            Type::Struct(struct_ty) => self.decode_struct(
-                buffer,
-                offset.clone(),
-                ty,
-                struct_ty,
-                validator,
-                ns,
-                vartab,
-                cfg,
-            ),
+            Type::Struct(struct_ty) => {
+                self.decode_struct(buffer, offset.clone(), ty, struct_ty, validator, ns, vartab, cfg)
+            },
 
             Type::Rational
             | Type::Ref(_)
@@ -915,50 +858,49 @@ pub(crate) trait AbiEncoding {
         // Checks if we can memcpy the elements from the buffer directly to the allocated array
         if allow_memcpy(array_ty, ns) {
             // Calculate number of elements
-            let (array_bytes_size, size_width, offset, var_no) =
-                if matches!(dims.last(), Some(&ArrayLength::Fixed(_))) {
-                    let elem_no = calculate_direct_copy_bytes_size(dims, elem_ty, ns);
-                    let allocated_vector = vartab.temp_anonymous(array_ty);
-                    let expr = Expression::ArrayLiteral {
-                        loc: Codegen,
-                        ty: array_ty.clone(),
-                        dimensions: vec![],
-                        values: vec![],
-                    };
-                    cfg.add(
-                        vartab,
-                        Instr::Set {
-                            loc: Codegen,
-                            res: allocated_vector,
-                            expr,
-                        },
-                    );
-                    (
-                        Expression::NumberLiteral {
-                            loc: Codegen,
-                            ty: Uint(32),
-                            value: elem_no,
-                        },
-                        Expression::NumberLiteral {
-                            loc: Codegen,
-                            ty: Uint(32),
-                            value: 0.into(),
-                        },
-                        offset.clone(),
-                        allocated_vector,
-                    )
-                } else {
-                    let (array_length, size_width) =
-                        self.retrieve_array_length(buffer, offset, vartab, cfg);
-                    let array_start = offset.clone().add_u32(size_width.clone());
-                    validator.validate_offset(array_start.clone(), ns, vartab, cfg);
-                    (
-                        calculate_array_bytes_size(array_length, elem_ty, ns),
-                        size_width,
-                        array_start,
-                        allocate_array(array_ty, array_length, vartab, cfg),
-                    )
+            let (array_bytes_size, size_width, offset, var_no) = if matches!(dims.last(), Some(&ArrayLength::Fixed(_)))
+            {
+                let elem_no = calculate_direct_copy_bytes_size(dims, elem_ty, ns);
+                let allocated_vector = vartab.temp_anonymous(array_ty);
+                let expr = Expression::ArrayLiteral {
+                    loc: Codegen,
+                    ty: array_ty.clone(),
+                    dimensions: vec![],
+                    values: vec![],
                 };
+                cfg.add(
+                    vartab,
+                    Instr::Set {
+                        loc: Codegen,
+                        res: allocated_vector,
+                        expr,
+                    },
+                );
+                (
+                    Expression::NumberLiteral {
+                        loc: Codegen,
+                        ty: Uint(32),
+                        value: elem_no,
+                    },
+                    Expression::NumberLiteral {
+                        loc: Codegen,
+                        ty: Uint(32),
+                        value: 0.into(),
+                    },
+                    offset.clone(),
+                    allocated_vector,
+                )
+            } else {
+                let (array_length, size_width) = self.retrieve_array_length(buffer, offset, vartab, cfg);
+                let array_start = offset.clone().add_u32(size_width.clone());
+                validator.validate_offset(array_start.clone(), ns, vartab, cfg);
+                (
+                    calculate_array_bytes_size(array_length, elem_ty, ns),
+                    size_width,
+                    array_start,
+                    allocate_array(array_ty, array_length, vartab, cfg),
+                )
+            };
 
             validator.validate_offset_plus_size(&offset, &array_bytes_size, ns, vartab, cfg);
 
@@ -1086,9 +1028,7 @@ pub(crate) trait AbiEncoding {
         // allocated the outer dimension, i.e., we are about to read a 'int[3][4]' item.
         // Arrays whose elements are dynamic cannot be verified.
         if validator.validation_necessary()
-            && !dims[0..(dimension + 1)]
-                .iter()
-                .any(|d| *d == ArrayLength::Dynamic)
+            && !dims[0..(dimension + 1)].iter().any(|d| *d == ArrayLength::Dynamic)
             && !elem_ty.is_dynamic(ns)
         {
             let mut elems = BigInt::one();
@@ -1107,8 +1047,7 @@ pub(crate) trait AbiEncoding {
 
         // Dynamic dimensions mean that the subarray we are processing must be allocated in memory.
         if dims[dimension] == ArrayLength::Dynamic {
-            let (array_length, size_length) =
-                self.retrieve_array_length(buffer, offset_expr, vartab, cfg);
+            let (array_length, size_length) = self.retrieve_array_length(buffer, offset_expr, vartab, cfg);
             let array_start = offset_expr.clone().add_u32(size_length);
             validator.validate_offset(array_start.clone(), ns, vartab, cfg);
             cfg.add(
@@ -1160,8 +1099,7 @@ pub(crate) trait AbiEncoding {
         let for_loop = set_array_loop(array_var, dims, dimension, indexes, vartab, cfg);
         cfg.set_basic_block(for_loop.body_block);
         if 0 == dimension {
-            let (read_expr, advance) =
-                self.read_from_buffer(buffer, offset_expr, elem_ty, validator, ns, vartab, cfg);
+            let (read_expr, advance) = self.read_from_buffer(buffer, offset_expr, elem_ty, validator, ns, vartab, cfg);
             let ptr = index_array(array_var.clone(), dims, indexes, true);
 
             cfg.add(
@@ -1230,9 +1168,10 @@ pub(crate) trait AbiEncoding {
     ) -> (Expression, Expression) {
         let size = ns.calculate_struct_non_padded_size(struct_ty);
         // If the size without padding equals the size with padding, memcpy this struct directly.
-        if let Some(no_padding_size) = size.as_ref().filter(|no_pad| {
-            *no_pad == &struct_ty.struct_padded_size(ns) && allow_memcpy(expr_ty, ns)
-        }) {
+        if let Some(no_padding_size) = size
+            .as_ref()
+            .filter(|no_pad| *no_pad == &struct_ty.struct_padded_size(ns) && allow_memcpy(expr_ty, ns))
+        {
             let size = Expression::NumberLiteral {
                 loc: Codegen,
                 ty: Uint(32),
@@ -1294,15 +1233,8 @@ pub(crate) trait AbiEncoding {
             struct_validator.initialize_validation(&offset, ns, vartab, cfg);
         }
 
-        let (mut read_expr, mut advance) = self.read_from_buffer(
-            buffer,
-            &offset,
-            &struct_tys[0],
-            &mut struct_validator,
-            ns,
-            vartab,
-            cfg,
-        );
+        let (mut read_expr, mut advance) =
+            self.read_from_buffer(buffer, &offset, &struct_tys[0], &mut struct_validator, ns, vartab, cfg);
         let mut runtime_size = advance.clone();
 
         let mut read_items = vec![Expression::Poison; qty];
@@ -1317,15 +1249,8 @@ pub(crate) trait AbiEncoding {
                 left: Box::new(offset.clone()),
                 right: Box::new(advance),
             };
-            (read_expr, advance) = self.read_from_buffer(
-                buffer,
-                &offset,
-                &struct_tys[i],
-                &mut struct_validator,
-                ns,
-                vartab,
-                cfg,
-            );
+            (read_expr, advance) =
+                self.read_from_buffer(buffer, &offset, &struct_tys[i], &mut struct_validator, ns, vartab, cfg);
             read_items[i] = read_expr;
             runtime_size = Expression::Add {
                 loc: Codegen,
@@ -1385,22 +1310,18 @@ pub(crate) trait AbiEncoding {
                     ty: Uint(32),
                     value: ty.memory_size_of(ns),
                 }
-            }
+            },
             Type::FunctionSelector => Expression::NumberLiteral {
                 loc: Codegen,
                 ty: Uint(32),
                 value: BigInt::from(ns.target.selector_length()),
             },
-            Type::Struct(struct_ty) => {
-                self.calculate_struct_size(arg_no, expr, struct_ty, ns, vartab, cfg)
-            }
+            Type::Struct(struct_ty) => self.calculate_struct_size(arg_no, expr, struct_ty, ns, vartab, cfg),
             Type::Slice(ty) => {
                 let dims = vec![ArrayLength::Dynamic];
                 self.calculate_array_size(expr, ty, &dims, arg_no, ns, vartab, cfg)
-            }
-            Type::Array(ty, dims) => {
-                self.calculate_array_size(expr, ty, dims, arg_no, ns, vartab, cfg)
-            }
+            },
+            Type::Array(ty, dims) => self.calculate_array_size(expr, ty, dims, arg_no, ns, vartab, cfg),
             Type::ExternalFunction { .. } => {
                 let selector_len: BigInt = ns.target.selector_length().into();
                 let address_size = Type::Address(false).memory_size_of(ns);
@@ -1409,7 +1330,7 @@ pub(crate) trait AbiEncoding {
                     ty: Uint(32),
                     value: address_size + selector_len,
                 }
-            }
+            },
             Type::Ref(r) => {
                 if let Type::Struct(struct_ty) = &**r {
                     return self.calculate_struct_size(arg_no, expr, struct_ty, ns, vartab, cfg);
@@ -1420,13 +1341,13 @@ pub(crate) trait AbiEncoding {
                     expr: expr.clone().into(),
                 };
                 self.get_expr_size(arg_no, &loaded, ns, vartab, cfg)
-            }
+            },
             Type::StorageRef(_, r) => {
                 let var = load_storage(&Codegen, r, expr.clone(), cfg, vartab);
                 let size = self.get_expr_size(arg_no, &var, ns, vartab, cfg);
                 self.storage_cache_insert(arg_no, var.clone());
                 size
-            }
+            },
             Type::String | Type::DynamicBytes => self.calculate_string_size(expr, vartab, cfg),
             Type::InternalFunction { .. }
             | Type::Void
@@ -1435,7 +1356,7 @@ pub(crate) trait AbiEncoding {
             | Type::Mapping(..) => unreachable!("This type cannot be encoded"),
             Type::UserType(_) | Type::Unresolved | Type::Rational => {
                 unreachable!("Type should not exist in codegen")
-            }
+            },
         }
     }
 
@@ -1467,8 +1388,7 @@ pub(crate) trait AbiEncoding {
         // we can calculate its size using a simple multiplication (direct_assessment)
         // i.e. 'uint8[3][] vec' has size vec.length*2*size_of(uint8)
         // In cases like 'uint [3][][2] v' this is not possible, as v[0] and v[1] have different sizes
-        let direct_assessment =
-            dyn_dims == 0 || (dyn_dims == 1 && dims.last() == Some(&ArrayLength::Dynamic));
+        let direct_assessment = dyn_dims == 0 || (dyn_dims == 1 && dims.last() == Some(&ArrayLength::Dynamic));
 
         // Check if the array contains only fixed sized elements
         let primitive_size = if elem_ty.is_primitive() && direct_assessment {
@@ -1554,8 +1474,7 @@ pub(crate) trait AbiEncoding {
                 right: size_width.into(),
             }
         } else {
-            let size_var =
-                vartab.temp_name(format!("array_bytes_size_{arg_no}").as_str(), &Uint(32));
+            let size_var = vartab.temp_name(format!("array_bytes_size_{arg_no}").as_str(), &Uint(32));
             cfg.add(
                 vartab,
                 Instr::Set {
@@ -1659,17 +1578,7 @@ pub(crate) trait AbiEncoding {
                 },
             );
         } else {
-            self.calculate_complex_array_size(
-                arg_no,
-                arr,
-                dims,
-                dimension - 1,
-                size_var_no,
-                ns,
-                indexes,
-                vartab,
-                cfg,
-            );
+            self.calculate_complex_array_size(arg_no, arr, dims, dimension - 1, size_var_no, ns, indexes, vartab, cfg);
         }
         finish_array_loop(&for_loop, vartab, cfg);
     }
@@ -1999,11 +1908,7 @@ fn load_struct_member(ty: Type, expr: Expression, member: usize, ns: &Namespace)
 }
 
 /// Get the outer array length inside a variable (cannot be used for any dimension).
-fn array_outer_length(
-    arr: &Expression,
-    vartab: &mut Vartable,
-    cfg: &mut ControlFlowGraph,
-) -> Expression {
+fn array_outer_length(arr: &Expression, vartab: &mut Vartable, cfg: &mut ControlFlowGraph) -> Expression {
     let get_size = Expression::Builtin {
         loc: Codegen,
         tys: vec![Uint(32)],
@@ -2034,15 +1939,11 @@ fn allow_memcpy(ty: &Type, ns: &Namespace) -> bool {
                 let padded_size = struct_ty.struct_padded_size(ns);
                 // This remainder tells us if padding is needed between the elements of an array
                 let remainder = padded_size.mod_floor(&ty.struct_elem_alignment(ns));
-                let ty_allowed = struct_ty
-                    .definition(ns)
-                    .fields
-                    .iter()
-                    .all(|f| allow_memcpy(&f.ty, ns));
+                let ty_allowed = struct_ty.definition(ns).fields.iter().all(|f| allow_memcpy(&f.ty, ns));
                 return no_padded_size == padded_size && remainder.is_zero() && ty_allowed;
             }
             false
-        }
+        },
         Type::Bytes(n) => *n < 2, // When n >= 2, the bytes must be reversed
         // If this is a dynamic array, we mempcy if its elements allow it and we don't need to index it.
         Type::Array(t, dims) if ty.is_dynamic(ns) => dims.len() == 1 && allow_memcpy(t, ns),
@@ -2054,11 +1955,7 @@ fn allow_memcpy(ty: &Type, ns: &Namespace) -> bool {
 }
 
 /// Calculate the number of bytes needed to memcpy an entire vector
-fn calculate_direct_copy_bytes_size(
-    dims: &[ArrayLength],
-    elem_ty: &Type,
-    ns: &Namespace,
-) -> BigInt {
+fn calculate_direct_copy_bytes_size(dims: &[ArrayLength], elem_ty: &Type, ns: &Namespace) -> BigInt {
     let mut elem_no = BigInt::one();
     for item in dims {
         debug_assert!(matches!(item, &ArrayLength::Fixed(_)));
@@ -2092,12 +1989,7 @@ fn calculate_array_bytes_size(length_var: usize, elem_ty: &Type, ns: &Namespace)
 }
 
 /// Allocate an array in memory and return its variable number.
-fn allocate_array(
-    ty: &Type,
-    length_variable: usize,
-    vartab: &mut Vartable,
-    cfg: &mut ControlFlowGraph,
-) -> usize {
+fn allocate_array(ty: &Type, length_variable: usize, vartab: &mut Vartable, cfg: &mut ControlFlowGraph) -> usize {
     let array_var = vartab.temp_anonymous(ty);
     let length_var = Expression::Variable {
         loc: Codegen,

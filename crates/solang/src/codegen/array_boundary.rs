@@ -50,10 +50,7 @@ pub(crate) fn handle_array_assign(
             initializer,
         }
     } else {
-        if let Expression::Variable {
-            var_no: right_res, ..
-        } = &right
-        {
+        if let Expression::Variable { var_no: right_res, .. } = &right {
             // If we have initialized a temp var for this var
             if cfg.array_lengths_temps.contains_key(right_res) {
                 let to_update = cfg.array_lengths_temps[right_res];

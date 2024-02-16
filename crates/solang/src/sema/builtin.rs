@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use super::ast::{
-    ArrayLength, Builtin, Diagnostic, Expression, File, Function, Namespace, Parameter, StructType,
-    Symbol, Type,
+    ArrayLength, Builtin, Diagnostic, Expression, File, Function, Namespace, Parameter, StructType, Symbol, Type,
 };
 use super::diagnostics::Diagnostics;
 use super::eval::eval_const_number;
@@ -311,12 +310,7 @@ pub static BUILTIN_FUNCTIONS: Lazy<[Prototype; 27]> = Lazy::new(|| {
             namespace: None,
             method: vec![],
             name: "ecrecover",
-            params: vec![
-                Type::Bytes(32),
-                Type::Uint(8),
-                Type::Bytes(32),
-                Type::Bytes(32),
-            ],
+            params: vec![Type::Bytes(32), Type::Uint(8), Type::Bytes(32), Type::Bytes(32)],
             ret: vec![Type::Address(false)],
             target: vec![Target::EVM],
             doc: "Recover the address associated with the public key from elliptic curve signature",
@@ -848,11 +842,9 @@ pub static BUILTIN_METHODS: Lazy<[Prototype; 27]> = Lazy::new(|| {
 
 /// Does function call match builtin
 pub fn is_builtin_call(namespace: Option<&str>, fname: &str, ns: &Namespace) -> bool {
-    BUILTIN_FUNCTIONS.iter().any(|p| {
-        p.name == fname
-            && p.namespace == namespace
-            && (p.target.is_empty() || p.target.contains(&ns.target))
-    })
+    BUILTIN_FUNCTIONS
+        .iter()
+        .any(|p| p.name == fname && p.namespace == namespace && (p.target.is_empty() || p.target.contains(&ns.target)))
 }
 
 /// Get the prototype for a builtin. If the prototype has arguments, it is a function else
@@ -911,9 +903,7 @@ pub fn builtin_var(
 
 /// Does variable name match any builtin namespace
 pub fn builtin_namespace(namespace: &str) -> bool {
-    BUILTIN_VARIABLE
-        .iter()
-        .any(|p| p.namespace == Some(namespace))
+    BUILTIN_VARIABLE.iter().any(|p| p.namespace == Some(namespace))
 }
 
 /// Is name reserved for builtins
@@ -922,19 +912,17 @@ pub fn is_reserved(fname: &str) -> bool {
         return true;
     }
 
-    let is_builtin_function = BUILTIN_FUNCTIONS.iter().any(|p| {
-        (p.name == fname && p.namespace.is_none() && p.method.is_empty())
-            || (p.namespace == Some(fname))
-    });
+    let is_builtin_function = BUILTIN_FUNCTIONS
+        .iter()
+        .any(|p| (p.name == fname && p.namespace.is_none() && p.method.is_empty()) || (p.namespace == Some(fname)));
 
     if is_builtin_function {
         return true;
     }
 
-    BUILTIN_VARIABLE.iter().any(|p| {
-        (p.name == fname && p.namespace.is_none() && p.method.is_empty())
-            || (p.namespace == Some(fname))
-    })
+    BUILTIN_VARIABLE
+        .iter()
+        .any(|p| (p.name == fname && p.namespace.is_none() && p.method.is_empty()) || (p.namespace == Some(fname)))
 }
 
 /// Resolve a builtin call
@@ -960,10 +948,7 @@ pub(super) fn resolve_call(
         if context.constant && !func.constant {
             errors.push(Diagnostic::cast_error(
                 *loc,
-                format!(
-                    "cannot call function '{}' in constant expression",
-                    func.name
-                ),
+                format!("cannot call function '{}' in constant expression", func.name),
             ));
             matches = false;
         }
@@ -999,7 +984,7 @@ pub(super) fn resolve_call(
                 Err(()) => {
                     matches = false;
                     continue;
-                }
+                },
             };
 
             if let Some(ty) = ty {
@@ -1007,7 +992,7 @@ pub(super) fn resolve_call(
                     Ok(expr) => cast_args.push(expr),
                     Err(()) => {
                         matches = false;
-                    }
+                    },
                 }
             }
         }
@@ -1076,14 +1061,7 @@ pub(super) fn resolve_namespace_call(
         let mut resolved_args = Vec::new();
 
         for arg in args {
-            let expr = expression(
-                arg,
-                context,
-                ns,
-                symtable,
-                diagnostics,
-                ResolveTo::Type(&ty),
-            )?;
+            let expr = expression(arg, context, ns, symtable, diagnostics, ResolveTo::Type(&ty))?;
 
             resolved_args.push(expr.cast(loc, &ty, true, ns, diagnostics)?);
         }
@@ -1098,16 +1076,7 @@ pub(super) fn resolve_namespace_call(
 
     // The abi.* functions need special handling, others do not
     if namespace != "abi" && namespace != "string" {
-        return resolve_call(
-            loc,
-            Some(namespace),
-            name,
-            args,
-            context,
-            ns,
-            symtable,
-            diagnostics,
-        );
+        return resolve_call(loc, Some(namespace), name, args, context, ns, symtable, diagnostics);
     }
 
     let builtin = match name {
@@ -1175,8 +1144,11 @@ pub(super) fn resolve_namespace_call(
                         if ty.is_mapping() || ty.is_recursive(ns) {
                             diagnostics.push(Diagnostic::error(
                                 *loc,
-                        format!("Invalid type '{}': mappings and recursive types cannot be abi decoded or encoded", ty.to_string(ns)))
-                            );
+                                format!(
+                                    "Invalid type '{}': mappings and recursive types cannot be abi decoded or encoded",
+                                    ty.to_string(ns)
+                                ),
+                            ));
                             broken = true;
                         }
 
@@ -1187,7 +1159,7 @@ pub(super) fn resolve_namespace_call(
                         broken = true;
                     }
                 }
-            }
+            },
             _ => {
                 let ty = ns.resolve_type(
                     context.file_no,
@@ -1200,13 +1172,16 @@ pub(super) fn resolve_namespace_call(
                 if ty.is_mapping() || ty.is_recursive(ns) {
                     diagnostics.push(Diagnostic::error(
                         *loc,
-                        format!("Invalid type '{}': mappings and recursive types cannot be abi decoded or encoded", ty.to_string(ns))
+                        format!(
+                            "Invalid type '{}': mappings and recursive types cannot be abi decoded or encoded",
+                            ty.to_string(ns)
+                        ),
                     ));
                     broken = true;
                 }
 
                 tys.push(ty);
-            }
+            },
         }
 
         return if broken {
@@ -1239,13 +1214,7 @@ pub(super) fn resolve_namespace_call(
 
                 resolved_args.insert(
                     0,
-                    selector.cast(
-                        &selector.loc(),
-                        &Type::FunctionSelector,
-                        true,
-                        ns,
-                        diagnostics,
-                    )?,
+                    selector.cast(&selector.loc(), &Type::FunctionSelector, true, ns, diagnostics)?,
                 );
             } else {
                 diagnostics.push(Diagnostic::error(
@@ -1258,32 +1227,20 @@ pub(super) fn resolve_namespace_call(
 
                 return Err(());
             }
-        }
+        },
         Builtin::AbiEncodeCall => {
             // first argument is function
             if let Some(function) = args_iter.next() {
-                let function = expression(
-                    function,
-                    context,
-                    ns,
-                    symtable,
-                    diagnostics,
-                    ResolveTo::Unknown,
-                )?;
+                let function = expression(function, context, ns, symtable, diagnostics, ResolveTo::Unknown)?;
 
                 match function.ty() {
-                    Type::ExternalFunction { params, .. }
-                    | Type::InternalFunction { params, .. } => {
+                    Type::ExternalFunction { params, .. } | Type::InternalFunction { params, .. } => {
                         resolved_args.push(function);
 
                         if args.len() - 1 != params.len() {
                             diagnostics.push(Diagnostic::error(
                                 *loc,
-                                format!(
-                                    "function takes {} arguments, {} provided",
-                                    params.len(),
-                                    args.len() - 1
-                                ),
+                                format!("function takes {} arguments, {} provided", params.len(), args.len() - 1),
                             ));
 
                             return Err(());
@@ -1303,8 +1260,7 @@ pub(super) fn resolve_namespace_call(
 
                             // A string or hex literal should be encoded as a string
                             if let Expression::BytesLiteral { .. } = &expr {
-                                expr =
-                                    expr.cast(&arg.loc(), &Type::String, true, ns, diagnostics)?;
+                                expr = expr.cast(&arg.loc(), &Type::String, true, ns, diagnostics)?;
                             }
 
                             resolved_args.push(expr);
@@ -1316,18 +1272,15 @@ pub(super) fn resolve_namespace_call(
                             kind: builtin,
                             args: resolved_args,
                         });
-                    }
+                    },
                     ty => {
                         diagnostics.push(Diagnostic::error(
                             *loc,
-                            format!(
-                                "first argument should be function, got '{}'",
-                                ty.to_string(ns)
-                            ),
+                            format!("first argument should be function, got '{}'", ty.to_string(ns)),
                         ));
 
                         return Err(());
-                    }
+                    },
                 }
             } else {
                 diagnostics.push(Diagnostic::error(
@@ -1337,7 +1290,7 @@ pub(super) fn resolve_namespace_call(
 
                 return Err(());
             }
-        }
+        },
         Builtin::AbiEncodeWithSignature => {
             // first argument is signature
             if let Some(signature) = args_iter.next() {
@@ -1362,7 +1315,7 @@ pub(super) fn resolve_namespace_call(
 
                 return Err(());
             }
-        }
+        },
         _ => (),
     }
 
@@ -1373,7 +1326,10 @@ pub(super) fn resolve_namespace_call(
         if ty.is_mapping() || ty.is_recursive(ns) {
             diagnostics.push(Diagnostic::error(
                 arg.loc(),
-                format!("Invalid type '{}': mappings and recursive types cannot be abi decoded or encoded", ty.to_string(ns)),
+                format!(
+                    "Invalid type '{}': mappings and recursive types cannot be abi decoded or encoded",
+                    ty.to_string(ns)
+                ),
             ));
 
             return Err(());
@@ -1421,10 +1377,7 @@ pub(super) fn resolve_method_call(
         if context.constant && !func.constant {
             diagnostics.push(Diagnostic::cast_error(
                 id.loc,
-                format!(
-                    "cannot call function '{}' in constant expression",
-                    func.name
-                ),
+                format!("cannot call function '{}' in constant expression", func.name),
             ));
             matches = false;
         }
@@ -1461,7 +1414,7 @@ pub(super) fn resolve_method_call(
                 Err(()) => {
                     matches = false;
                     continue;
-                }
+                },
             };
 
             if let Some(ty) = ty {
@@ -1470,7 +1423,7 @@ pub(super) fn resolve_method_call(
                     Err(()) => {
                         matches = false;
                         continue;
-                    }
+                    },
                 }
             }
         }
@@ -1480,10 +1433,7 @@ pub(super) fn resolve_method_call(
                 return Err(());
             }
         } else {
-            cast_args.insert(
-                0,
-                expr.cast(&id.loc, deref_ty, true, ns, diagnostics).unwrap(),
-            );
+            cast_args.insert(0, expr.cast(&id.loc, deref_ty, true, ns, diagnostics).unwrap());
 
             let returns = if func.ret.is_empty() {
                 vec![Type::Void]
@@ -1506,7 +1456,7 @@ pub(super) fn resolve_method_call(
             diagnostics.extend(errors);
 
             Err(())
-        }
+        },
         _ => {
             diagnostics.push(Diagnostic::error(
                 id.loc,
@@ -1514,7 +1464,7 @@ pub(super) fn resolve_method_call(
             ));
 
             Err(())
-        }
+        },
     }
 }
 
@@ -1616,12 +1566,7 @@ impl Namespace {
 
         self.functions.push(func);
 
-        assert!(self.add_symbol(
-            file_no,
-            None,
-            &id,
-            Symbol::Function(vec![(pt::Loc::Builtin, func_no)])
-        ));
+        assert!(self.add_symbol(file_no, None, &id, Symbol::Function(vec![(pt::Loc::Builtin, func_no)])));
 
         let mut func = Function::new(
             pt::Loc::Builtin,
@@ -1699,20 +1644,12 @@ impl Namespace {
 
         self.functions.push(func);
 
-        assert!(self.add_symbol(
-            file_no,
-            None,
-            &id,
-            Symbol::Function(vec![(pt::Loc::Builtin, func_no)])
-        ));
+        assert!(self.add_symbol(file_no, None, &id, Symbol::Function(vec![(pt::Loc::Builtin, func_no)])));
     }
 
     pub fn add_polkadot_builtins(&mut self) {
         let loc = pt::Loc::Builtin;
-        let identifier = |name: &str| Identifier {
-            name: name.into(),
-            loc,
-        };
+        let identifier = |name: &str| Identifier { name: name.into(), loc };
 
         let file_no = self.files.len();
         self.files.push(File {

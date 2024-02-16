@@ -915,14 +915,7 @@ fn test_flow() {
         vec![0],    // 4 -> 0
         vec![3, 4], // 5 -> 3, 4
     ];
-    let mut traversing_order = vec![
-        (0, false),
-        (1, false),
-        (4, false),
-        (2, false),
-        (3, false),
-        (5, false),
-    ];
+    let mut traversing_order = vec![(0, false), (1, false), (4, false), (2, false), (3, false), (5, false)];
     traversing_order.reverse();
     let anticipated_expressions = AnticipatedExpressions::new(&dag, reverse_dag, traversing_order);
     let flow = anticipated_expressions.calculate_flow(4, 5);

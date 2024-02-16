@@ -49,12 +49,7 @@ impl<'a> CommonSubExpressionTracker<'a> {
     }
 
     /// Add an expression to the tracker.
-    pub fn add_expression(
-        &mut self,
-        exp: &Expression,
-        expr_type: &ExpressionType,
-        node: &BasicExpression,
-    ) {
+    pub fn add_expression(&mut self, exp: &Expression, expr_type: &ExpressionType, node: &BasicExpression) {
         // Variables, Literals and constants shouldn't be added,
         // as we are not supposed to exchange them by temporaries.
         if matches!(
@@ -76,8 +71,7 @@ impl<'a> CommonSubExpressionTracker<'a> {
 
         if let Some(var_no) = node.available_variable.get_var_number() {
             // If we encounter an expression like 'x = y+2', we can map 'x' to 'y+2', whenever possible.
-            self.mapped_variables
-                .insert(var_no, self.common_subexpressions.len());
+            self.mapped_variables.insert(var_no, self.common_subexpressions.len());
         }
 
         self.common_subexpressions.push(CommonSubexpression {
@@ -146,11 +140,7 @@ impl<'a> CommonSubExpressionTracker<'a> {
     /// '''
     ///
     /// This avoids the repeated calculation of 'a+b'
-    pub fn check_availability_on_branches(
-        &mut self,
-        expr_type: &ExpressionType,
-        expr: &Expression,
-    ) {
+    pub fn check_availability_on_branches(&mut self, expr_type: &ExpressionType, expr: &Expression) {
         if let Some(expr_id) = self.inserted_subexpressions.get(expr_type) {
             let expr_block = self.common_subexpressions[*expr_id].block;
             let expr_block = self.common_subexpressions[*expr_id]
@@ -172,11 +162,7 @@ impl<'a> CommonSubExpressionTracker<'a> {
     }
 
     /// Try exchanging an expression by a temporary variable.
-    pub fn check_variable_available(
-        &mut self,
-        expr_type: &ExpressionType,
-        exp: &Expression,
-    ) -> Option<Expression> {
+    pub fn check_variable_available(&mut self, expr_type: &ExpressionType, exp: &Expression) -> Option<Expression> {
         let expr_id = self.inserted_subexpressions.get(expr_type)?;
         let common_expression = &mut self.common_subexpressions[*expr_id];
         // If there is a variable available, but it has not ben instantiated yet:
@@ -241,15 +227,9 @@ impl<'a> CommonSubExpressionTracker<'a> {
     /// two blocks. The parent is the deepest block in which every path from the entry block to both
     /// 'block_1' and 'block_2' passes through such a block, provided that the expression is
     /// anticipated there.
-    pub fn find_parent_block(
-        &self,
-        block_1: usize,
-        block_2: usize,
-        expr: &Expression,
-    ) -> Option<usize> {
+    pub fn find_parent_block(&self, block_1: usize, block_2: usize, expr: &Expression) -> Option<usize> {
         // The analysis is done at another data structure to isolate the logic of traversing the
         // CFG from the end to the beginning (backwards).
-        self.anticipated_expressions
-            .find_ancestor(block_1, block_2, expr)
+        self.anticipated_expressions.find_ancestor(block_1, block_2, expr)
     }
 }

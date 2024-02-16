@@ -14,8 +14,6 @@ pub(super) fn function_dispatch(
 ) -> Vec<ControlFlowGraph> {
     match &ns.target {
         Target::Solana => vec![solana::function_dispatch(contract_no, all_cfg, ns, opt)],
-        Target::Polkadot { .. } | Target::EVM => {
-            polkadot::function_dispatch(contract_no, all_cfg, ns, opt)
-        }
+        Target::Polkadot { .. } | Target::EVM => polkadot::function_dispatch(contract_no, all_cfg, ns, opt),
     }
 }

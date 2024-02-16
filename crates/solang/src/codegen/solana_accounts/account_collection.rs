@@ -105,9 +105,7 @@ pub(crate) fn collect_accounts_from_contract(contract_no: usize, ns: &Namespace)
                 .get_index_of(BuiltinAccounts::DataAccount.as_str());
             if let Some(data_account_index) = index {
                 // Enforce the data account to be the first
-                func.solana_accounts
-                    .borrow_mut()
-                    .move_index(data_account_index, 0);
+                func.solana_accounts.borrow_mut().move_index(data_account_index, 0);
             }
 
             if func.is_constructor() && func.has_payer_annotation() {
@@ -122,10 +120,7 @@ pub(crate) fn collect_accounts_from_contract(contract_no: usize, ns: &Namespace)
                 );
             }
         }
-        visiting_queue.insert((
-            contract_no,
-            ns.contracts[contract_no].all_functions[func_no],
-        ));
+        visiting_queue.insert((contract_no, ns.contracts[contract_no].all_functions[func_no]));
     }
 
     let mut recurse_data = RecurseData {
@@ -151,7 +146,7 @@ pub(crate) fn collect_accounts_from_contract(contract_no: usize, ns: &Namespace)
             match &ns.contracts[*contract_no].cfg[*func_no].function_no {
                 ASTFunction::SolidityFunction(ast_no) | ASTFunction::YulFunction(ast_no) => {
                     recurse_data.ast_no = *ast_no;
-                }
+                },
                 _ => (),
             }
             check_function(&ns.contracts[*contract_no].cfg[*func_no], &mut recurse_data);
@@ -160,9 +155,7 @@ pub(crate) fn collect_accounts_from_contract(contract_no: usize, ns: &Namespace)
         // This is the convergence condition for this loop.
         // If we have not added new accounts to the map in this iteration and the queue for the
         // next iteration does not have any new element, we can stop.
-        if old_size == recurse_data.accounts_added
-            && visiting_queue.len() == recurse_data.next_queue.len()
-        {
+        if old_size == recurse_data.accounts_added && visiting_queue.len() == recurse_data.next_queue.len() {
             break;
         }
         old_size = recurse_data.accounts_added;
@@ -210,7 +203,7 @@ fn check_instruction(instr: &Instr, data: &mut RecurseData) {
         | Instr::SelfDestruct { recipient: expr }
         | Instr::Set { expr, .. } => {
             expr.recurse(data, check_expression);
-        }
+        },
         Instr::Call { call, args, .. } => {
             if let InternalCallTy::Static { cfg_no } = call {
                 // When we have an internal call, we analyse the current function again and the
@@ -220,12 +213,11 @@ fn check_instruction(instr: &Instr, data: &mut RecurseData) {
                 data.next_queue.insert((data.contract_no, data.cfg_func_no));
                 match &data.contracts[data.contract_no].cfg[*cfg_no].function_no {
                     ASTFunction::SolidityFunction(ast_no) | ASTFunction::YulFunction(ast_no) => {
-                        let accounts_to_add =
-                            data.functions[*ast_no].solana_accounts.borrow().clone();
+                        let accounts_to_add = data.functions[*ast_no].solana_accounts.borrow().clone();
                         for (account_name, account) in accounts_to_add {
                             data.add_account(account_name, &account);
                         }
-                    }
+                    },
                     _ => (),
                 }
             } else if let InternalCallTy::Builtin { ast_func_no } = call {
@@ -238,30 +230,27 @@ fn check_instruction(instr: &Instr, data: &mut RecurseData) {
             for item in args {
                 item.recurse(data, check_expression);
             }
-        }
+        },
         Instr::Return { value } => {
             for item in value {
                 item.recurse(data, check_expression);
             }
-        }
+        },
         Instr::Branch { .. }
         | Instr::Nop
         | Instr::ReturnCode { .. }
         | Instr::PopMemory { .. }
-        | Instr::Unimplemented { .. } => {}
-        Instr::Store {
-            dest,
-            data: store_data,
-        } => {
+        | Instr::Unimplemented { .. } => {},
+        Instr::Store { dest, data: store_data } => {
             dest.recurse(data, check_expression);
             store_data.recurse(data, check_expression);
-        }
+        },
 
         Instr::AssertFailure { encoded_args } => {
             if let Some(args) = encoded_args {
                 args.recurse(data, check_expression);
             }
-        }
+        },
 
         Instr::ReturnData {
             data: expr1,
@@ -274,7 +263,7 @@ fn check_instruction(instr: &Instr, data: &mut RecurseData) {
         } => {
             expr1.recurse(data, check_expression);
             expr2.recurse(data, check_expression);
-        }
+        },
         Instr::WriteBuffer {
             buf: expr_1,
             offset: expr_2,
@@ -293,7 +282,7 @@ fn check_instruction(instr: &Instr, data: &mut RecurseData) {
             expr_1.recurse(data, check_expression);
             expr_2.recurse(data, check_expression);
             expr_3.recurse(data, check_expression);
-        }
+        },
         Instr::PushStorage {
             value: opt_expr,
             storage: expr,
@@ -303,10 +292,10 @@ fn check_instruction(instr: &Instr, data: &mut RecurseData) {
                 opt_expr.recurse(data, check_expression);
             }
             expr.recurse(data, check_expression);
-        }
+        },
         Instr::PushMemory { value, .. } => {
             value.recurse(data, check_expression);
-        }
+        },
         Instr::Constructor {
             loc,
             encoded_args,
@@ -361,7 +350,7 @@ fn check_instruction(instr: &Instr, data: &mut RecurseData) {
             }
 
             data.add_system_account();
-        }
+        },
         Instr::ExternalCall {
             loc,
             address,
@@ -422,24 +411,22 @@ fn check_instruction(instr: &Instr, data: &mut RecurseData) {
                     transfer_accounts(loc, *contract_no, *function_no, data);
                 }
             }
-        }
+        },
         Instr::EmitEvent {
-            data: data_,
-            topics,
-            ..
+            data: data_, topics, ..
         } => {
             data_.recurse(data, check_expression);
 
             for item in topics {
                 item.recurse(data, check_expression);
             }
-        }
+        },
         Instr::Switch { cond, cases, .. } => {
             cond.recurse(data, check_expression);
             for (expr, _) in cases {
                 expr.recurse(data, check_expression);
             }
-        }
+        },
 
         Instr::ValueTransfer { .. } => unreachable!("Value transfer does not exist on Solana"),
         Instr::AccountAccess { .. } => (),
@@ -462,7 +449,7 @@ fn check_expression(expr: &Expression, data: &mut RecurseData) -> bool {
                     generated: true,
                 },
             );
-        }
+        },
         Expression::Builtin {
             kind: Builtin::SignatureVerify,
             ..
@@ -476,13 +463,13 @@ fn check_expression(expr: &Expression, data: &mut RecurseData) -> bool {
                     generated: true,
                 },
             );
-        }
+        },
         Expression::Builtin {
             kind: Builtin::Ripemd160 | Builtin::Keccak256 | Builtin::Sha256,
             ..
         } => {
             data.add_system_account();
-        }
+        },
 
         _ => (),
     }
@@ -493,22 +480,13 @@ fn check_expression(expr: &Expression, data: &mut RecurseData) -> bool {
 /// When we make an external call from function A to function B, function A must know all the
 /// accounts function B needs. The 'transfer_accounts' function takes care to transfer the accounts
 /// from B's IDL to A's IDL.
-fn transfer_accounts(
-    loc: &pt::Loc,
-    contract_no: usize,
-    function_no: usize,
-    data: &mut RecurseData,
-) {
+fn transfer_accounts(loc: &pt::Loc, contract_no: usize, function_no: usize, data: &mut RecurseData) {
     let accounts_to_add = data.functions[function_no].solana_accounts.borrow().clone();
 
     for (name, mut account) in accounts_to_add {
         if name == BuiltinAccounts::DataAccount {
             let idl_name = format!("{}_dataAccount", data.contracts[contract_no].id);
-            if let Some(acc) = data.functions[data.ast_no]
-                .solana_accounts
-                .borrow()
-                .get(&idl_name)
-            {
+            if let Some(acc) = data.functions[data.ast_no].solana_accounts.borrow().get(&idl_name) {
                 if acc.loc != *loc {
                     data.diagnostics.push(
                         Diagnostic::error_with_note(
@@ -527,22 +505,17 @@ fn transfer_accounts(
             continue;
         }
 
-        if let Some(other_account) = data.functions[data.ast_no]
-            .solana_accounts
-            .borrow()
-            .get(&name)
-        {
+        if let Some(other_account) = data.functions[data.ast_no].solana_accounts.borrow().get(&name) {
             if !other_account.generated {
-                data.diagnostics.push(
-                    Diagnostic::error_with_note(
-                        other_account.loc,
-                        "account name collision encountered. Calling a function that \
+                data.diagnostics.push(Diagnostic::error_with_note(
+                    other_account.loc,
+                    "account name collision encountered. Calling a function that \
                                 requires an account whose name is also defined in the current function \
-                                will create duplicate names in the IDL. Please, rename one of the accounts".to_string(),
-                        account.loc,
-                        "other declaration".to_string(),
-                    )
-                );
+                                will create duplicate names in the IDL. Please, rename one of the accounts"
+                        .to_string(),
+                    account.loc,
+                    "other declaration".to_string(),
+                ));
             }
         }
         data.add_account(name, &account);

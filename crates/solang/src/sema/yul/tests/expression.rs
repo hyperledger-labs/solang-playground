@@ -15,8 +15,7 @@ use crate::{parse_and_resolve, sema::ast, FileResolver, Target};
 use num_bigint::BigInt;
 use solang_parser::pt;
 use solang_parser::pt::{
-    ContractTy, HexLiteral, Identifier, Loc, StorageLocation, StringLiteral, Visibility,
-    YulFunctionCall,
+    ContractTy, HexLiteral, Identifier, Loc, StorageLocation, StringLiteral, Visibility, YulFunctionCall,
 };
 use std::ffi::OsStr;
 use std::sync::Arc;
@@ -38,8 +37,7 @@ fn resolve_bool_literal() {
         }),
     );
 
-    let resolved_type =
-        resolve_yul_expression(&expr, &mut ctx, &mut symtable, &mut function_table, &mut ns);
+    let resolved_type = resolve_yul_expression(&expr, &mut ctx, &mut symtable, &mut function_table, &mut ns);
     assert!(resolved_type.is_ok());
     assert!(ns.diagnostics.is_empty());
     let unwrapped = resolved_type.unwrap();
@@ -50,8 +48,7 @@ fn resolve_bool_literal() {
     );
 
     let expr = pt::YulExpression::BoolLiteral(Loc::File(0, 3, 5), true, None);
-    let resolved_type =
-        resolve_yul_expression(&expr, &mut ctx, &mut symtable, &mut function_table, &mut ns);
+    let resolved_type = resolve_yul_expression(&expr, &mut ctx, &mut symtable, &mut function_table, &mut ns);
 
     assert!(resolved_type.is_ok());
     assert!(ns.diagnostics.is_empty());
@@ -80,8 +77,7 @@ fn resolve_number_literal() {
             name: "u64".to_string(),
         }),
     );
-    let parsed =
-        resolve_yul_expression(&expr, &mut ctx, &mut symtable, &mut function_table, &mut ns);
+    let parsed = resolve_yul_expression(&expr, &mut ctx, &mut symtable, &mut function_table, &mut ns);
     assert!(parsed.is_ok());
     assert_eq!(ns.diagnostics.len(), 1);
     assert_eq!(
@@ -99,8 +95,7 @@ fn resolve_number_literal() {
             name: "u128".to_string(),
         }),
     );
-    let parsed =
-        resolve_yul_expression(&expr, &mut ctx, &mut symtable, &mut function_table, &mut ns);
+    let parsed = resolve_yul_expression(&expr, &mut ctx, &mut symtable, &mut function_table, &mut ns);
     assert!(parsed.is_err());
     assert_eq!(ns.diagnostics.len(), 1);
     assert_eq!(
@@ -110,8 +105,7 @@ fn resolve_number_literal() {
 
     ns.diagnostics = Diagnostics::default();
     let expr = pt::YulExpression::NumberLiteral(loc, "20".to_string(), "".to_string(), None);
-    let parsed =
-        resolve_yul_expression(&expr, &mut ctx, &mut symtable, &mut function_table, &mut ns);
+    let parsed = resolve_yul_expression(&expr, &mut ctx, &mut symtable, &mut function_table, &mut ns);
     assert!(parsed.is_ok());
     assert!(ns.diagnostics.is_empty());
     assert_eq!(
@@ -138,8 +132,7 @@ fn resolve_hex_number_literal() {
         }),
     );
 
-    let resolved =
-        resolve_yul_expression(&expr, &mut ctx, &mut symtable, &mut function_table, &mut ns);
+    let resolved = resolve_yul_expression(&expr, &mut ctx, &mut symtable, &mut function_table, &mut ns);
     assert!(resolved.is_ok());
     assert_eq!(ns.diagnostics.len(), 1);
     assert_eq!(
@@ -156,8 +149,7 @@ fn resolve_hex_number_literal() {
             name: "s64".to_string(),
         }),
     );
-    let resolved =
-        resolve_yul_expression(&expr, &mut ctx, &mut symtable, &mut function_table, &mut ns);
+    let resolved = resolve_yul_expression(&expr, &mut ctx, &mut symtable, &mut function_table, &mut ns);
     assert!(resolved.is_ok());
     assert!(ns.diagnostics.is_empty());
     assert_eq!(
@@ -183,8 +175,7 @@ fn resolve_hex_string_literal() {
         None,
     );
 
-    let resolved =
-        resolve_yul_expression(&expr, &mut ctx, &mut symtable, &mut function_table, &mut ns);
+    let resolved = resolve_yul_expression(&expr, &mut ctx, &mut symtable, &mut function_table, &mut ns);
     assert!(resolved.is_err());
     assert_eq!(ns.diagnostics.len(), 1);
     assert_eq!(
@@ -203,8 +194,7 @@ fn resolve_hex_string_literal() {
             name: "myType".to_string(),
         }),
     );
-    let resolved =
-        resolve_yul_expression(&expr, &mut ctx, &mut symtable, &mut function_table, &mut ns);
+    let resolved = resolve_yul_expression(&expr, &mut ctx, &mut symtable, &mut function_table, &mut ns);
     assert!(resolved.is_err());
     assert_eq!(ns.diagnostics.len(), 1);
     assert_eq!(
@@ -223,8 +213,7 @@ fn resolve_hex_string_literal() {
             name: "u256".to_string(),
         }),
     );
-    let resolved =
-        resolve_yul_expression(&expr, &mut ctx, &mut symtable, &mut function_table, &mut ns);
+    let resolved = resolve_yul_expression(&expr, &mut ctx, &mut symtable, &mut function_table, &mut ns);
     assert!(resolved.is_ok());
     assert!(ns.diagnostics.is_empty());
     assert_eq!(
@@ -254,8 +243,7 @@ fn resolve_string_literal() {
         }),
     );
 
-    let resolved =
-        resolve_yul_expression(&expr, &mut ctx, &mut symtable, &mut function_table, &mut ns);
+    let resolved = resolve_yul_expression(&expr, &mut ctx, &mut symtable, &mut function_table, &mut ns);
     assert!(resolved.is_ok());
     assert!(ns.diagnostics.is_empty());
     assert_eq!(
@@ -314,20 +302,8 @@ fn resolve_variable_local() {
     let expected_1 = YulExpression::YulLocalVariable(loc, Type::Uint(32), pos1);
     let expected_2 = YulExpression::SolidityLocalVariable(loc, Type::Uint(32), None, pos2);
 
-    let res1 = resolve_yul_expression(
-        &expr1,
-        &mut context,
-        &mut symtable,
-        &mut function_table,
-        &mut ns,
-    );
-    let res2 = resolve_yul_expression(
-        &expr2,
-        &mut context,
-        &mut symtable,
-        &mut function_table,
-        &mut ns,
-    );
+    let res1 = resolve_yul_expression(&expr1, &mut context, &mut symtable, &mut function_table, &mut ns);
+    let res2 = resolve_yul_expression(&expr2, &mut context, &mut symtable, &mut function_table, &mut ns);
 
     assert!(res1.is_ok());
     assert!(res2.is_ok());
@@ -412,22 +388,14 @@ fn resolve_variable_contract() {
         read: false,
     });
 
-    ns.variable_symbols.insert(
-        (0, Some(0), "var1".to_string()),
-        Symbol::Variable(loc, Some(0), 0),
-    );
-    ns.variable_symbols.insert(
-        (0, Some(0), "var2".to_string()),
-        Symbol::Variable(loc, Some(0), 1),
-    );
-    ns.variable_symbols.insert(
-        (0, Some(0), "imut".to_string()),
-        Symbol::Variable(loc, Some(0), 2),
-    );
-    ns.variable_symbols.insert(
-        (0, None, "var3".to_string()),
-        Symbol::Variable(loc, None, 0),
-    );
+    ns.variable_symbols
+        .insert((0, Some(0), "var1".to_string()), Symbol::Variable(loc, Some(0), 0));
+    ns.variable_symbols
+        .insert((0, Some(0), "var2".to_string()), Symbol::Variable(loc, Some(0), 1));
+    ns.variable_symbols
+        .insert((0, Some(0), "imut".to_string()), Symbol::Variable(loc, Some(0), 2));
+    ns.variable_symbols
+        .insert((0, None, "var3".to_string()), Symbol::Variable(loc, None, 0));
     ns.variable_symbols
         .insert((0, Some(0), "func".to_string()), Symbol::Function(vec![]));
 
@@ -435,13 +403,7 @@ fn resolve_variable_contract() {
         loc,
         name: "var1".to_string(),
     });
-    let res = resolve_yul_expression(
-        &expr,
-        &mut context,
-        &mut symtable,
-        &mut function_table,
-        &mut ns,
-    );
+    let res = resolve_yul_expression(&expr, &mut context, &mut symtable, &mut function_table, &mut ns);
     assert!(res.is_ok());
     assert_eq!(
         YulExpression::ConstantVariable(loc, Type::Bool, Some(0), 0),
@@ -452,30 +414,15 @@ fn resolve_variable_contract() {
         loc,
         name: "var2".to_string(),
     });
-    let res = resolve_yul_expression(
-        &expr,
-        &mut context,
-        &mut symtable,
-        &mut function_table,
-        &mut ns,
-    );
+    let res = resolve_yul_expression(&expr, &mut context, &mut symtable, &mut function_table, &mut ns);
     assert!(res.is_ok());
-    assert_eq!(
-        YulExpression::StorageVariable(loc, Type::Int(128), 0, 1),
-        res.unwrap()
-    );
+    assert_eq!(YulExpression::StorageVariable(loc, Type::Int(128), 0, 1), res.unwrap());
 
     let expr = pt::YulExpression::Variable(Identifier {
         loc,
         name: "var3".to_string(),
     });
-    let res = resolve_yul_expression(
-        &expr,
-        &mut context,
-        &mut symtable,
-        &mut function_table,
-        &mut ns,
-    );
+    let res = resolve_yul_expression(&expr, &mut context, &mut symtable, &mut function_table, &mut ns);
     assert!(res.is_ok());
     assert_eq!(
         YulExpression::ConstantVariable(loc, Type::Uint(32), None, 0),
@@ -486,13 +433,7 @@ fn resolve_variable_contract() {
         loc,
         name: "func".to_string(),
     });
-    let res = resolve_yul_expression(
-        &expr,
-        &mut context,
-        &mut symtable,
-        &mut function_table,
-        &mut ns,
-    );
+    let res = resolve_yul_expression(&expr, &mut context, &mut symtable, &mut function_table, &mut ns);
     assert!(res.is_err());
     assert_eq!(ns.diagnostics.len(), 1);
     assert_eq!(
@@ -505,32 +446,17 @@ fn resolve_variable_contract() {
         loc,
         name: "none".to_string(),
     });
-    let res = resolve_yul_expression(
-        &expr,
-        &mut context,
-        &mut symtable,
-        &mut function_table,
-        &mut ns,
-    );
+    let res = resolve_yul_expression(&expr, &mut context, &mut symtable, &mut function_table, &mut ns);
     assert!(res.is_err());
     assert_eq!(ns.diagnostics.len(), 1);
-    assert_eq!(
-        ns.diagnostics.iter().next().unwrap().message,
-        "'none' not found"
-    );
+    assert_eq!(ns.diagnostics.iter().next().unwrap().message, "'none' not found");
 
     ns.diagnostics = Diagnostics::default();
     let expr = pt::YulExpression::Variable(Identifier {
         loc,
         name: "imut".to_string(),
     });
-    let res = resolve_yul_expression(
-        &expr,
-        &mut context,
-        &mut symtable,
-        &mut function_table,
-        &mut ns,
-    );
+    let res = resolve_yul_expression(&expr, &mut context, &mut symtable, &mut function_table, &mut ns);
     assert!(res.is_err());
     assert_eq!(ns.diagnostics.len(), 1);
     assert_eq!(
@@ -557,13 +483,7 @@ fn function_call() {
         },
         arguments: vec![],
     }));
-    let res = resolve_yul_expression(
-        &expr,
-        &mut context,
-        &mut symtable,
-        &mut function_table,
-        &mut ns,
-    );
+    let res = resolve_yul_expression(&expr, &mut context, &mut symtable, &mut function_table, &mut ns);
     assert!(res.is_err());
     assert_eq!(ns.diagnostics.len(), 1);
     assert_eq!(
@@ -580,13 +500,7 @@ fn function_call() {
         },
         arguments: vec![],
     }));
-    let res = resolve_yul_expression(
-        &expr,
-        &mut context,
-        &mut symtable,
-        &mut function_table,
-        &mut ns,
-    );
+    let res = resolve_yul_expression(&expr, &mut context, &mut symtable, &mut function_table, &mut ns);
     assert!(res.is_err());
     assert_eq!(ns.diagnostics.len(), 1);
     assert_eq!(
@@ -612,13 +526,7 @@ fn function_call() {
         },
         arguments: vec![arg.clone()],
     }));
-    let res = resolve_yul_expression(
-        &expr,
-        &mut context,
-        &mut symtable,
-        &mut function_table,
-        &mut ns,
-    );
+    let res = resolve_yul_expression(&expr, &mut context, &mut symtable, &mut function_table, &mut ns);
     assert!(res.is_err());
     assert_eq!(ns.diagnostics.len(), 1);
     assert_eq!(
@@ -635,26 +543,13 @@ fn function_call() {
         },
         arguments: vec![arg.clone()],
     }));
-    let res = resolve_yul_expression(
-        &expr,
-        &mut context,
-        &mut symtable,
-        &mut function_table,
-        &mut ns,
-    );
+    let res = resolve_yul_expression(&expr, &mut context, &mut symtable, &mut function_table, &mut ns);
     assert!(res.is_ok());
     assert_eq!(
         YulExpression::BuiltInCall(
             loc,
             YulBuiltInFunction::Not,
-            vec![resolve_yul_expression(
-                &arg,
-                &mut context,
-                &mut symtable,
-                &mut function_table,
-                &mut ns
-            )
-            .unwrap()]
+            vec![resolve_yul_expression(&arg, &mut context, &mut symtable, &mut function_table, &mut ns).unwrap()]
         ),
         res.unwrap()
     );
@@ -676,13 +571,7 @@ fn function_call() {
         },
         arguments: vec![arg.clone()],
     }));
-    let res = resolve_yul_expression(
-        &expr,
-        &mut context,
-        &mut symtable,
-        &mut function_table,
-        &mut ns,
-    );
+    let res = resolve_yul_expression(&expr, &mut context, &mut symtable, &mut function_table, &mut ns);
     assert!(res.is_err());
     assert_eq!(ns.diagnostics.len(), 1);
     assert_eq!(
@@ -699,13 +588,7 @@ fn function_call() {
         },
         arguments: vec![],
     }));
-    let res = resolve_yul_expression(
-        &expr,
-        &mut context,
-        &mut symtable,
-        &mut function_table,
-        &mut ns,
-    );
+    let res = resolve_yul_expression(&expr, &mut context, &mut symtable, &mut function_table, &mut ns);
     assert!(res.is_ok());
     assert_eq!(
         YulExpression::FunctionCall(loc, 0, vec![], Arc::new(vec![])),
@@ -720,13 +603,7 @@ fn function_call() {
         },
         arguments: vec![],
     }));
-    let res = resolve_yul_expression(
-        &expr,
-        &mut context,
-        &mut symtable,
-        &mut function_table,
-        &mut ns,
-    );
+    let res = resolve_yul_expression(&expr, &mut context, &mut symtable, &mut function_table, &mut ns);
     assert!(res.is_err());
     assert_eq!(ns.diagnostics.len(), 1);
     assert_eq!(
@@ -813,13 +690,7 @@ fn check_arguments() {
         }))],
     }));
 
-    let _ = resolve_yul_expression(
-        &expr,
-        &mut context,
-        &mut symtable,
-        &mut function_table,
-        &mut ns,
-    );
+    let _ = resolve_yul_expression(&expr, &mut context, &mut symtable, &mut function_table, &mut ns);
     assert!(!ns.diagnostics.is_empty());
     assert_eq!(
         ns.diagnostics.iter().next().unwrap().message,
@@ -843,13 +714,7 @@ fn check_arguments() {
         }))],
     }));
 
-    let _ = resolve_yul_expression(
-        &expr,
-        &mut context,
-        &mut symtable,
-        &mut function_table,
-        &mut ns,
-    );
+    let _ = resolve_yul_expression(&expr, &mut context, &mut symtable, &mut function_table, &mut ns);
     assert!(!ns.diagnostics.is_empty());
     assert_eq!(
         ns.diagnostics.iter().next().unwrap().message,
@@ -873,13 +738,7 @@ fn check_arguments() {
         }))],
     }));
 
-    let _ = resolve_yul_expression(
-        &expr,
-        &mut context,
-        &mut symtable,
-        &mut function_table,
-        &mut ns,
-    );
+    let _ = resolve_yul_expression(&expr, &mut context, &mut symtable, &mut function_table, &mut ns);
     assert!(!ns.diagnostics.is_empty());
     assert_eq!(
         ns.diagnostics.iter().next().unwrap().message,
@@ -925,10 +784,8 @@ fn test_member_access() {
 
     ns.contracts.push(contract);
 
-    ns.variable_symbols.insert(
-        (0, Some(0), "var1".to_string()),
-        Symbol::Variable(loc, Some(0), 0),
-    );
+    ns.variable_symbols
+        .insert((0, Some(0), "var1".to_string()), Symbol::Variable(loc, Some(0), 0));
 
     let expr = pt::YulExpression::SuffixAccess(
         loc,
@@ -939,13 +796,7 @@ fn test_member_access() {
         },
     );
 
-    let res = resolve_yul_expression(
-        &expr,
-        &mut context,
-        &mut symtable,
-        &mut function_table,
-        &mut ns,
-    );
+    let res = resolve_yul_expression(&expr, &mut context, &mut symtable, &mut function_table, &mut ns);
     assert!(res.is_err());
     assert_eq!(ns.diagnostics.len(), 1);
     assert_eq!(
@@ -963,13 +814,7 @@ fn test_member_access() {
         },
     );
 
-    let res = resolve_yul_expression(
-        &expr,
-        &mut context,
-        &mut symtable,
-        &mut function_table,
-        &mut ns,
-    );
+    let res = resolve_yul_expression(&expr, &mut context, &mut symtable, &mut function_table, &mut ns);
     assert!(res.is_err());
     assert_eq!(ns.diagnostics.len(), 1);
     assert_eq!(
@@ -990,13 +835,7 @@ fn test_member_access() {
         },
     );
 
-    let res = resolve_yul_expression(
-        &expr,
-        &mut context,
-        &mut symtable,
-        &mut function_table,
-        &mut ns,
-    );
+    let res = resolve_yul_expression(&expr, &mut context, &mut symtable, &mut function_table, &mut ns);
     assert!(res.is_ok());
     assert!(ns.diagnostics.is_empty());
     assert_eq!(
@@ -1012,12 +851,7 @@ fn test_member_access() {
 #[test]
 fn test_check_types() {
     let loc = Loc::File(0, 0, 0);
-    let expr = YulExpression::SolidityLocalVariable(
-        loc,
-        Type::Uint(32),
-        Some(StorageLocation::Storage(loc)),
-        0,
-    );
+    let expr = YulExpression::SolidityLocalVariable(loc, Type::Uint(32), Some(StorageLocation::Storage(loc)), 0);
 
     let mut context = ExprContext::default();
     context.enter_scope();
@@ -1081,7 +915,10 @@ fn test_check_types() {
     );
     let res = check_type(&expr, &mut context, &mut ns, &mut symtable);
     assert!(res.is_some());
-    assert_eq!(res.unwrap().message, "Calldata arrays must be accessed with '.offset', '.length' and the 'calldatacopy' function");
+    assert_eq!(
+        res.unwrap().message,
+        "Calldata arrays must be accessed with '.offset', '.length' and the 'calldatacopy' function"
+    );
 
     let expr = YulExpression::StringLiteral(loc, vec![0, 255, 20], Type::Uint(256));
     let res = check_type(&expr, &mut context, &mut ns, &mut symtable);
@@ -1105,9 +942,7 @@ contract testTypes {
     "#;
 
     let ns = parse(file);
-    assert!(ns
-        .diagnostics
-        .contains_message("cannot assign a value to offset"));
+    assert!(ns.diagnostics.contains_message("cannot assign a value to offset"));
 
     let file = r#"
     contract testTypes {
@@ -1162,9 +997,7 @@ contract testTypes {
     "#;
 
     let ns = parse(file);
-    assert!(ns
-        .diagnostics
-        .contains_message("cannot assigned a value to a constant"));
+    assert!(ns.diagnostics.contains_message("cannot assigned a value to a constant"));
 
     let file = r#"
 contract testTypes {
@@ -1212,12 +1045,8 @@ contract testTypes {
     "#;
     let ns = parse(file);
     assert_eq!(ns.diagnostics.len(), 2);
-    assert!(ns
-        .diagnostics
-        .contains_message("found contract 'testTypes'"));
-    assert!(ns
-        .diagnostics
-        .contains_message("function parameter 'vl' is unused"));
+    assert!(ns.diagnostics.contains_message("found contract 'testTypes'"));
+    assert!(ns.diagnostics.contains_message("function parameter 'vl' is unused"));
 
     let file = r#"
     contract testTypes {
@@ -1239,9 +1068,9 @@ contract testTypes {
 }   "#;
 
     let ns = parse(file);
-    assert!(ns.diagnostics.contains_message(
-        "storage variables cannot be assigned any value in assembly. You may use 'sstore()'"
-    ));
+    assert!(ns
+        .diagnostics
+        .contains_message("storage variables cannot be assigned any value in assembly. You may use 'sstore()'"));
 
     let file = r#"
 contract testTypes {
@@ -1383,9 +1212,9 @@ contract testTypes {
 }    "#;
 
     let ns = parse(file);
-    assert!(ns.diagnostics.contains_message(
-        "variables of type function pointer only support '.selector' and '.address' suffixes"
-    ));
+    assert!(ns
+        .diagnostics
+        .contains_message("variables of type function pointer only support '.selector' and '.address' suffixes"));
 
     let file = r#"
 contract testTypes {
@@ -1415,9 +1244,9 @@ contract testTypes {
 }
     "#;
     let ns = parse(file);
-    assert!(ns.diagnostics.contains_message(
-        "the suffixes .offset and .slot can only be used in non-constant storage variables"
-    ));
+    assert!(ns
+        .diagnostics
+        .contains_message("the suffixes .offset and .slot can only be used in non-constant storage variables"));
 
     let file = r#"
 contract testTypes {
@@ -1482,9 +1311,7 @@ contract testTypes {
         .diagnostics
         .contains_message("256 bit type may not fit into 128 bit type"));
 
-    assert!(ns
-        .diagnostics
-        .contains_message("Truncating argument to bool"));
+    assert!(ns.diagnostics.contains_message("Truncating argument to bool"));
 }
 
 #[test]
@@ -1651,9 +1478,7 @@ fn external_function() {
     let ns = parse(file);
     assert_eq!(ns.diagnostics.len(), 2);
     assert!(ns.diagnostics.contains_message("found contract 'test'"));
-    assert!(ns
-        .diagnostics
-        .contains_message("yul variable 't' has never been read"));
+    assert!(ns.diagnostics.contains_message("yul variable 't' has never been read"));
 }
 
 #[test]

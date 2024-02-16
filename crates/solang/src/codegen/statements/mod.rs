@@ -5,16 +5,13 @@ use super::{
     events::new_event_emitter,
     expression::{assign_single, emit_function_call, expression},
     revert::revert,
-    unused_variable::{
-        should_remove_assignment, should_remove_variable, SideEffectsCheckParameters,
-    },
+    unused_variable::{should_remove_assignment, should_remove_variable, SideEffectsCheckParameters},
     vartable::Vartable,
     yul::inline_assembly_cfg,
     Builtin, Expression, Options,
 };
 use crate::sema::ast::{
-    self, ArrayLength, DestructureField, Function, Namespace, RetrieveType, SolanaAccount,
-    Statement, Type, Type::Uint,
+    self, ArrayLength, DestructureField, Function, Namespace, RetrieveType, SolanaAccount, Statement, Type, Type::Uint,
 };
 use crate::sema::solana_accounts::BuiltinAccounts;
 use crate::sema::Recurse;
@@ -57,7 +54,7 @@ pub(crate) fn statement(
                     break;
                 }
             }
-        }
+        },
         Statement::VariableDecl(loc, pos, _, Some(init)) => {
             if should_remove_variable(*pos, func, opt, ns) {
                 let mut params = SideEffectsCheckParameters {
@@ -122,7 +119,7 @@ pub(crate) fn statement(
                     expr: expression,
                 },
             );
-        }
+        },
         Statement::VariableDecl(loc, pos, param, None) => {
             if should_remove_variable(*pos, func, opt, ns) {
                 return;
@@ -134,9 +131,7 @@ pub(crate) fn statement(
                 Instr::Set {
                     loc: *loc,
                     res: *pos,
-                    expr: Expression::Undefined {
-                        ty: param.ty.clone(),
-                    },
+                    expr: Expression::Undefined { ty: param.ty.clone() },
                 },
             );
             // Handling arrays without size, defaulting the initial size with zero
@@ -158,7 +153,7 @@ pub(crate) fn statement(
                 );
                 cfg.array_lengths_temps.insert(*pos, temp_res);
             }
-        }
+        },
         Statement::Return(_, expr) => {
             if let Some(return_instr) = return_override {
                 cfg.add(vartab, return_instr.clone());
@@ -168,7 +163,7 @@ pub(crate) fn statement(
                     Some(expr) => returns(expr, cfg, contract_no, func, ns, vartab, opt),
                 }
             }
-        }
+        },
         Statement::Expression(_, _, expr) => {
             if let ast::Expression::Assign { left, right, .. } = &expr {
                 if should_remove_assignment(left, func, opt, ns) {
@@ -204,7 +199,7 @@ pub(crate) fn statement(
             }
 
             let _ = expression(expr, cfg, contract_no, Some(func), ns, vartab, opt);
-        }
+        },
         Statement::Delete(_, ty, expr) => {
             let var_expr = expression(expr, cfg, contract_no, Some(func), ns, vartab, opt);
 
@@ -215,7 +210,7 @@ pub(crate) fn statement(
                     storage: var_expr,
                 },
             );
-        }
+        },
         Statement::Break(_) => {
             cfg.add(
                 vartab,
@@ -223,7 +218,7 @@ pub(crate) fn statement(
                     block: loops.do_break(),
                 },
             );
-        }
+        },
         Statement::Continue(_) => {
             cfg.add(
                 vartab,
@@ -231,7 +226,7 @@ pub(crate) fn statement(
                     block: loops.do_continue(),
                 },
             );
-        }
+        },
         Statement::If(_, _, cond, then_stmt, else_stmt) if else_stmt.is_empty() => {
             if_then(
                 cond,
@@ -246,7 +241,7 @@ pub(crate) fn statement(
                 return_override,
                 opt,
             );
-        }
+        },
         Statement::If(_, _, cond, then_stmt, else_stmt) => if_then_else(
             cond,
             then_stmt,
@@ -315,7 +310,7 @@ pub(crate) fn statement(
             cfg.set_phis(cond, set);
 
             cfg.set_basic_block(end);
-        }
+        },
         Statement::While(_, _, cond_expr, body_stmt) => {
             let cond = cfg.new_basic_block("cond".to_string());
             let body = cfg.new_basic_block("body".to_string());
@@ -370,7 +365,7 @@ pub(crate) fn statement(
             cfg.set_phis(cond, set);
 
             cfg.set_basic_block(end);
-        }
+        },
         Statement::For {
             init,
             cond: None,
@@ -401,14 +396,7 @@ pub(crate) fn statement(
 
             cfg.set_basic_block(body_block);
 
-            loops.enter_scope(
-                end_block,
-                if next.is_none() {
-                    body_block
-                } else {
-                    next_block
-                },
-            );
+            loops.enter_scope(end_block, if next.is_none() { body_block } else { next_block });
 
             vartab.new_dirty_tracker();
 
@@ -458,7 +446,7 @@ pub(crate) fn statement(
             cfg.set_phis(end_block, set);
 
             cfg.set_basic_block(end_block);
-        }
+        },
         Statement::For {
             init,
             cond: Some(cond_expr),
@@ -553,10 +541,8 @@ pub(crate) fn statement(
             cfg.set_phis(next_block, set.clone());
             cfg.set_phis(end_block, set.clone());
             cfg.set_phis(cond_block, set);
-        }
-        Statement::Destructure(_, fields, expr) => {
-            destructure(fields, expr, cfg, contract_no, func, ns, vartab, opt)
-        }
+        },
+        Statement::Destructure(_, fields, expr) => destructure(fields, expr, cfg, contract_no, func, ns, vartab, opt),
         Statement::TryCatch(_, _, try_stmt) => self::try_catch::try_catch(
             try_stmt,
             func,
@@ -570,31 +556,14 @@ pub(crate) fn statement(
             opt,
         ),
         Statement::Emit {
-            loc,
-            event_no,
-            args,
-            ..
+            loc, event_no, args, ..
         } => {
             let emitter = new_event_emitter(loc, *event_no, args, ns);
             emitter.emit(contract_no, func, cfg, vartab, opt);
-        }
-        Statement::Revert {
-            loc,
-            args,
-            error_no,
-        } => {
-            revert(
-                args,
-                error_no,
-                cfg,
-                contract_no,
-                Some(func),
-                ns,
-                vartab,
-                opt,
-                loc,
-            );
-        }
+        },
+        Statement::Revert { loc, args, error_no } => {
+            revert(args, error_no, cfg, contract_no, Some(func), ns, vartab, opt, loc);
+        },
         Statement::Underscore(_) => {
             // ensure we get phi nodes for the return values
             if let Some(instr @ Instr::Call { res, .. }) = placeholder {
@@ -606,11 +575,11 @@ pub(crate) fn statement(
             } else {
                 panic!("placeholder should be provided for modifiers");
             }
-        }
+        },
 
         Statement::Assembly(inline_assembly, ..) => {
             inline_assembly_cfg(inline_assembly, contract_no, ns, cfg, vartab, opt);
-        }
+        },
     }
 }
 
@@ -805,7 +774,7 @@ fn returns(
             returns(right, cfg, contract_no, func, ns, vartab, opt);
 
             return;
-        }
+        },
 
         ast::Expression::Builtin {
             kind: ast::Builtin::AbiDecode,
@@ -815,7 +784,7 @@ fn returns(
         | ast::Expression::ExternalFunctionCall { .. }
         | ast::Expression::ExternalFunctionCallRaw { .. } => {
             emit_function_call(expr, contract_no, cfg, Some(func), ns, vartab, opt)
-        }
+        },
 
         ast::Expression::List { list, .. } => list
             .iter()
@@ -824,16 +793,8 @@ fn returns(
 
         // Can be any other expression
         _ => {
-            vec![expression(
-                expr,
-                cfg,
-                contract_no,
-                Some(func),
-                ns,
-                vartab,
-                opt,
-            )]
-        }
+            vec![expression(expr, cfg, contract_no, Some(func), ns, vartab, opt)]
+        },
     };
 
     let cast_values = func
@@ -912,19 +873,15 @@ fn destructure(
 
                 cfg.add(vartab, Instr::Set { loc, res, expr });
 
-                values.push(Expression::Variable {
-                    loc,
-                    ty,
-                    var_no: res,
-                });
+                values.push(Expression::Variable { loc, ty, var_no: res });
             }
 
             values
-        }
+        },
         _ => {
             // must be function call, either internal or external
             emit_function_call(expr, contract_no, cfg, Some(func), ns, vartab, opt)
-        }
+        },
     };
 
     for field in fields.iter() {
@@ -933,7 +890,7 @@ fn destructure(
         match field {
             DestructureField::None => {
                 // nothing to do
-            }
+            },
             DestructureField::VariableDecl(res, param) => {
                 let expr = try_load_and_cast(&param.loc, &right, &param.ty, ns, cfg, vartab);
 
@@ -949,7 +906,7 @@ fn destructure(
                         expr,
                     },
                 );
-            }
+            },
             DestructureField::Expression(left) => {
                 let expr = try_load_and_cast(&left.loc(), &right, &left.ty(), ns, cfg, vartab);
 
@@ -958,7 +915,7 @@ fn destructure(
                 }
 
                 assign_single(left, expr, cfg, contract_no, Some(func), ns, vartab, opt);
-            }
+            },
         }
     }
 }
@@ -1002,7 +959,7 @@ fn try_load_and_cast(
                 ty: (*ty).clone(),
                 var_no: anonymous_no,
             }
-        }
+        },
         Type::Ref(ty) => match *ty {
             Type::Array(_, _) => expr.cast(to_ty, ns),
             _ => Expression::Load {
@@ -1029,10 +986,7 @@ impl LoopScopes {
     }
 
     pub(crate) fn enter_scope(&mut self, break_bb: usize, continue_bb: usize) {
-        self.0.push(LoopScope {
-            break_bb,
-            continue_bb,
-        })
+        self.0.push(LoopScope { break_bb, continue_bb })
     }
 
     pub(crate) fn leave_scope(&mut self) -> LoopScope {
@@ -1069,7 +1023,7 @@ impl Type {
                     ty: self.clone(),
                     value: l,
                 })
-            }
+            },
             Type::Enum(e) => ns.enums[*e].ty.default(ns),
             Type::Struct(struct_ty) => {
                 // make sure all our fields have default values
@@ -1082,7 +1036,7 @@ impl Type {
                     ty: self.clone(),
                     values: Vec::new(),
                 })
-            }
+            },
             Type::Ref(ty) => {
                 assert!(matches!(ty.as_ref(), Type::Address(_)));
 
@@ -1095,7 +1049,7 @@ impl Type {
                         value: BigInt::from(0),
                     }),
                 })
-            }
+            },
             Type::StorageRef(..) => None,
             Type::String | Type::DynamicBytes => Some(Expression::AllocDynamicBytes {
                 loc: Codegen,
@@ -1107,9 +1061,7 @@ impl Type {
                 }),
                 initializer: None,
             }),
-            Type::InternalFunction { .. } | Type::Contract(_) | Type::ExternalFunction { .. } => {
-                None
-            }
+            Type::InternalFunction { .. } | Type::Contract(_) | Type::ExternalFunction { .. } => None,
             Type::Array(ty, dims) => {
                 ty.default(ns)?;
 
@@ -1132,7 +1084,7 @@ impl Type {
                         values: Vec::new(),
                     })
                 }
-            }
+            },
             _ => None,
         }
     }
@@ -1177,31 +1129,18 @@ impl Namespace {
 /// This function looks for expressions that have side effects during code execution and
 /// processes them.
 /// They must be added to the cfg event if we remove the assignment
-pub fn process_side_effects_expressions(
-    exp: &ast::Expression,
-    ctx: &mut SideEffectsCheckParameters,
-) -> bool {
+pub fn process_side_effects_expressions(exp: &ast::Expression, ctx: &mut SideEffectsCheckParameters) -> bool {
     match &exp {
         ast::Expression::InternalFunctionCall { .. }
         | ast::Expression::ExternalFunctionCall { .. }
         | ast::Expression::ExternalFunctionCallRaw { .. }
         | ast::Expression::Constructor { .. }
         | ast::Expression::Assign { .. } => {
-            let _ = expression(
-                exp,
-                ctx.cfg,
-                ctx.contract_no,
-                ctx.func,
-                ctx.ns,
-                ctx.vartab,
-                ctx.opt,
-            );
+            let _ = expression(exp, ctx.cfg, ctx.contract_no, ctx.func, ctx.ns, ctx.vartab, ctx.opt);
             false
-        }
+        },
 
-        ast::Expression::Builtin {
-            kind: builtin_type, ..
-        } => match &builtin_type {
+        ast::Expression::Builtin { kind: builtin_type, .. } => match &builtin_type {
             ast::Builtin::PayableSend
             | ast::Builtin::ArrayPush
             | ast::Builtin::ArrayPop

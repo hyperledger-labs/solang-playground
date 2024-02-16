@@ -22,14 +22,14 @@ impl fmt::Display for Definition {
         match self {
             Definition::Undefined => {
                 write!(f, "undef")
-            }
+            },
             Definition::Instr {
                 block_no,
                 instr_no,
                 assignment_no,
             } => {
                 write!(f, "({block_no}, {instr_no}, {assignment_no})")
-            }
+            },
         }
     }
 }
@@ -37,21 +37,10 @@ impl fmt::Display for Definition {
 #[allow(clippy::large_enum_variant)]
 #[derive(Clone, PartialEq, Eq)]
 enum Transfer {
-    Gen {
-        def: Definition,
-        var_no: usize,
-    },
-    Copy {
-        var_no: usize,
-        src: usize,
-    },
-    Kill {
-        var_no: usize,
-    },
-    Store {
-        def: Definition,
-        expr: Option<Expression>,
-    },
+    Gen { def: Definition, var_no: usize },
+    Copy { var_no: usize, src: usize },
+    Kill { var_no: usize },
+    Store { def: Definition, expr: Option<Expression> },
 }
 
 impl fmt::Display for Transfer {
@@ -59,16 +48,16 @@ impl fmt::Display for Transfer {
         match self {
             Transfer::Gen { def, var_no } => {
                 write!(f, "Gen %{var_no} = {def}")
-            }
+            },
             Transfer::Copy { var_no, src } => {
                 write!(f, "Copy %{var_no} from %{src}")
-            }
+            },
             Transfer::Kill { var_no } => {
                 write!(f, "Kill %{var_no}")
-            }
+            },
             Transfer::Store { def, expr } => {
                 write!(f, "Storage: {expr:?} at {def}")
-            }
+            },
         }
     }
 }
@@ -97,10 +86,7 @@ fn reaching_definitions(cfg: &mut ControlFlowGraph) -> (Vec<Vec<Vec<Transfer>>>,
 
         block_transfers.push(transfer);
 
-        debug_assert_eq!(
-            cfg.blocks[block_no].instr.len(),
-            block_transfers[block_no].len()
-        );
+        debug_assert_eq!(cfg.blocks[block_no].instr.len(), block_transfers[block_no].len());
     }
 
     let mut blocks_todo: HashSet<usize> = HashSet::new();
@@ -132,13 +118,7 @@ fn reaching_definitions(cfg: &mut ControlFlowGraph) -> (Vec<Vec<Vec<Transfer>>>,
             }
         };
 
-        apply_transfers(
-            &block_transfers[block_no],
-            &mut vars,
-            cfg,
-            block_no,
-            &mut block_vars,
-        );
+        apply_transfers(&block_transfers[block_no], &mut vars, cfg, block_no, &mut block_vars);
 
         for edge in cfg.blocks[block_no].successors() {
             if !block_vars.contains_key(&edge) {
@@ -146,9 +126,7 @@ fn reaching_definitions(cfg: &mut ControlFlowGraph) -> (Vec<Vec<Vec<Transfer>>>,
                 block_vars.insert(edge, vec![vars.clone()]);
             } else if block_vars[&edge][0] != vars {
                 blocks_todo.insert(edge);
-                let block_vars = block_vars
-                    .get_mut(&edge)
-                    .expect("block vars must contain edge");
+                let block_vars = block_vars.get_mut(&edge).expect("block vars must contain edge");
                 // merge incoming vars
                 for (var_no, defs) in &vars.vars {
                     if let Some(entry) = block_vars[0].vars.get_mut(var_no) {
@@ -217,7 +195,7 @@ fn instr_transfers(block_no: usize, block: &BasicBlock) -> Vec<Vec<Transfer>> {
                         src: *src,
                     },
                 ]
-            }
+            },
             Instr::Set { res, .. } => set_var(&[*res]),
             Instr::Call { res, .. } => {
                 // We don't know what this function does to storage, so clear all storage
@@ -227,32 +205,23 @@ fn instr_transfers(block_no: usize, block: &BasicBlock) -> Vec<Vec<Transfer>> {
                 v.push(Transfer::Store { def, expr: None });
 
                 v
-            }
+            },
             Instr::LoadStorage { res, .. } => set_var(&[*res]),
             Instr::PushMemory { array, res, .. } => {
                 let mut v = set_var(&[*res]);
                 v.push(Transfer::Kill { var_no: *array });
 
                 v
-            }
+            },
             Instr::PopMemory { array, .. } => {
                 vec![Transfer::Kill { var_no: *array }]
-            }
-            Instr::ExternalCall {
-                success: Some(res), ..
-            }
-            | Instr::Constructor {
-                success: None, res, ..
-            }
-            | Instr::ValueTransfer {
-                success: Some(res), ..
-            } => {
+            },
+            Instr::ExternalCall { success: Some(res), .. }
+            | Instr::Constructor { success: None, res, .. }
+            | Instr::ValueTransfer { success: Some(res), .. } => {
                 // A constructor/external call can call us back and modify storage
-                vec![
-                    Transfer::Kill { var_no: *res },
-                    Transfer::Store { def, expr: None },
-                ]
-            }
+                vec![Transfer::Kill { var_no: *res }, Transfer::Store { def, expr: None }]
+            },
             Instr::Store { dest, .. } => {
                 let mut v = Vec::new();
 
@@ -261,7 +230,7 @@ fn instr_transfers(block_no: usize, block: &BasicBlock) -> Vec<Vec<Transfer>> {
                 }
 
                 v
-            }
+            },
             Instr::Constructor {
                 success: Some(success),
                 res,
@@ -273,7 +242,7 @@ fn instr_transfers(block_no: usize, block: &BasicBlock) -> Vec<Vec<Transfer>> {
                     Transfer::Kill { var_no: *success },
                     Transfer::Store { def, expr: None },
                 ]
-            }
+            },
             Instr::SetStorageBytes { storage, .. }
             | Instr::ClearStorage { storage, .. }
             | Instr::SetStorage { storage, .. } => {
@@ -281,7 +250,7 @@ fn instr_transfers(block_no: usize, block: &BasicBlock) -> Vec<Vec<Transfer>> {
                     def,
                     expr: Some(storage.clone()),
                 }]
-            }
+            },
             Instr::PopStorage {
                 res: Some(res),
                 storage,
@@ -296,10 +265,10 @@ fn instr_transfers(block_no: usize, block: &BasicBlock) -> Vec<Vec<Transfer>> {
                         expr: Some(storage.clone()),
                     },
                 ]
-            }
+            },
             Instr::Return { .. } => {
                 vec![Transfer::Store { def, expr: None }]
-            }
+            },
             _ => Vec::new(),
         });
     }
@@ -312,9 +281,7 @@ fn instr_transfers(block_no: usize, block: &BasicBlock) -> Vec<Vec<Transfer>> {
 fn array_var(expr: &Expression) -> Option<usize> {
     match expr {
         Expression::Variable { var_no, .. } => Some(*var_no),
-        Expression::Subscript { expr, .. } | Expression::StructMember { expr, .. } => {
-            array_var(expr)
-        }
+        Expression::Subscript { expr, .. } | Expression::StructMember { expr, .. } => array_var(expr),
         _ => None,
     }
 }
@@ -342,14 +309,14 @@ fn apply_transfers(
             match transfer {
                 Transfer::Kill { var_no } => {
                     vars.vars.remove(var_no);
-                }
+                },
                 Transfer::Copy { var_no, src } => {
                     if let Some(defs) = vars.vars.get(src) {
                         let defs = defs.clone();
 
                         vars.vars.insert(*var_no, defs);
                     }
-                }
+                },
                 Transfer::Gen { var_no, def } => {
                     if let Some(entry) = vars.vars.get_mut(var_no) {
                         entry.insert(*def, None);
@@ -358,7 +325,7 @@ fn apply_transfers(
                         v.insert(*def, None);
                         vars.vars.insert(*var_no, v);
                     }
-                }
+                },
                 // For the second pass
                 Transfer::Store { .. } => (),
             }
@@ -379,14 +346,14 @@ fn apply_transfers(
             match transfer {
                 Transfer::Kill { var_no } => {
                     vars.vars.remove(var_no);
-                }
+                },
                 Transfer::Copy { var_no, src } => {
                     if let Some(defs) = vars.vars.get(src) {
                         let defs = defs.clone();
 
                         vars.vars.insert(*var_no, defs);
                     }
-                }
+                },
                 Transfer::Gen { var_no, def } => {
                     if let Some(entry) = vars.vars.get_mut(var_no) {
                         entry.insert(*def, None);
@@ -395,7 +362,7 @@ fn apply_transfers(
                         v.insert(*def, None);
                         vars.vars.insert(*var_no, v);
                     }
-                }
+                },
                 Transfer::Store { def, expr } => {
                     // store to contract storage. This should kill any equal
                     let mut eliminated_vars = Vec::new();
@@ -406,14 +373,8 @@ fn apply_transfers(
                                 if let Some(expr) = expr {
                                     let storage_vars = get_vars_at(def, block_vars);
 
-                                    if expression_compare(
-                                        expr,
-                                        vars,
-                                        storage_def.slot,
-                                        &storage_vars,
-                                        cfg,
-                                        block_vars,
-                                    ) != ExpressionCmp::NotEqual
+                                    if expression_compare(expr, vars, storage_def.slot, &storage_vars, cfg, block_vars)
+                                        != ExpressionCmp::NotEqual
                                     {
                                         eliminated_vars.push(*var_no);
                                     }
@@ -437,14 +398,8 @@ fn apply_transfers(
                         for (no, (def, storage)) in vars.stores.iter().enumerate() {
                             let storage_vars = get_vars_at(def, block_vars);
 
-                            if expression_compare(
-                                expr,
-                                vars,
-                                storage,
-                                &storage_vars,
-                                cfg,
-                                block_vars,
-                            ) == ExpressionCmp::Equal
+                            if expression_compare(expr, vars, storage, &storage_vars, cfg, block_vars)
+                                == ExpressionCmp::Equal
                             {
                                 eliminated_stores.push(no);
                             }
@@ -459,7 +414,7 @@ fn apply_transfers(
                         // flush all reaching stores
                         vars.stores.truncate(0);
                     }
-                }
+                },
             }
         }
     }
@@ -501,14 +456,8 @@ pub fn dead_storage(cfg: &mut ControlFlowGraph, _ns: &mut Namespace) {
                             if let Some(storage_def) = get_storage_definition(def, cfg) {
                                 let def_vars = get_vars_at(def, &block_vars);
 
-                                if expression_compare(
-                                    storage,
-                                    vars,
-                                    storage_def.slot,
-                                    &def_vars,
-                                    cfg,
-                                    &block_vars,
-                                ) == ExpressionCmp::Equal
+                                if expression_compare(storage, vars, storage_def.slot, &def_vars, cfg, &block_vars)
+                                    == ExpressionCmp::Equal
                                     && storage_def.var_no != *res
                                     && ty == storage_def.ty
                                 {
@@ -542,7 +491,7 @@ pub fn dead_storage(cfg: &mut ControlFlowGraph, _ns: &mut Namespace) {
                             }
                         }
                     }
-                }
+                },
                 Instr::PushStorage { storage, .. } | Instr::PopStorage { storage, .. } => {
                     for (def, expr) in &vars.stores {
                         let def_vars = get_vars_at(def, &block_vars);
@@ -555,10 +504,8 @@ pub fn dead_storage(cfg: &mut ControlFlowGraph, _ns: &mut Namespace) {
                             }
                         }
                     }
-                }
-                Instr::SetStorage { .. }
-                | Instr::SetStorageBytes { .. }
-                | Instr::ClearStorage { .. } => {
+                },
+                Instr::SetStorage { .. } | Instr::SetStorageBytes { .. } | Instr::ClearStorage { .. } => {
                     let def = Definition::Instr {
                         block_no,
                         instr_no,
@@ -567,7 +514,7 @@ pub fn dead_storage(cfg: &mut ControlFlowGraph, _ns: &mut Namespace) {
 
                     // add an entry if there is not one there already
                     redundant_stores.entry(def).or_insert(true);
-                }
+                },
                 _ => (),
             }
 
@@ -588,10 +535,7 @@ pub fn dead_storage(cfg: &mut ControlFlowGraph, _ns: &mut Namespace) {
     // remove all stores which are marked as still redundant
     for (def, redundant) in &redundant_stores {
         if *redundant {
-            if let Definition::Instr {
-                block_no, instr_no, ..
-            } = def
-            {
+            if let Definition::Instr { block_no, instr_no, .. } = def {
                 // Function calls should never be eliminated from the CFG, as they might have side effects
                 if !matches!(cfg.blocks[*block_no].instr[*instr_no], Instr::Call { .. }) {
                     cfg.blocks[*block_no].instr[*instr_no] = Instr::Nop;
@@ -607,18 +551,10 @@ struct StorageDef<'a> {
     ty: &'a Type,
 }
 
-fn get_storage_definition<'a>(
-    def: &Definition,
-    cfg: &'a ControlFlowGraph,
-) -> Option<StorageDef<'a>> {
-    if let Definition::Instr {
-        block_no, instr_no, ..
-    } = def
-    {
+fn get_storage_definition<'a>(def: &Definition, cfg: &'a ControlFlowGraph) -> Option<StorageDef<'a>> {
+    if let Definition::Instr { block_no, instr_no, .. } = def {
         match &cfg.blocks[*block_no].instr[*instr_no] {
-            Instr::LoadStorage {
-                storage, res, ty, ..
-            } => Some(StorageDef {
+            Instr::LoadStorage { storage, res, ty, .. } => Some(StorageDef {
                 var_no: *res,
                 slot: storage,
                 ty,
@@ -630,14 +566,8 @@ fn get_storage_definition<'a>(
     }
 }
 
-fn get_definition<'a>(
-    def: &Definition,
-    cfg: &'a ControlFlowGraph,
-) -> Option<(&'a Expression, Type)> {
-    if let Definition::Instr {
-        block_no, instr_no, ..
-    } = def
-    {
+fn get_definition<'a>(def: &Definition, cfg: &'a ControlFlowGraph) -> Option<(&'a Expression, Type)> {
+    if let Definition::Instr { block_no, instr_no, .. } = def {
         match &cfg.blocks[*block_no].instr[*instr_no] {
             Instr::LoadStorage { storage, ty, .. } => Some((storage, ty.clone())),
             Instr::Set { expr, .. } => Some((expr, expr.ty())),
@@ -650,9 +580,7 @@ fn get_definition<'a>(
 
 fn get_vars_at(def: &Definition, block_vars: &BlockVars) -> ReachingDefs {
     match def {
-        Definition::Instr {
-            block_no, instr_no, ..
-        } => {
+        Definition::Instr { block_no, instr_no, .. } => {
             let vars = if let Some(vars) = block_vars.get(block_no) {
                 vars[*instr_no].clone()
             } else {
@@ -663,10 +591,10 @@ fn get_vars_at(def: &Definition, block_vars: &BlockVars) -> ReachingDefs {
             };
 
             vars
-        }
+        },
         Definition::Undefined => {
             unreachable!("cannot get reaching definitions for undefined");
-        }
+        },
     }
 }
 
@@ -687,25 +615,20 @@ fn expression_compare(
     block_vars: &BlockVars,
 ) -> ExpressionCmp {
     let v = match (left, right) {
-        (
-            Expression::NumberLiteral { value: left, .. },
-            Expression::NumberLiteral { value: right, .. },
-        ) => {
+        (Expression::NumberLiteral { value: left, .. }, Expression::NumberLiteral { value: right, .. }) => {
             if left == right {
                 ExpressionCmp::Equal
             } else {
                 ExpressionCmp::NotEqual
             }
-        }
+        },
         (Expression::Keccak256 { exprs: left, .. }, Expression::Keccak256 { exprs: right, .. }) => {
             // This could be written with fold_first() rather than collect(), but that is an unstable feature.
             // Also fold first does not short circuit
             let cmps: Vec<ExpressionCmp> = left
                 .iter()
                 .zip(right.iter())
-                .map(|(left, right)| {
-                    expression_compare(left, left_vars, right, right_vars, cfg, block_vars)
-                })
+                .map(|(left, right)| expression_compare(left, left_vars, right, right_vars, cfg, block_vars))
                 .collect();
 
             let first = cmps[0];
@@ -715,68 +638,49 @@ fn expression_compare(
             } else {
                 first
             }
-        }
+        },
         (Expression::ZeroExt { expr: left, .. }, Expression::ZeroExt { expr: right, .. })
         | (Expression::Trunc { expr: left, .. }, Expression::Trunc { expr: right, .. }) => {
             expression_compare(left, left_vars, right, right_vars, cfg, block_vars)
-        }
-        (
-            Expression::FunctionArg { arg_no: left, .. },
-            Expression::FunctionArg { arg_no: right, .. },
-        ) => {
+        },
+        (Expression::FunctionArg { arg_no: left, .. }, Expression::FunctionArg { arg_no: right, .. }) => {
             if left == right {
                 ExpressionCmp::Equal
             } else {
                 // two function arguments can have the same value
                 ExpressionCmp::Unknown
             }
-        }
+        },
         (
             Expression::Add {
-                left: l1,
-                right: r1,
-                ..
+                left: l1, right: r1, ..
             },
             Expression::Add {
-                left: l2,
-                right: r2,
-                ..
+                left: l2, right: r2, ..
             },
         )
         | (
             Expression::Multiply {
-                left: l1,
-                right: r1,
-                ..
+                left: l1, right: r1, ..
             },
             Expression::Multiply {
-                left: l2,
-                right: r2,
-                ..
+                left: l2, right: r2, ..
             },
         )
         | (
             Expression::Subtract {
-                left: l1,
-                right: r1,
-                ..
+                left: l1, right: r1, ..
             },
             Expression::Subtract {
-                left: l2,
-                right: r2,
-                ..
+                left: l2, right: r2, ..
             },
         )
         | (
             Expression::Subscript {
-                expr: l1,
-                index: r1,
-                ..
+                expr: l1, index: r1, ..
             },
             Expression::Subscript {
-                expr: l2,
-                index: r2,
-                ..
+                expr: l2, index: r2, ..
             },
         ) => {
             let l = expression_compare(l1, left_vars, l2, right_vars, cfg, block_vars);
@@ -792,20 +696,20 @@ fn expression_compare(
             } else {
                 ExpressionCmp::Unknown
             }
-        }
+        },
         (Expression::Variable { var_no: left, .. }, Expression::Variable { var_no: right, .. }) => {
             // let's check that the variable left has the same reaching definitions as right
             let left = match left_vars.vars.get(left) {
                 Some(left) => left,
                 None => {
                     return ExpressionCmp::Unknown;
-                }
+                },
             };
             let right = match right_vars.vars.get(right) {
                 Some(right) => right,
                 None => {
                     return ExpressionCmp::Unknown;
-                }
+                },
             };
 
             if left == right {
@@ -819,27 +723,20 @@ fn expression_compare(
                         let left_vars = get_vars_at(left.0, block_vars);
                         let right_vars = get_vars_at(right.0, block_vars);
 
-                        let cmp = expression_compare(
-                            left_expr,
-                            &left_vars,
-                            right_expr,
-                            &right_vars,
-                            cfg,
-                            block_vars,
-                        );
+                        let cmp = expression_compare(left_expr, &left_vars, right_expr, &right_vars, cfg, block_vars);
 
                         if cmp == ExpressionCmp::Equal && left_ty != right_ty {
                             ExpressionCmp::Unknown
                         } else {
                             cmp
                         }
-                    }
+                    },
                     _ => ExpressionCmp::Unknown,
                 }
             } else {
                 ExpressionCmp::Unknown
             }
-        }
+        },
         _ => ExpressionCmp::Unknown,
     };
 

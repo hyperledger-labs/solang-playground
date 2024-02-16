@@ -38,24 +38,17 @@ pub(super) fn unexpected_parameter_annotation(loc: pt::Loc) -> Diagnostic {
 /// Resolve the prototype annotation for functions (just the selector). These
 /// annotations can be resolved for functions without a body. This means they
 /// do not need to access the symbol table, like `@seed(foo)` annotations do.
-pub fn function_prototype_annotations(
-    func: &mut Function,
-    annotations: &[&pt::Annotation],
-    ns: &mut Namespace,
-) {
+pub fn function_prototype_annotations(func: &mut Function, annotations: &[&pt::Annotation], ns: &mut Namespace) {
     let mut diagnostics = Diagnostics::default();
 
     for annotation in annotations {
         match annotation.id.name.as_str() {
             "selector" => function_selector(func, annotation, &mut diagnostics, ns),
-            "account" | "signer" | "mutableAccount" | "mutableSigner"
-                if ns.target == Target::Solana =>
-            {
+            "account" | "signer" | "mutableAccount" | "mutableSigner" if ns.target == Target::Solana => {
                 if !func.is_constructor() && !matches!(func.visibility, Visibility::External(..)) {
                     diagnostics.push(Diagnostic::error(
                         annotation.loc,
-                        "account declarations are only valid in functions declared as external"
-                            .to_string(),
+                        "account declarations are only valid in functions declared as external".to_string(),
                     ));
                     continue;
                 }
@@ -68,7 +61,7 @@ pub fn function_prototype_annotations(
                     &mut ns.diagnostics,
                     &mut ConstructorAnnotations::default(),
                 );
-            }
+            },
 
             _ if !func.has_body => {
                 // function_body_annotations() is called iff there is a body
@@ -79,10 +72,10 @@ pub fn function_prototype_annotations(
                         annotation.id.name, func.ty
                     ),
                 ));
-            }
+            },
             _ => {
                 // handled in function_body_annotations()
-            }
+            },
         }
     }
 
@@ -96,9 +89,7 @@ fn function_selector(
     diagnostics: &mut Diagnostics,
     ns: &mut Namespace,
 ) {
-    if func.ty != pt::FunctionTy::Function
-        && (!ns.target.is_polkadot() || func.ty != pt::FunctionTy::Constructor)
-    {
+    if func.ty != pt::FunctionTy::Function && (!ns.target.is_polkadot() || func.ty != pt::FunctionTy::Constructor) {
         diagnostics.push(Diagnostic::error(
             annotation.loc,
             format!("overriding selector not permitted on {}", func.ty),
@@ -118,13 +109,7 @@ fn function_selector(
     }
 
     if let Some((prev, _)) = &func.selector {
-        duplicate_annotation(
-            diagnostics,
-            "selector",
-            annotation.loc,
-            *prev,
-            func.ty.as_str(),
-        );
+        duplicate_annotation(diagnostics, "selector", annotation.loc, *prev, func.ty.as_str());
         return;
     }
 
@@ -138,27 +123,16 @@ fn function_selector(
                 let expr = match expr {
                     pt::Expression::HexNumberLiteral(loc, n, None) => {
                         hex_number_literal(loc, n, ns, diagnostics, ResolveTo::Type(&uint8))
-                    }
+                    },
                     pt::Expression::NumberLiteral(loc, base, exp, unit) => {
                         let unit = unit_literal(loc, unit, ns, diagnostics);
 
-                        number_literal(
-                            loc,
-                            base,
-                            exp,
-                            ns,
-                            &unit,
-                            diagnostics,
-                            ResolveTo::Type(&uint8),
-                        )
-                    }
+                        number_literal(loc, base, exp, ns, &unit, diagnostics, ResolveTo::Type(&uint8))
+                    },
                     _ => {
-                        diagnostics.push(Diagnostic::error(
-                            expr.loc(),
-                            "literal number expected".into(),
-                        ));
+                        diagnostics.push(Diagnostic::error(expr.loc(), "literal number expected".into()));
                         continue;
-                    }
+                    },
                 };
 
                 if let Ok(Expression::NumberLiteral { loc, value, .. }) = &expr {
@@ -176,13 +150,13 @@ fn function_selector(
             if !diagnostics.any_errors() {
                 func.selector = Some((annotation.loc, selector));
             }
-        }
+        },
         _ => {
             diagnostics.push(Diagnostic::error(
                 annotation.value.as_ref().unwrap().loc(),
                 "expression must be an array literal".into(),
             ));
-        }
+        },
     }
 }
 
@@ -318,7 +292,7 @@ pub(super) fn function_body_annotations(
                 if let Some(resolved) = resolved {
                     annotations.seeds.push(resolved);
                 }
-            }
+            },
             "bump" => {
                 let ty = Type::Bytes(1);
                 parameter_annotation(
@@ -331,7 +305,7 @@ pub(super) fn function_body_annotations(
                     symtable,
                     &mut has_annotation,
                 );
-            }
+            },
             "space" => {
                 let ty = Type::Uint(64);
                 parameter_annotation(
@@ -344,7 +318,7 @@ pub(super) fn function_body_annotations(
                     symtable,
                     &mut has_annotation,
                 );
-            }
+            },
 
             "payer" => {
                 diagnostics.push(Diagnostic::error(
@@ -355,7 +329,7 @@ pub(super) fn function_body_annotations(
                         .loc,
                     "@payer annotation not allowed next to a parameter".to_string(),
                 ));
-            }
+            },
 
             _ => {
                 let annotation = ns.functions[function_no].params[unresolved.parameter_no]
@@ -369,7 +343,7 @@ pub(super) fn function_body_annotations(
                         annotation.id.name, ns.functions[function_no].ty
                     ),
                 ))
-            }
+            },
         }
     }
 
@@ -419,20 +393,17 @@ fn body_annotation(
                     Ok((_, _)) => {
                         *has_annotation = true;
                         *resolved_annotation = Some((annotation.loc, expr));
-                    }
+                    },
                     Err(EvaluationError::MathError) => {
                         diagnostics.extend(eval_diagnostics);
-                    }
+                    },
 
                     Err(EvaluationError::NotAConstant) => {
                         diagnostics.push(Diagnostic::error(
                             annotation.value.as_ref().unwrap().loc(),
-                            format!(
-                                "'@{}' annotation on a constructor only accepts constant values",
-                                name
-                            ),
+                            format!("'@{}' annotation on a constructor only accepts constant values", name),
                         ));
-                    }
+                    },
                 }
             }
         }
@@ -470,11 +441,7 @@ fn parameter_annotation(
     };
 
     // Mark variable as used, without using 'ns' (I cannot borrow it as mutable here)
-    symtable
-        .vars
-        .get_mut(&unresolved_annotation.var_no)
-        .unwrap()
-        .read = true;
+    symtable.vars.get_mut(&unresolved_annotation.var_no).unwrap().read = true;
 
     if let Ok(casted) = expr.cast(&annotation.loc, ty, true, ns, diagnostics) {
         *has_annotation = true;
@@ -483,13 +450,7 @@ fn parameter_annotation(
 }
 
 /// This function centralizes where we generate the duplicate annotation error.
-fn duplicate_annotation(
-    diagnostics: &mut Diagnostics,
-    name: &str,
-    new_loc: pt::Loc,
-    old_loc: pt::Loc,
-    func_ty: &str,
-) {
+fn duplicate_annotation(diagnostics: &mut Diagnostics, name: &str, new_loc: pt::Loc, old_loc: pt::Loc, func_ty: &str) {
     diagnostics.push(Diagnostic::error_with_note(
         new_loc,
         format!("duplicate @{} annotation for {}", name, func_ty),
@@ -529,24 +490,15 @@ fn account_declaration(
                     other_account.get().loc,
                     "previous definition".to_string(),
                 ));
-            }
+            },
             Entry::Vacant(vacancy) => {
                 if let Some(prev) = &resolved_annotations.payer {
-                    duplicate_annotation(
-                        diagnostics,
-                        annotation_name,
-                        *loc,
-                        prev.0,
-                        func.ty.as_str(),
-                    );
+                    duplicate_annotation(diagnostics, annotation_name, *loc, prev.0, func.ty.as_str());
                 } else {
                     vacancy.insert(SolanaAccount {
                         loc: *loc,
                         is_signer: matches!(annotation_name, "payer" | "signer" | "mutableSigner"),
-                        is_writer: matches!(
-                            annotation_name,
-                            "mutableAccount" | "payer" | "mutableSigner"
-                        ),
+                        is_writer: matches!(annotation_name, "mutableAccount" | "payer" | "mutableSigner"),
                         generated: false,
                     });
 
@@ -554,12 +506,9 @@ fn account_declaration(
                         resolved_annotations.payer = Some((*loc, id.name.clone()));
                     }
                 }
-            }
+            },
         }
     } else {
-        diagnostics.push(Diagnostic::error(
-            *loc,
-            "invalid parameter for annotation".to_string(),
-        ));
+        diagnostics.push(Diagnostic::error(*loc, "invalid parameter for annotation".to_string()));
     }
 }

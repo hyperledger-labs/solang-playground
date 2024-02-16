@@ -1,11 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::sema::ast::{
-    ArrayLength, Contract, Function, Namespace, Parameter, StructDecl, StructType, Tag, Type,
-};
+use crate::sema::ast::{ArrayLength, Contract, Function, Namespace, Parameter, StructDecl, StructType, Tag, Type};
 use anchor_syn::idl::types::{
-    Idl, IdlAccount, IdlAccountItem, IdlEnumVariant, IdlEvent, IdlEventField, IdlField,
-    IdlInstruction, IdlType, IdlTypeDefinition, IdlTypeDefinitionTy,
+    Idl, IdlAccount, IdlAccountItem, IdlEnumVariant, IdlEvent, IdlEventField, IdlField, IdlInstruction, IdlType,
+    IdlTypeDefinition, IdlTypeDefinitionTy,
 };
 use base58::ToBase58;
 use num_traits::ToPrimitive;
@@ -73,11 +71,7 @@ pub fn generate_anchor_idl(contract_no: usize, ns: &Namespace, contract_version:
 }
 
 /// Generate IDL events for a contract.
-fn idl_events(
-    contract: &Contract,
-    type_manager: &mut TypeManager,
-    ns: &Namespace,
-) -> Option<Vec<IdlEvent>> {
+fn idl_events(contract: &Contract, type_manager: &mut TypeManager, ns: &Namespace) -> Option<Vec<IdlEvent>> {
     if contract.emits_events.is_empty() {
         None
     } else {
@@ -272,8 +266,7 @@ impl TypeManager<'_> {
         // If the existing type was declared outside a contract or if it is from the current contract,
         // we should change the name of the type we are adding now.
         if other_contract.is_none()
-            || other_contract.as_ref().unwrap()
-                == &self.namespace.contracts[self.contract_no].id.name
+            || other_contract.as_ref().unwrap() == &self.namespace.contracts[self.contract_no].id.name
         {
             let new_name = if let Some(this_name) = contract {
                 format!("{this_name}_{type_name}")
@@ -291,8 +284,7 @@ impl TypeManager<'_> {
             };
             let unique_name = self.unique_string(new_other_name);
             self.types[idx].name = unique_name.clone();
-            self.added_names
-                .insert(unique_name, (idx, other_contract, real_name));
+            self.added_names.insert(unique_name, (idx, other_contract, real_name));
             type_name.clone()
         }
     }
@@ -334,10 +326,7 @@ impl TypeManager<'_> {
     /// with multiple returns, before returning all the custom types needed for the IDL file.
     fn generate_custom_idl_types(self) -> Vec<IdlTypeDefinition> {
         let mut custom_types = self.types;
-        let mut used_names: HashSet<String> = custom_types
-            .iter()
-            .map(|e| e.name.clone())
-            .collect::<HashSet<String>>();
+        let mut used_names: HashSet<String> = custom_types.iter().map(|e| e.name.clone()).collect::<HashSet<String>>();
 
         for item in self.returns_structs {
             let mut value = 0;
@@ -420,33 +409,30 @@ impl TypeManager<'_> {
                 let def = struct_type.definition(self.namespace);
                 self.add_struct_definition(def, ast_type);
                 IdlType::Defined(def.id.name.clone())
-            }
+            },
             Type::Array(ty, dims) => {
                 let mut idl_type = self.convert(ty);
                 for item in dims {
                     match item {
                         ArrayLength::Fixed(number) => {
-                            idl_type =
-                                IdlType::Array(Box::new(idl_type), number.to_usize().unwrap());
-                        }
+                            idl_type = IdlType::Array(Box::new(idl_type), number.to_usize().unwrap());
+                        },
                         ArrayLength::Dynamic => {
                             idl_type = IdlType::Vec(Box::new(idl_type));
-                        }
+                        },
                         ArrayLength::AnyFixed => {
                             unreachable!("A parameter cannot have an AnyFixed dimension")
-                        }
+                        },
                     }
                 }
                 idl_type
-            }
+            },
             Type::Bytes(dim) => IdlType::Array(Box::new(IdlType::U8), *dim as usize),
             Type::Enum(enum_no) => {
                 self.add_enum_definition(*enum_no, ast_type);
                 IdlType::Defined(self.namespace.enums[*enum_no].id.name.clone())
-            }
-            Type::ExternalFunction { .. } => {
-                self.convert(&Type::Struct(StructType::ExternalFunction))
-            }
+            },
+            Type::ExternalFunction { .. } => self.convert(&Type::Struct(StructType::ExternalFunction)),
             Type::UserType(type_no) => self.convert(&self.namespace.user_types[*type_no].ty),
             _ => unreachable!("Type should not be in the IDL"),
         }

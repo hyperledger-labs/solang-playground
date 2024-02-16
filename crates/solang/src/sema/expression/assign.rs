@@ -28,14 +28,7 @@ pub(super) fn assign_single(
         context.lvalue = prev_lvalue;
     });
 
-    let var = expression(
-        left,
-        &mut context,
-        ns,
-        symtable,
-        diagnostics,
-        ResolveTo::Unknown,
-    )?;
+    let var = expression(left, &mut context, ns, symtable, diagnostics, ResolveTo::Unknown)?;
     assigned_variable(ns, &var, symtable);
 
     context.lvalue = false;
@@ -67,7 +60,7 @@ pub(super) fn assign_single(
                 ),
             ));
             Err(())
-        }
+        },
         Expression::ConstantVariable {
             loc,
             contract_no: None,
@@ -79,7 +72,7 @@ pub(super) fn assign_single(
                 format!("cannot assign to constant '{}'", ns.constants[*var_no].name),
             ));
             Err(())
-        }
+        },
         Expression::StorageVariable {
             loc,
             ty,
@@ -93,10 +86,7 @@ pub(super) fn assign_single(
                     if !ns.functions[function_no].is_constructor() {
                         diagnostics.push(Diagnostic::error(
                             *loc,
-                            format!(
-                                "cannot assign to immutable '{}' outside of constructor",
-                                store_var.name
-                            ),
+                            format!("cannot assign to immutable '{}' outside of constructor", store_var.name),
                         ));
                         return Err(());
                     }
@@ -111,7 +101,7 @@ pub(super) fn assign_single(
                 left: Box::new(var.clone()),
                 right: Box::new(val.cast(&right.loc(), ty, true, ns, diagnostics)?),
             })
-        }
+        },
         Expression::Variable { ty: var_ty, .. } => Ok(Expression::Assign {
             loc: *loc,
             ty: var_ty.clone(),
@@ -124,13 +114,7 @@ pub(super) fn assign_single(
                 loc: *loc,
                 ty: inner.deref_memory().clone(),
                 left: Box::new(var.cast(loc, inner, true, ns, diagnostics)?),
-                right: Box::new(val.cast(
-                    &right.loc(),
-                    inner.deref_memory(),
-                    true,
-                    ns,
-                    diagnostics,
-                )?),
+                right: Box::new(val.cast(&right.loc(), inner.deref_memory(), true, ns, diagnostics)?),
             }),
             Type::Ref(r_ty) => Ok(Expression::Assign {
                 loc: *loc,
@@ -157,14 +141,11 @@ pub(super) fn assign_single(
                     left: Box::new(var),
                     right: Box::new(val.cast(&right.loc(), r_ty, true, ns, diagnostics)?),
                 })
-            }
+            },
             _ => {
-                diagnostics.push(Diagnostic::error(
-                    var.loc(),
-                    "expression is not assignable".to_string(),
-                ));
+                diagnostics.push(Diagnostic::error(var.loc(), "expression is not assignable".to_string()));
                 Err(())
-            }
+            },
         },
     }
 }
@@ -187,14 +168,7 @@ pub(super) fn assign_expr(
         context.lvalue = prev_lvalue;
     });
 
-    let var = expression(
-        left,
-        &mut context,
-        ns,
-        symtable,
-        diagnostics,
-        ResolveTo::Unknown,
-    )?;
+    let var = expression(left, &mut context, ns, symtable, diagnostics, ResolveTo::Unknown)?;
     assigned_variable(ns, &var, symtable);
     let var_ty = var.ty();
 
@@ -212,111 +186,107 @@ pub(super) fn assign_expr(
     used_variable(ns, &set, symtable);
     let set_type = set.ty();
 
-    let assign_operation = |assign: Expression,
-                            ty: &Type,
-                            ns: &Namespace,
-                            diagnostics: &mut Diagnostics|
-     -> Result<Expression, ()> {
-        let set = match expr {
-            pt::Expression::AssignShiftLeft(..) | pt::Expression::AssignShiftRight(..) => {
-                let left_length = type_bits_and_sign(ty, loc, true, ns, diagnostics)?;
-                let right_length =
-                    type_bits_and_sign(&set_type, &left.loc(), false, ns, diagnostics)?;
+    let assign_operation =
+        |assign: Expression, ty: &Type, ns: &Namespace, diagnostics: &mut Diagnostics| -> Result<Expression, ()> {
+            let set = match expr {
+                pt::Expression::AssignShiftLeft(..) | pt::Expression::AssignShiftRight(..) => {
+                    let left_length = type_bits_and_sign(ty, loc, true, ns, diagnostics)?;
+                    let right_length = type_bits_and_sign(&set_type, &left.loc(), false, ns, diagnostics)?;
 
-                // TODO: does shifting by negative value need compiletime/runtime check?
-                if left_length == right_length {
-                    set
-                } else if right_length < left_length && set_type.is_signed_int(ns) {
-                    Expression::SignExt {
-                        loc: *loc,
-                        to: ty.clone(),
-                        expr: Box::new(set),
+                    // TODO: does shifting by negative value need compiletime/runtime check?
+                    if left_length == right_length {
+                        set
+                    } else if right_length < left_length && set_type.is_signed_int(ns) {
+                        Expression::SignExt {
+                            loc: *loc,
+                            to: ty.clone(),
+                            expr: Box::new(set),
+                        }
+                    } else if right_length < left_length && !set_type.is_signed_int(ns) {
+                        Expression::ZeroExt {
+                            loc: *loc,
+                            to: ty.clone(),
+                            expr: Box::new(set),
+                        }
+                    } else {
+                        Expression::Trunc {
+                            loc: *loc,
+                            to: ty.clone(),
+                            expr: Box::new(set),
+                        }
                     }
-                } else if right_length < left_length && !set_type.is_signed_int(ns) {
-                    Expression::ZeroExt {
-                        loc: *loc,
-                        to: ty.clone(),
-                        expr: Box::new(set),
-                    }
-                } else {
-                    Expression::Trunc {
-                        loc: *loc,
-                        to: ty.clone(),
-                        expr: Box::new(set),
-                    }
-                }
-            }
-            _ => set.cast(&right.loc(), ty, true, ns, diagnostics)?,
+                },
+                _ => set.cast(&right.loc(), ty, true, ns, diagnostics)?,
+            };
+
+            Ok(match expr {
+                pt::Expression::AssignAdd(..) => Expression::Add {
+                    loc: *loc,
+                    ty: ty.clone(),
+                    unchecked: context.unchecked,
+                    left: Box::new(assign),
+                    right: Box::new(set),
+                },
+                pt::Expression::AssignSubtract(..) => Expression::Subtract {
+                    loc: *loc,
+                    ty: ty.clone(),
+                    unchecked: context.unchecked,
+                    left: Box::new(assign),
+                    right: Box::new(set),
+                },
+                pt::Expression::AssignMultiply(..) => Expression::Multiply {
+                    loc: *loc,
+                    ty: ty.clone(),
+                    unchecked: context.unchecked,
+                    left: Box::new(assign),
+                    right: Box::new(set),
+                },
+                pt::Expression::AssignOr(..) => Expression::BitwiseOr {
+                    loc: *loc,
+                    ty: ty.clone(),
+                    left: Box::new(assign),
+                    right: Box::new(set),
+                },
+                pt::Expression::AssignAnd(..) => Expression::BitwiseAnd {
+                    loc: *loc,
+                    ty: ty.clone(),
+                    left: Box::new(assign),
+                    right: Box::new(set),
+                },
+                pt::Expression::AssignXor(..) => Expression::BitwiseXor {
+                    loc: *loc,
+                    ty: ty.clone(),
+                    left: Box::new(assign),
+                    right: Box::new(set),
+                },
+                pt::Expression::AssignShiftLeft(..) => Expression::ShiftLeft {
+                    loc: *loc,
+                    ty: ty.clone(),
+                    left: Box::new(assign),
+                    right: Box::new(set),
+                },
+                pt::Expression::AssignShiftRight(..) => Expression::ShiftRight {
+                    loc: *loc,
+                    ty: ty.clone(),
+                    left: Box::new(assign),
+                    right: Box::new(set),
+                    sign: ty.is_signed_int(ns),
+                },
+                pt::Expression::AssignDivide(..) => Expression::Divide {
+                    loc: *loc,
+                    ty: ty.clone(),
+                    left: Box::new(assign),
+                    right: Box::new(set),
+                },
+                pt::Expression::AssignModulo(..) => Expression::Modulo {
+                    loc: *loc,
+                    ty: ty.clone(),
+                    left: Box::new(assign),
+                    right: Box::new(set),
+                },
+                _ => unreachable!(),
+            })
         };
-
-        Ok(match expr {
-            pt::Expression::AssignAdd(..) => Expression::Add {
-                loc: *loc,
-                ty: ty.clone(),
-                unchecked: context.unchecked,
-                left: Box::new(assign),
-                right: Box::new(set),
-            },
-            pt::Expression::AssignSubtract(..) => Expression::Subtract {
-                loc: *loc,
-                ty: ty.clone(),
-                unchecked: context.unchecked,
-                left: Box::new(assign),
-                right: Box::new(set),
-            },
-            pt::Expression::AssignMultiply(..) => Expression::Multiply {
-                loc: *loc,
-                ty: ty.clone(),
-                unchecked: context.unchecked,
-                left: Box::new(assign),
-                right: Box::new(set),
-            },
-            pt::Expression::AssignOr(..) => Expression::BitwiseOr {
-                loc: *loc,
-                ty: ty.clone(),
-                left: Box::new(assign),
-                right: Box::new(set),
-            },
-            pt::Expression::AssignAnd(..) => Expression::BitwiseAnd {
-                loc: *loc,
-                ty: ty.clone(),
-                left: Box::new(assign),
-                right: Box::new(set),
-            },
-            pt::Expression::AssignXor(..) => Expression::BitwiseXor {
-                loc: *loc,
-                ty: ty.clone(),
-                left: Box::new(assign),
-                right: Box::new(set),
-            },
-            pt::Expression::AssignShiftLeft(..) => Expression::ShiftLeft {
-                loc: *loc,
-                ty: ty.clone(),
-                left: Box::new(assign),
-                right: Box::new(set),
-            },
-            pt::Expression::AssignShiftRight(..) => Expression::ShiftRight {
-                loc: *loc,
-                ty: ty.clone(),
-                left: Box::new(assign),
-                right: Box::new(set),
-                sign: ty.is_signed_int(ns),
-            },
-            pt::Expression::AssignDivide(..) => Expression::Divide {
-                loc: *loc,
-                ty: ty.clone(),
-                left: Box::new(assign),
-                right: Box::new(set),
-            },
-            pt::Expression::AssignModulo(..) => Expression::Modulo {
-                loc: *loc,
-                ty: ty.clone(),
-                left: Box::new(assign),
-                right: Box::new(set),
-            },
-            _ => unreachable!(),
-        })
-    };
 
     match &var {
         Expression::ConstantVariable {
@@ -333,7 +303,7 @@ pub(super) fn assign_expr(
                 ),
             ));
             Err(())
-        }
+        },
         Expression::ConstantVariable {
             loc,
             contract_no: None,
@@ -345,7 +315,7 @@ pub(super) fn assign_expr(
                 format!("cannot assign to constant '{}'", ns.constants[*var_no].name),
             ));
             Err(())
-        }
+        },
         Expression::Variable { var_no, .. } => {
             match var_ty {
                 Type::Bytes(_) | Type::Int(_) | Type::Uint(_) => (),
@@ -359,7 +329,7 @@ pub(super) fn assign_expr(
                         ),
                     ));
                     return Err(());
-                }
+                },
             };
             Ok(Expression::Assign {
                 loc: *loc,
@@ -367,7 +337,7 @@ pub(super) fn assign_expr(
                 left: Box::new(var.clone()),
                 right: Box::new(assign_operation(var, &var_ty, ns, diagnostics)?),
             })
-        }
+        },
         _ => match &var_ty {
             Type::Ref(r_ty) => match r_ty.as_ref() {
                 Type::Bytes(_) | Type::Int(_) | Type::Uint(_) => Ok(Expression::Assign {
@@ -382,9 +352,7 @@ pub(super) fn assign_expr(
                     )?),
                 }),
                 // If the variable is a Type::Ref(Type::Ref(..)), we must load it first.
-                Type::Ref(inner)
-                    if matches!(**inner, Type::Bytes(_) | Type::Int(_) | Type::Uint(_)) =>
-                {
+                Type::Ref(inner) if matches!(**inner, Type::Bytes(_) | Type::Int(_) | Type::Uint(_)) => {
                     Ok(Expression::Assign {
                         loc: *loc,
                         ty: *inner.clone(),
@@ -396,14 +364,14 @@ pub(super) fn assign_expr(
                             diagnostics,
                         )?),
                     })
-                }
+                },
                 _ => {
                     diagnostics.push(Diagnostic::error(
                         var.loc(),
                         format!("assigning to incorrect type {}", r_ty.to_string(ns)),
                     ));
                     Err(())
-                }
+                },
             },
             Type::StorageRef(immutable, r_ty) => {
                 if *immutable {
@@ -436,16 +404,13 @@ pub(super) fn assign_expr(
                             format!("assigning to incorrect type {}", r_ty.to_string(ns)),
                         ));
                         Err(())
-                    }
+                    },
                 }
-            }
+            },
             _ => {
-                diagnostics.push(Diagnostic::error(
-                    var.loc(),
-                    "expression is not assignable".to_string(),
-                ));
+                diagnostics.push(Diagnostic::error(var.loc(), "expression is not assignable".to_string()));
                 Err(())
-            }
+            },
         },
     }
 }

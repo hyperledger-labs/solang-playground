@@ -41,17 +41,14 @@ pub fn constant_folding(cfg: &mut ControlFlowGraph, dry_run: bool, ns: &mut Name
                             expr,
                         };
                     }
-                }
+                },
                 Instr::Call {
                     res,
                     call,
                     args,
                     return_tys,
                 } => {
-                    let args = args
-                        .iter()
-                        .map(|e| expression(e, Some(&vars), cfg, ns).0)
-                        .collect();
+                    let args = args.iter().map(|e| expression(e, Some(&vars), cfg, ns).0).collect();
 
                     if !dry_run {
                         cfg.blocks[block_no].instr[instr_no] = Instr::Call {
@@ -61,17 +58,14 @@ pub fn constant_folding(cfg: &mut ControlFlowGraph, dry_run: bool, ns: &mut Name
                             return_tys: return_tys.clone(),
                         };
                     }
-                }
+                },
                 Instr::Return { value } => {
-                    let value = value
-                        .iter()
-                        .map(|e| expression(e, Some(&vars), cfg, ns).0)
-                        .collect();
+                    let value = value.iter().map(|e| expression(e, Some(&vars), cfg, ns).0).collect();
 
                     if !dry_run {
                         cfg.blocks[block_no].instr[instr_no] = Instr::Return { value };
                     }
-                }
+                },
                 Instr::BranchCond {
                     cond,
                     true_block,
@@ -92,7 +86,7 @@ pub fn constant_folding(cfg: &mut ControlFlowGraph, dry_run: bool, ns: &mut Name
                             };
                         }
                     }
-                }
+                },
                 Instr::Store { dest, data } => {
                     let (dest, _) = expression(dest, Some(&vars), cfg, ns);
                     let (data, _) = expression(data, Some(&vars), cfg, ns);
@@ -100,7 +94,7 @@ pub fn constant_folding(cfg: &mut ControlFlowGraph, dry_run: bool, ns: &mut Name
                     if !dry_run {
                         cfg.blocks[block_no].instr[instr_no] = Instr::Store { dest, data };
                     }
-                }
+                },
                 Instr::AssertFailure {
                     encoded_args: Some(expr),
                 } => {
@@ -111,14 +105,14 @@ pub fn constant_folding(cfg: &mut ControlFlowGraph, dry_run: bool, ns: &mut Name
                             encoded_args: Some(buf),
                         };
                     }
-                }
+                },
                 Instr::Print { expr } => {
                     let (expr, _) = expression(expr, Some(&vars), cfg, ns);
 
                     if !dry_run {
                         cfg.blocks[block_no].instr[instr_no] = Instr::Print { expr };
                     }
-                }
+                },
                 Instr::ClearStorage { ty, storage } => {
                     let (storage, _) = expression(storage, Some(&vars), cfg, ns);
 
@@ -128,7 +122,7 @@ pub fn constant_folding(cfg: &mut ControlFlowGraph, dry_run: bool, ns: &mut Name
                             storage,
                         };
                     }
-                }
+                },
                 Instr::SetStorage { ty, storage, value } => {
                     let (storage, _) = expression(storage, Some(&vars), cfg, ns);
                     let (value, _) = expression(value, Some(&vars), cfg, ns);
@@ -140,7 +134,7 @@ pub fn constant_folding(cfg: &mut ControlFlowGraph, dry_run: bool, ns: &mut Name
                             value,
                         };
                     }
-                }
+                },
                 Instr::LoadStorage { ty, storage, res } => {
                     let (storage, _) = expression(storage, Some(&vars), cfg, ns);
 
@@ -151,24 +145,16 @@ pub fn constant_folding(cfg: &mut ControlFlowGraph, dry_run: bool, ns: &mut Name
                             res: *res,
                         };
                     }
-                }
-                Instr::SetStorageBytes {
-                    storage,
-                    value,
-                    offset,
-                } => {
+                },
+                Instr::SetStorageBytes { storage, value, offset } => {
                     let (storage, _) = expression(storage, Some(&vars), cfg, ns);
                     let (value, _) = expression(value, Some(&vars), cfg, ns);
                     let (offset, _) = expression(offset, Some(&vars), cfg, ns);
 
                     if !dry_run {
-                        cfg.blocks[block_no].instr[instr_no] = Instr::SetStorageBytes {
-                            storage,
-                            value,
-                            offset,
-                        };
+                        cfg.blocks[block_no].instr[instr_no] = Instr::SetStorageBytes { storage, value, offset };
                     }
-                }
+                },
                 Instr::PushStorage {
                     res,
                     ty,
@@ -176,9 +162,7 @@ pub fn constant_folding(cfg: &mut ControlFlowGraph, dry_run: bool, ns: &mut Name
                     value,
                 } => {
                     let (storage, _) = expression(storage, Some(&vars), cfg, ns);
-                    let value = value
-                        .as_ref()
-                        .map(|expr| expression(expr, Some(&vars), cfg, ns).0);
+                    let value = value.as_ref().map(|expr| expression(expr, Some(&vars), cfg, ns).0);
 
                     if !dry_run {
                         cfg.blocks[block_no].instr[instr_no] = Instr::PushStorage {
@@ -188,7 +172,7 @@ pub fn constant_folding(cfg: &mut ControlFlowGraph, dry_run: bool, ns: &mut Name
                             value,
                         };
                     }
-                }
+                },
                 Instr::PopStorage { res, ty, storage } => {
                     let (storage, _) = expression(storage, Some(&vars), cfg, ns);
 
@@ -199,13 +183,8 @@ pub fn constant_folding(cfg: &mut ControlFlowGraph, dry_run: bool, ns: &mut Name
                             storage,
                         };
                     }
-                }
-                Instr::PushMemory {
-                    res,
-                    ty,
-                    array,
-                    value,
-                } => {
+                },
+                Instr::PushMemory { res, ty, array, value } => {
                     let (value, _) = expression(value, Some(&vars), cfg, ns);
 
                     if !dry_run {
@@ -216,7 +195,7 @@ pub fn constant_folding(cfg: &mut ControlFlowGraph, dry_run: bool, ns: &mut Name
                             value: Box::new(value),
                         };
                     }
-                }
+                },
                 Instr::Constructor {
                     success,
                     res,
@@ -232,19 +211,11 @@ pub fn constant_folding(cfg: &mut ControlFlowGraph, dry_run: bool, ns: &mut Name
                     constructor_no,
                 } => {
                     let encoded_args = expression(encoded_args, Some(&vars), cfg, ns).0;
-                    let value = value
-                        .as_ref()
-                        .map(|expr| expression(expr, Some(&vars), cfg, ns).0);
+                    let value = value.as_ref().map(|expr| expression(expr, Some(&vars), cfg, ns).0);
                     let gas = expression(gas, Some(&vars), cfg, ns).0;
-                    let salt = salt
-                        .as_ref()
-                        .map(|expr| expression(expr, Some(&vars), cfg, ns).0);
-                    let address = address
-                        .as_ref()
-                        .map(|expr| expression(expr, Some(&vars), cfg, ns).0);
-                    let seeds = seeds
-                        .as_ref()
-                        .map(|expr| expression(expr, Some(&vars), cfg, ns).0);
+                    let salt = salt.as_ref().map(|expr| expression(expr, Some(&vars), cfg, ns).0);
+                    let address = address.as_ref().map(|expr| expression(expr, Some(&vars), cfg, ns).0);
+                    let seeds = seeds.as_ref().map(|expr| expression(expr, Some(&vars), cfg, ns).0);
                     let accounts = accounts.map(|expr| expression(expr, Some(&vars), cfg, ns).0);
 
                     if !dry_run {
@@ -263,7 +234,7 @@ pub fn constant_folding(cfg: &mut ControlFlowGraph, dry_run: bool, ns: &mut Name
                             accounts,
                         };
                     }
-                }
+                },
                 Instr::ExternalCall {
                     loc,
                     success,
@@ -280,16 +251,10 @@ pub fn constant_folding(cfg: &mut ControlFlowGraph, dry_run: bool, ns: &mut Name
                     let value = expression(value, Some(&vars), cfg, ns).0;
                     let gas = expression(gas, Some(&vars), cfg, ns).0;
                     let payload = expression(payload, Some(&vars), cfg, ns).0;
-                    let address = address
-                        .as_ref()
-                        .map(|expr| expression(expr, Some(&vars), cfg, ns).0);
+                    let address = address.as_ref().map(|expr| expression(expr, Some(&vars), cfg, ns).0);
                     let accounts = accounts.map(|expr| expression(expr, Some(&vars), cfg, ns).0);
-                    let seeds = seeds
-                        .as_ref()
-                        .map(|expr| expression(expr, Some(&vars), cfg, ns).0);
-                    let flags = flags
-                        .as_ref()
-                        .map(|expr| expression(expr, Some(&vars), cfg, ns).0);
+                    let seeds = seeds.as_ref().map(|expr| expression(expr, Some(&vars), cfg, ns).0);
+                    let flags = flags.as_ref().map(|expr| expression(expr, Some(&vars), cfg, ns).0);
 
                     if !dry_run {
                         cfg.blocks[block_no].instr[instr_no] = Instr::ExternalCall {
@@ -306,23 +271,16 @@ pub fn constant_folding(cfg: &mut ControlFlowGraph, dry_run: bool, ns: &mut Name
                             flags,
                         };
                     }
-                }
+                },
                 Instr::SelfDestruct { recipient } => {
                     let (recipient, _) = expression(recipient, Some(&vars), cfg, ns);
 
                     if !dry_run {
                         cfg.blocks[block_no].instr[instr_no] = Instr::SelfDestruct { recipient };
                     }
-                }
-                Instr::EmitEvent {
-                    event_no,
-                    data,
-                    topics,
-                } => {
-                    let topics = topics
-                        .iter()
-                        .map(|e| expression(e, Some(&vars), cfg, ns).0)
-                        .collect();
+                },
+                Instr::EmitEvent { event_no, data, topics } => {
+                    let topics = topics.iter().map(|e| expression(e, Some(&vars), cfg, ns).0).collect();
 
                     if !dry_run {
                         cfg.blocks[block_no].instr[instr_no] = Instr::EmitEvent {
@@ -331,7 +289,7 @@ pub fn constant_folding(cfg: &mut ControlFlowGraph, dry_run: bool, ns: &mut Name
                             topics,
                         };
                     }
-                }
+                },
                 Instr::MemCopy {
                     source,
                     destination,
@@ -348,12 +306,8 @@ pub fn constant_folding(cfg: &mut ControlFlowGraph, dry_run: bool, ns: &mut Name
                             bytes: bytes.0,
                         };
                     }
-                }
-                Instr::Switch {
-                    cond,
-                    cases,
-                    default,
-                } => {
+                },
+                Instr::Switch { cond, cases, default } => {
                     let cond = expression(cond, Some(&vars), cfg, ns);
                     let cases = cases
                         .iter()
@@ -364,10 +318,7 @@ pub fn constant_folding(cfg: &mut ControlFlowGraph, dry_run: bool, ns: &mut Name
                         if let Expression::NumberLiteral { value: num, .. } = &cond.0 {
                             let mut simplified_branch = None;
                             for (match_item, block) in &cases {
-                                if let Expression::NumberLiteral {
-                                    value: match_num, ..
-                                } = match_item
-                                {
+                                if let Expression::NumberLiteral { value: match_num, .. } = match_item {
                                     if match_num == num {
                                         simplified_branch = Some(*block);
                                     }
@@ -385,7 +336,7 @@ pub fn constant_folding(cfg: &mut ControlFlowGraph, dry_run: bool, ns: &mut Name
                             default: *default,
                         };
                     }
-                }
+                },
                 Instr::ReturnData { data, data_len } => {
                     let data = expression(data, Some(&vars), cfg, ns);
                     let data_len = expression(data_len, Some(&vars), cfg, ns);
@@ -396,7 +347,7 @@ pub fn constant_folding(cfg: &mut ControlFlowGraph, dry_run: bool, ns: &mut Name
                             data_len: data_len.0,
                         };
                     }
-                }
+                },
                 Instr::WriteBuffer { buf, offset, value } => {
                     let offset = expression(offset, Some(&vars), cfg, ns).0;
                     let value = expression(value, Some(&vars), cfg, ns).0;
@@ -408,14 +359,11 @@ pub fn constant_folding(cfg: &mut ControlFlowGraph, dry_run: bool, ns: &mut Name
                             value,
                         };
                     }
-                }
+                },
                 _ => (),
             }
 
-            reaching_definitions::apply_transfers(
-                &cfg.blocks[block_no].transfers[instr_no],
-                &mut vars,
-            );
+            reaching_definitions::apply_transfers(&cfg.blocks[block_no].transfers[instr_no], &mut vars);
         }
     }
 }
@@ -456,24 +404,9 @@ fn expression(
             left,
             right,
         } => multiply(loc, ty, *overflowing, left, right, vars, cfg, ns),
-        Expression::BitwiseAnd {
-            loc,
-            ty,
-            left,
-            right,
-        } => bitwise_and(loc, ty, left, right, vars, cfg, ns),
-        Expression::BitwiseOr {
-            loc,
-            ty,
-            left,
-            right,
-        } => bitwise_or(loc, ty, left, right, vars, cfg, ns),
-        Expression::BitwiseXor {
-            loc,
-            ty,
-            left,
-            right,
-        } => bitwise_xor(loc, ty, left, right, vars, cfg, ns),
+        Expression::BitwiseAnd { loc, ty, left, right } => bitwise_and(loc, ty, left, right, vars, cfg, ns),
+        Expression::BitwiseOr { loc, ty, left, right } => bitwise_or(loc, ty, left, right, vars, cfg, ns),
+        Expression::BitwiseXor { loc, ty, left, right } => bitwise_xor(loc, ty, left, right, vars, cfg, ns),
         Expression::ShiftLeft {
             loc,
             ty,
@@ -494,30 +427,10 @@ fn expression(
             base,
             exp,
         } => power(loc, ty, *overflowing, base, exp, vars, cfg, ns),
-        Expression::UnsignedDivide {
-            loc,
-            ty,
-            left,
-            right,
-        } => divide(loc, ty, left, right, vars, cfg, ns, false),
-        Expression::SignedDivide {
-            loc,
-            ty,
-            left,
-            right,
-        } => divide(loc, ty, left, right, vars, cfg, ns, true),
-        Expression::SignedModulo {
-            loc,
-            ty,
-            left,
-            right,
-        } => modulo(loc, ty, left, right, vars, cfg, ns, true),
-        Expression::UnsignedModulo {
-            loc,
-            ty,
-            left,
-            right,
-        } => modulo(loc, ty, left, right, vars, cfg, ns, false),
+        Expression::UnsignedDivide { loc, ty, left, right } => divide(loc, ty, left, right, vars, cfg, ns, false),
+        Expression::SignedDivide { loc, ty, left, right } => divide(loc, ty, left, right, vars, cfg, ns, true),
+        Expression::SignedModulo { loc, ty, left, right } => modulo(loc, ty, left, right, vars, cfg, ns, true),
+        Expression::UnsignedModulo { loc, ty, left, right } => modulo(loc, ty, left, right, vars, cfg, ns, false),
         Expression::ZeroExt { loc, ty, expr } => zero_ext(loc, ty, expr, vars, cfg, ns),
         Expression::SignExt { loc, ty, expr } => sign_ext(loc, ty, expr, vars, cfg, ns),
         Expression::Trunc { loc, ty, expr } => trunc(loc, ty, expr, vars, cfg, ns),
@@ -528,9 +441,7 @@ fn expression(
             overflowing,
             expr,
         } => negate(loc, ty, expr, *overflowing, vars, cfg, ns),
-        Expression::Variable { loc, ty, var_no } => {
-            reference_variable(loc, *var_no, ty, vars, cfg, ns, expr)
-        }
+        Expression::Variable { loc, ty, var_no } => reference_variable(loc, *var_no, ty, vars, cfg, ns, expr),
         Expression::Builtin {
             loc,
             tys,
@@ -544,9 +455,7 @@ fn expression(
         } => builtin_hash(loc, tys, *kind, args, vars, cfg, ns),
         Expression::Keccak256 { loc, ty, exprs } => keccak_256(loc, ty, exprs, vars, cfg, ns),
         // The rest is simply for recursing; no constant expansion should be done
-        Expression::StructLiteral { loc, ty, values } => {
-            struct_literal(loc, ty, values, vars, cfg, ns)
-        }
+        Expression::StructLiteral { loc, ty, values } => struct_literal(loc, ty, values, vars, cfg, ns),
         Expression::ArrayLiteral {
             loc,
             ty,
@@ -561,12 +470,7 @@ fn expression(
         } => const_array_literal(loc, ty, values, dimensions, vars, cfg, ns),
         Expression::Load { loc, ty, expr } => load(loc, ty, expr, vars, cfg, ns),
         Expression::Cast { loc, ty, expr } => cast(loc, ty, expr, vars, cfg, ns),
-        Expression::BytesCast {
-            loc,
-            ty,
-            from,
-            expr,
-        } => bytes_cast(loc, ty, from, expr, vars, cfg, ns),
+        Expression::BytesCast { loc, ty, from, expr } => bytes_cast(loc, ty, from, expr, vars, cfg, ns),
         Expression::More {
             loc,
             signed,
@@ -601,33 +505,21 @@ fn expression(
             expr,
             index,
         } => subscript(loc, ty, array_ty, expr, index, vars, cfg, ns),
-        Expression::StructMember {
-            loc,
-            ty,
-            expr,
-            member,
-        } => struct_member(loc, ty, expr, *member, vars, cfg, ns),
+        Expression::StructMember { loc, ty, expr, member } => struct_member(loc, ty, expr, *member, vars, cfg, ns),
         Expression::StorageArrayLength {
             loc,
             ty,
             array,
             elem_ty,
         } => storage_array_length(loc, ty, array, elem_ty, vars, cfg, ns),
-        Expression::StringCompare { loc, left, right } => {
-            string_compare(loc, left, right, vars, cfg, ns)
-        }
+        Expression::StringCompare { loc, left, right } => string_compare(loc, left, right, vars, cfg, ns),
         Expression::Builtin {
             loc,
             kind: Builtin::Concat,
             args,
             ..
         } => bytes_concat(loc, args, vars, cfg, ns),
-        Expression::Builtin {
-            loc,
-            tys,
-            kind,
-            args,
-        } => builtin(loc, tys, *kind, args, vars, cfg, ns),
+        Expression::Builtin { loc, tys, kind, args } => builtin(loc, tys, *kind, args, vars, cfg, ns),
         Expression::AllocDynamicBytes {
             loc,
             ty,
@@ -687,7 +579,7 @@ fn bigint_to_expression(
             } else {
                 value
             }
-        }
+        },
         Type::Int(bits) => {
             let mut bs = value.to_signed_bytes_le();
 
@@ -698,7 +590,7 @@ fn bigint_to_expression(
             } else {
                 value
             }
-        }
+        },
         Type::StorageRef(..) => value,
         _ => unreachable!(),
     };
@@ -713,10 +605,7 @@ fn bigint_to_expression(
     )
 }
 
-fn get_definition<'a>(
-    def: &reaching_definitions::Def,
-    cfg: &'a ControlFlowGraph,
-) -> Option<&'a Expression> {
+fn get_definition<'a>(def: &reaching_definitions::Def, cfg: &'a ControlFlowGraph) -> Option<&'a Expression> {
     if let Instr::Set { expr, .. } = &cfg.blocks[def.block_no].instr[def.instr_no] {
         Some(expr)
     } else {
@@ -760,10 +649,8 @@ fn add(
     let left = expression(left, vars, cfg, ns);
     let right = expression(right, vars, cfg, ns);
 
-    if let (
-        Expression::NumberLiteral { value: left, .. },
-        Expression::NumberLiteral { value: right, .. },
-    ) = (&left.0, &right.0)
+    if let (Expression::NumberLiteral { value: left, .. }, Expression::NumberLiteral { value: right, .. }) =
+        (&left.0, &right.0)
     {
         bigint_to_expression(loc, ty, left.add(right), overflowing, ns)
     } else {
@@ -793,10 +680,8 @@ fn subtract(
     let left = expression(left, vars, cfg, ns);
     let right = expression(right, vars, cfg, ns);
 
-    if let (
-        Expression::NumberLiteral { value: left, .. },
-        Expression::NumberLiteral { value: right, .. },
-    ) = (&left.0, &right.0)
+    if let (Expression::NumberLiteral { value: left, .. }, Expression::NumberLiteral { value: right, .. }) =
+        (&left.0, &right.0)
     {
         bigint_to_expression(loc, ty, left.sub(right), overflowing, ns)
     } else {
@@ -850,10 +735,8 @@ fn multiply(
     let left = expression(left, vars, cfg, ns);
     let right = expression(right, vars, cfg, ns);
 
-    if let (
-        Expression::NumberLiteral { value: left, .. },
-        Expression::NumberLiteral { value: right, .. },
-    ) = (&left.0, &right.0)
+    if let (Expression::NumberLiteral { value: left, .. }, Expression::NumberLiteral { value: right, .. }) =
+        (&left.0, &right.0)
     {
         bigint_to_expression(loc, ty, left.mul(right), overflowing, ns)
     } else {
@@ -882,10 +765,8 @@ fn bitwise_and(
     let left = expression(left, vars, cfg, ns);
     let right = expression(right, vars, cfg, ns);
 
-    if let (
-        Expression::NumberLiteral { value: left, .. },
-        Expression::NumberLiteral { value: right, .. },
-    ) = (&left.0, &right.0)
+    if let (Expression::NumberLiteral { value: left, .. }, Expression::NumberLiteral { value: right, .. }) =
+        (&left.0, &right.0)
     {
         bigint_to_expression(loc, ty, left.bitand(right), true, ns)
     } else {
@@ -913,10 +794,8 @@ fn bitwise_or(
     let left = expression(left, vars, cfg, ns);
     let right = expression(right, vars, cfg, ns);
 
-    if let (
-        Expression::NumberLiteral { value: left, .. },
-        Expression::NumberLiteral { value: right, .. },
-    ) = (&left.0, &right.0)
+    if let (Expression::NumberLiteral { value: left, .. }, Expression::NumberLiteral { value: right, .. }) =
+        (&left.0, &right.0)
     {
         bigint_to_expression(loc, ty, left.bitor(right), true, ns)
     } else {
@@ -944,10 +823,8 @@ fn bitwise_xor(
     let left = expression(left, vars, cfg, ns);
     let right = expression(right, vars, cfg, ns);
 
-    if let (
-        Expression::NumberLiteral { value: left, .. },
-        Expression::NumberLiteral { value: right, .. },
-    ) = (&left.0, &right.0)
+    if let (Expression::NumberLiteral { value: left, .. }, Expression::NumberLiteral { value: right, .. }) =
+        (&left.0, &right.0)
     {
         bigint_to_expression(loc, ty, left.bitxor(right), true, ns)
     } else {
@@ -975,10 +852,8 @@ fn shift_left(
     let left = expression(left_expr, vars, cfg, ns);
     let right = expression(right_expr, vars, cfg, ns);
 
-    if let (
-        Expression::NumberLiteral { value: left, .. },
-        Expression::NumberLiteral { value: right, .. },
-    ) = (&left.0, &right.0)
+    if let (Expression::NumberLiteral { value: left, .. }, Expression::NumberLiteral { value: right, .. }) =
+        (&left.0, &right.0)
     {
         if right.sign() == Sign::Minus || right >= &BigInt::from(left_expr.ty().bits(ns)) {
             ns.diagnostics.push(Diagnostic::error(
@@ -1015,10 +890,8 @@ fn shift_right(
     let left = expression(left_expr, vars, cfg, ns);
     let right = expression(right_expr, vars, cfg, ns);
 
-    if let (
-        Expression::NumberLiteral { value: left, .. },
-        Expression::NumberLiteral { value: right, .. },
-    ) = (&left.0, &right.0)
+    if let (Expression::NumberLiteral { value: left, .. }, Expression::NumberLiteral { value: right, .. }) =
+        (&left.0, &right.0)
     {
         if right.sign() == Sign::Minus || right >= &BigInt::from(left_expr.ty().bits(ns)) {
             ns.diagnostics.push(Diagnostic::error(
@@ -1057,16 +930,12 @@ fn power(
     let base = expression(base, vars, cfg, ns);
     let exp = expression(exp, vars, cfg, ns);
 
-    if let (
-        Expression::NumberLiteral { value: left, .. },
-        Expression::NumberLiteral { value: right, .. },
-    ) = (&base.0, &exp.0)
+    if let (Expression::NumberLiteral { value: left, .. }, Expression::NumberLiteral { value: right, .. }) =
+        (&base.0, &exp.0)
     {
         if right.sign() == Sign::Minus || right >= &BigInt::from(u16::MAX) {
-            ns.diagnostics.push(Diagnostic::error(
-                *loc,
-                format!("power {right} not possible"),
-            ));
+            ns.diagnostics
+                .push(Diagnostic::error(*loc, format!("power {right} not possible")));
         } else {
             let right: u32 = right.to_u32().unwrap();
 
@@ -1363,8 +1232,7 @@ fn builtin_hash(
     let arg = expression(&args[0], vars, cfg, ns);
 
     if let Expression::AllocDynamicBytes {
-        initializer: Some(bs),
-        ..
+        initializer: Some(bs), ..
     } = arg.0
     {
         let hash: Vec<u8> = match kind {
@@ -1374,27 +1242,27 @@ fn builtin_hash(
                 let mut hash = [0u8; 32];
                 hasher.finalize(&mut hash);
                 hash.to_vec()
-            }
+            },
             Builtin::Ripemd160 => {
                 let mut hasher = Ripemd160::new();
                 hasher.update(&bs);
                 let result = hasher.finalize();
                 result[..].to_vec()
-            }
+            },
             Builtin::Blake2_256 => {
                 let hash = blake2_rfc::blake2b::blake2b(32, &[], &bs);
                 hash.as_bytes().to_vec()
-            }
+            },
             Builtin::Blake2_128 => {
                 let hash = blake2_rfc::blake2b::blake2b(16, &[], &bs);
                 hash.as_bytes().to_vec()
-            }
+            },
             Builtin::Sha256 => {
                 let mut hasher = Sha256::new();
                 hasher.update(&bs);
                 let result = hasher.finalize();
                 result[..].to_vec()
-            }
+            },
             _ => unreachable!("not a hash"),
         };
 
@@ -1443,7 +1311,7 @@ fn keccak_256(
                     }
                     | Expression::BytesLiteral { value, .. } => {
                         hasher.update(value);
-                    }
+                    },
                     Expression::NumberLiteral { ty, value, .. } => {
                         let (sign, mut bs) = value.to_bytes_le();
 
@@ -1454,23 +1322,23 @@ fn keccak_256(
                                 let v = if sign == Sign::Minus { 0xffu8 } else { 0 };
 
                                 bs.resize(*bits as usize / 8, v);
-                            }
+                            },
                             Type::Bytes(n) => {
                                 while (*n as usize) < bs.len() {
                                     bs.insert(0, 0);
                                 }
-                            }
+                            },
                             Type::Address(_) => {
                                 bs.resize(ns.address_length, 0);
-                            }
+                            },
                             _ => unreachable!(),
                         }
 
                         hasher.update(&bs);
-                    }
+                    },
                     _ => {
                         all_constant = false;
-                    }
+                    },
                 }
             }
 
@@ -1512,10 +1380,7 @@ fn struct_literal(
     cfg: &ControlFlowGraph,
     ns: &mut Namespace,
 ) -> (Expression, bool) {
-    let args = args
-        .iter()
-        .map(|expr| expression(expr, vars, cfg, ns).0)
-        .collect();
+    let args = args.iter().map(|expr| expression(expr, vars, cfg, ns).0).collect();
 
     (
         Expression::StructLiteral {
@@ -1536,10 +1401,7 @@ fn array_literal(
     cfg: &ControlFlowGraph,
     ns: &mut Namespace,
 ) -> (Expression, bool) {
-    let args = args
-        .iter()
-        .map(|expr| expression(expr, vars, cfg, ns).0)
-        .collect();
+    let args = args.iter().map(|expr| expression(expr, vars, cfg, ns).0).collect();
 
     (
         Expression::ArrayLiteral {
@@ -1561,10 +1423,7 @@ fn const_array_literal(
     cfg: &ControlFlowGraph,
     ns: &mut Namespace,
 ) -> (Expression, bool) {
-    let args = args
-        .iter()
-        .map(|expr| expression(expr, vars, cfg, ns).0)
-        .collect();
+    let args = args.iter().map(|expr| expression(expr, vars, cfg, ns).0).collect();
 
     (
         Expression::ConstArrayLiteral {
@@ -1770,8 +1629,7 @@ fn equal(
     let left = expression(left, vars, cfg, ns);
     let right = expression(right, vars, cfg, ns);
 
-    if let (Expression::BytesLiteral { value: l, .. }, Expression::BytesLiteral { value: r, .. }) =
-        (&left.0, &right.0)
+    if let (Expression::BytesLiteral { value: l, .. }, Expression::BytesLiteral { value: r, .. }) = (&left.0, &right.0)
     {
         (
             Expression::BoolLiteral {
@@ -1803,8 +1661,7 @@ fn not_equal(
     let left = expression(left, vars, cfg, ns);
     let right = expression(right, vars, cfg, ns);
 
-    if let (Expression::BytesLiteral { value: l, .. }, Expression::BytesLiteral { value: r, .. }) =
-        (&left.0, &right.0)
+    if let (Expression::BytesLiteral { value: l, .. }, Expression::BytesLiteral { value: r, .. }) = (&left.0, &right.0)
     {
         (
             Expression::BoolLiteral {
@@ -1941,14 +1798,7 @@ fn string_compare(
             right.clone()
         };
 
-        (
-            Expression::StringCompare {
-                loc: *loc,
-                left,
-                right,
-            },
-            false,
-        )
+        (Expression::StringCompare { loc: *loc, left, right }, false)
     }
 }
 
@@ -1966,8 +1816,7 @@ fn bytes_concat(
         let expr = expression(arg, vars, cfg, ns).0;
 
         if let Expression::AllocDynamicBytes {
-            initializer: Some(bs),
-            ..
+            initializer: Some(bs), ..
         } = &expr
         {
             if bs.is_empty() {
@@ -2048,10 +1897,7 @@ fn builtin(
     cfg: &ControlFlowGraph,
     ns: &mut Namespace,
 ) -> (Expression, bool) {
-    let args = args
-        .iter()
-        .map(|expr| expression(expr, vars, cfg, ns).0)
-        .collect();
+    let args = args.iter().map(|expr| expression(expr, vars, cfg, ns).0).collect();
 
     (
         Expression::Builtin {

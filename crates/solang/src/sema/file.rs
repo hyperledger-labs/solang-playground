@@ -11,12 +11,7 @@ pub enum PathDisplay {
 }
 
 impl File {
-    pub fn new(
-        path: path::PathBuf,
-        contents: &str,
-        cache_no: usize,
-        import_no: Option<usize>,
-    ) -> Self {
+    pub fn new(path: path::PathBuf, contents: &str, cache_no: usize, import_no: Option<usize>) -> Self {
         let mut line_starts = Vec::new();
 
         for (ind, c) in contents.char_indices() {
@@ -47,13 +42,7 @@ impl File {
         if from_line == to_line && from_column == to_column {
             format!("{}{}:{}", path, from_line + 1, from_column + 1)
         } else if from_line == to_line {
-            format!(
-                "{}{}:{}-{}",
-                path,
-                from_line + 1,
-                from_column + 1,
-                to_column + 1
-            )
+            format!("{}{}:{}-{}", path, from_line + 1, from_column + 1, to_column + 1)
         } else {
             format!(
                 "{}{}:{}-{}:{}",
@@ -68,9 +57,7 @@ impl File {
 
     /// Convert an offset to line and column number, based zero
     pub fn offset_to_line_column(&self, loc: usize) -> (usize, usize) {
-        let line_no = self
-            .line_starts
-            .partition_point(|line_start| loc >= *line_start);
+        let line_no = self.line_starts.partition_point(|line_start| loc >= *line_start);
 
         let col_no = if line_no > 0 {
             loc - self.line_starts[line_no - 1]
@@ -86,9 +73,7 @@ impl File {
         if line_no == 0 {
             Some(column_no)
         } else {
-            self.line_starts
-                .get(line_no - 1)
-                .map(|offset| offset + column_no)
+            self.line_starts.get(line_no - 1).map(|offset| offset + column_no)
         }
     }
 
@@ -113,9 +98,7 @@ impl Namespace {
     /// Give a position as a human readable position
     pub fn loc_to_string(&self, display: PathDisplay, loc: &Loc) -> String {
         match loc {
-            Loc::File(file_no, start, end) => {
-                self.files[*file_no].loc_to_string(display, *start, *end)
-            }
+            Loc::File(file_no, start, end) => self.files[*file_no].loc_to_string(display, *start, *end),
             Loc::Builtin => String::from("builtin"),
             Loc::Codegen => String::from("codegen"),
             Loc::Implicit => String::from("implicit"),
@@ -125,10 +108,7 @@ impl Namespace {
 
     /// File number of the top level source unit which was compiled
     pub fn top_file_no(&self) -> usize {
-        self.files
-            .iter()
-            .position(|file| file.cache_no.is_some())
-            .unwrap()
+        self.files.iter().position(|file| file.cache_no.is_some()).unwrap()
     }
 }
 
@@ -148,7 +128,7 @@ fn fix_windows_verbatim(p: &path::Path) -> path::PathBuf {
             let mut base = OsString::from(format!("{}:", disk as char));
             base.push(components.as_path());
             path::PathBuf::from(base)
-        }
+        },
         path::Prefix::VerbatimUNC(server, share) => {
             let mut base = OsString::from(r"\\");
             base.push(server);
@@ -156,7 +136,7 @@ fn fix_windows_verbatim(p: &path::Path) -> path::PathBuf {
             base.push(share);
             base.push(components.as_path());
             path::PathBuf::from(base)
-        }
+        },
         _ => p.to_path_buf(),
     }
 }

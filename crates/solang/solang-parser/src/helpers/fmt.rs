@@ -377,7 +377,7 @@ impl Display for pt::CatchClause {
                 f.write_str("catch ")?;
                 write_opt!(f, '(', param, ") ");
                 block.fmt(f)
-            }
+            },
             Self::Named(_, ident, param, block) => {
                 f.write_str("catch ")?;
                 ident.fmt(f)?;
@@ -385,7 +385,7 @@ impl Display for pt::CatchClause {
                 param.fmt(f)?;
                 f.write_str(") ")?;
                 block.fmt(f)
-            }
+            },
         }
     }
 }
@@ -436,11 +436,11 @@ impl Display for pt::Expression {
             Self::New(_, expr) => {
                 f.write_str("new ")?;
                 expr.fmt(f)
-            }
+            },
             Self::Delete(_, expr) => {
                 f.write_str("delete ")?;
                 expr.fmt(f)
-            }
+            },
 
             Self::Type(_, ty) => ty.fmt(f),
 
@@ -450,13 +450,13 @@ impl Display for pt::Expression {
                 f.write_char('[')?;
                 write_separated(exprs, f, ", ")?;
                 f.write_char(']')
-            }
+            },
             Self::ArraySubscript(_, expr1, expr2) => {
                 expr1.fmt(f)?;
                 f.write_char('[')?;
                 write_opt!(f, expr2);
                 f.write_char(']')
-            }
+            },
             Self::ArraySlice(_, arr, l, r) => {
                 arr.fmt(f)?;
                 f.write_char('[')?;
@@ -464,24 +464,24 @@ impl Display for pt::Expression {
                 f.write_char(':')?;
                 write_opt!(f, r);
                 f.write_char(']')
-            }
+            },
 
             Self::MemberAccess(_, expr, ident) => {
                 expr.fmt(f)?;
                 f.write_char('.')?;
                 ident.fmt(f)
-            }
+            },
 
             Self::Parenthesis(_, expr) => {
                 f.write_char('(')?;
                 expr.fmt(f)?;
                 f.write_char(')')
-            }
+            },
             Self::List(_, list) => {
                 f.write_char('(')?;
                 fmt_parameter_list(list, f)?;
                 f.write_char(')')
-            }
+            },
 
             Self::AddressLiteral(_, lit) => f.write_str(lit),
             Self::StringLiteral(vals) => write_separated(vals, f, " "),
@@ -489,14 +489,14 @@ impl Display for pt::Expression {
             Self::BoolLiteral(_, bool) => {
                 let s = if *bool { "true" } else { "false" };
                 f.write_str(s)
-            }
+            },
             Self::HexNumberLiteral(_, val, unit) => {
                 // TODO: Check with and write the checksummed address when len == 42
                 // ref: https://docs.soliditylang.org/en/latest/types.html#address-literals
                 f.write_str(val)?;
                 write_opt!(f, ' ', unit);
                 Ok(())
-            }
+            },
             Self::NumberLiteral(_, val, exp, unit) => {
                 let val = rm_underscores(val);
                 f.write_str(&val)?;
@@ -507,7 +507,7 @@ impl Display for pt::Expression {
                 }
                 write_opt!(f, ' ', unit);
                 Ok(())
-            }
+            },
             Self::RationalNumberLiteral(_, val, fraction, exp, unit) => {
                 let val = rm_underscores(val);
                 f.write_str(&val)?;
@@ -526,24 +526,24 @@ impl Display for pt::Expression {
                 }
                 write_opt!(f, ' ', unit);
                 Ok(())
-            }
+            },
 
             Self::FunctionCall(_, expr, exprs) => {
                 expr.fmt(f)?;
                 f.write_char('(')?;
                 write_separated(exprs, f, ", ")?;
                 f.write_char(')')
-            }
+            },
             Self::FunctionCallBlock(_, expr, block) => {
                 expr.fmt(f)?;
                 block.fmt(f)
-            }
+            },
             Self::NamedFunctionCall(_, expr, args) => {
                 expr.fmt(f)?;
                 f.write_str("({")?;
                 write_separated(args, f, ", ")?;
                 f.write_str("})")
-            }
+            },
 
             Self::ConditionalOperator(_, cond, l, r) => {
                 cond.fmt(f)?;
@@ -551,7 +551,7 @@ impl Display for pt::Expression {
                 l.fmt(f)?;
                 f.write_str(" : ")?;
                 r.fmt(f)
-            }
+            },
 
             Self::PreIncrement(..)
             | Self::PostIncrement(..)
@@ -612,7 +612,7 @@ impl Display for pt::Expression {
                 }
 
                 Ok(())
-            }
+            },
         }
     }
 }
@@ -702,7 +702,7 @@ impl Display for pt::FunctionAttribute {
                     f.write_char(')')?;
                 }
                 Ok(())
-            }
+            },
             Self::BaseOrModifier(_, base) => base.fmt(f),
             Self::Error(_) => Ok(()),
         }
@@ -734,14 +734,14 @@ impl Display for pt::Import {
                 f.write_str("import ")?;
                 lit.fmt(f)?;
                 f.write_char(';')
-            }
+            },
             Self::GlobalSymbol(lit, ident, _) => {
                 f.write_str("import ")?;
                 lit.fmt(f)?;
                 f.write_str(" as ")?;
                 ident.fmt(f)?;
                 f.write_char(';')
-            }
+            },
             Self::Rename(lit, idents, _) => {
                 f.write_str("import {")?;
 
@@ -759,7 +759,7 @@ impl Display for pt::Import {
                 f.write_str("} from ")?;
                 lit.fmt(f)?;
                 f.write_char(';')
-            }
+            },
         }
     }
 }
@@ -817,21 +817,21 @@ impl Display for pt::PragmaDirective {
                 write_opt!(f, ' ', ident);
                 write_opt!(f, ' ', val);
                 f.write_char(';')
-            }
+            },
             Self::StringLiteral(_, ident, lit) => {
                 f.write_str("pragma ")?;
                 ident.fmt(f)?;
                 f.write_char(' ')?;
                 lit.fmt(f)?;
                 f.write_char(';')
-            }
+            },
             Self::Version(_, ident, versions) => {
                 f.write_str("pragma ")?;
                 ident.fmt(f)?;
                 f.write_char(' ')?;
                 write_separated(versions, f, " ")?;
                 f.write_char(';')
-            }
+            },
         }
     }
 }
@@ -843,17 +843,17 @@ impl Display for pt::VersionComparator {
             Self::Operator { op, version, .. } => {
                 op.fmt(f)?;
                 write_separated(version, f, ".")
-            }
+            },
             Self::Range { from, to, .. } => {
                 write_separated(from, f, ".")?;
                 f.write_str(" - ")?;
                 write_separated(to, f, ".")
-            }
+            },
             Self::Or { left, right, .. } => {
                 left.fmt(f)?;
                 f.write_str(" || ")?;
                 right.fmt(f)
-            }
+            },
         }
     }
 }
@@ -884,9 +884,7 @@ impl Display for pt::Statement {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         match self {
             Self::Block {
-                unchecked,
-                statements,
-                ..
+                unchecked, statements, ..
             } => {
                 if *unchecked {
                     f.write_str("unchecked ")?;
@@ -895,12 +893,9 @@ impl Display for pt::Statement {
                 f.write_char('{')?;
                 write_separated(statements, f, " ")?;
                 f.write_char('}')
-            }
+            },
             Self::Assembly {
-                dialect,
-                flags,
-                block,
-                ..
+                dialect, flags, block, ..
             } => {
                 f.write_str("assembly ")?;
                 write_opt!(f, dialect, ' ');
@@ -912,12 +907,12 @@ impl Display for pt::Statement {
                     }
                 }
                 block.fmt(f)
-            }
+            },
             Self::Args(_, args) => {
                 f.write_char('{')?;
                 write_separated(args, f, ", ")?;
                 f.write_char('}')
-            }
+            },
             Self::If(_, cond, block, end_block) => {
                 f.write_str("if (")?;
                 cond.fmt(f)?;
@@ -925,22 +920,22 @@ impl Display for pt::Statement {
                 block.fmt(f)?;
                 write_opt!(f, " else ", end_block);
                 Ok(())
-            }
+            },
             Self::While(_, cond, block) => {
                 f.write_str("while (")?;
                 cond.fmt(f)?;
                 f.write_str(") ")?;
                 block.fmt(f)
-            }
+            },
             Self::Expression(_, expr) => {
                 expr.fmt(f)?;
                 f.write_char(';')
-            }
+            },
             Self::VariableDefinition(_, var, expr) => {
                 var.fmt(f)?;
                 write_opt!(f, " = ", expr);
                 f.write_char(';')
-            }
+            },
             Self::For(_, init, cond, expr, block) => {
                 f.write_str("for (")?;
                 // edge case, don't write semicolon on a variable definition
@@ -949,7 +944,7 @@ impl Display for pt::Statement {
                     Some(stmt) => {
                         stmt.fmt(f)?;
                         f.write_char(';')
-                    }
+                    },
                     None => f.write_char(';'),
                 }?;
                 write_opt!(f, ' ', cond);
@@ -961,28 +956,28 @@ impl Display for pt::Statement {
                 } else {
                     f.write_char(';')
                 }
-            }
+            },
             Self::DoWhile(_, block, cond) => {
                 f.write_str("do ")?;
                 block.fmt(f)?;
                 f.write_str(" while (")?;
                 cond.fmt(f)?;
                 f.write_str(");")
-            }
+            },
             Self::Continue(_) => f.write_str("continue;"),
             Self::Break(_) => f.write_str("break;"),
             Self::Return(_, expr) => {
                 f.write_str("return")?;
                 write_opt!(f, ' ', expr);
                 f.write_char(';')
-            }
+            },
             Self::Revert(_, ident, exprs) => {
                 f.write_str("revert")?;
                 write_opt!(f, ' ', ident);
                 f.write_char('(')?;
                 write_separated(exprs, f, ", ")?;
                 f.write_str(");")
-            }
+            },
             Self::RevertNamedArgs(_, ident, args) => {
                 f.write_str("revert")?;
                 write_opt!(f, ' ', ident);
@@ -993,12 +988,12 @@ impl Display for pt::Statement {
                     f.write_char('}')?;
                 }
                 f.write_str(");")
-            }
+            },
             Self::Emit(_, expr) => {
                 f.write_str("emit ")?;
                 expr.fmt(f)?;
                 f.write_char(';')
-            }
+            },
             Self::Try(_, expr, returns, catch) => {
                 f.write_str("try ")?;
                 expr.fmt(f)?;
@@ -1015,7 +1010,7 @@ impl Display for pt::Statement {
                     write_separated(catch, f, " ")?;
                 }
                 Ok(())
-            }
+            },
             Self::Error(_) => Ok(()),
         }
     }
@@ -1050,15 +1045,15 @@ impl Display for pt::Type {
             Self::Bytes(n) => {
                 f.write_str("bytes")?;
                 n.fmt(f)
-            }
+            },
             Self::Int(n) => {
                 f.write_str("int")?;
                 n.fmt(f)
-            }
+            },
             Self::Uint(n) => {
                 f.write_str("uint")?;
                 n.fmt(f)
-            }
+            },
             Self::Mapping {
                 key,
                 key_name,
@@ -1077,7 +1072,7 @@ impl Display for pt::Type {
                 write_opt!(f, ' ', value_name);
 
                 f.write_char(')')
-            }
+            },
             Self::Function {
                 params,
                 attributes,
@@ -1105,7 +1100,7 @@ impl Display for pt::Type {
                     }
                 }
                 Ok(())
-            }
+            },
         }
     }
 }
@@ -1148,7 +1143,7 @@ impl Display for pt::UsingList {
                 f.write_char('{')?;
                 write_separated(list, f, ", ")?;
                 f.write_char('}')
-            }
+            },
             Self::Error => Ok(()),
         }
     }
@@ -1168,7 +1163,7 @@ impl Display for pt::VariableAttribute {
                     f.write_char(')')?;
                 }
                 Ok(())
-            }
+            },
         }
     }
 }
@@ -1198,7 +1193,7 @@ impl Display for pt::YulExpression {
                 f.write_str(value)?;
                 write_opt!(f, ": ", ident);
                 Ok(())
-            }
+            },
             Self::NumberLiteral(_, value, exponent, ident) => {
                 f.write_str(value)?;
                 if !exponent.is_empty() {
@@ -1207,29 +1202,29 @@ impl Display for pt::YulExpression {
                 }
                 write_opt!(f, ": ", ident);
                 Ok(())
-            }
+            },
             Self::HexNumberLiteral(_, value, ident) => {
                 f.write_str(value)?;
                 write_opt!(f, ": ", ident);
                 Ok(())
-            }
+            },
             Self::HexStringLiteral(value, ident) => {
                 value.fmt(f)?;
                 write_opt!(f, ": ", ident);
                 Ok(())
-            }
+            },
             Self::StringLiteral(value, ident) => {
                 value.fmt(f)?;
                 write_opt!(f, ": ", ident);
                 Ok(())
-            }
+            },
             Self::Variable(ident) => ident.fmt(f),
             Self::FunctionCall(call) => call.fmt(f),
             Self::SuffixAccess(_, l, r) => {
                 l.fmt(f)?;
                 f.write_char('.')?;
                 r.fmt(f)
-            }
+            },
         }
     }
 }
@@ -1247,7 +1242,7 @@ impl Display for pt::YulStatement {
                 write_separated(exprs, f, ", ")?;
                 f.write_str(" := ")?;
                 eq_expr.fmt(f)
-            }
+            },
             Self::VariableDeclaration(_, vars, eq_expr) => {
                 f.write_str("let")?;
                 if !vars.is_empty() {
@@ -1256,14 +1251,14 @@ impl Display for pt::YulStatement {
                 }
                 write_opt!(f, " := ", eq_expr);
                 Ok(())
-            }
+            },
 
             Self::If(_, expr, block) => {
                 f.write_str("if ")?;
                 expr.fmt(f)?;
                 f.write_char(' ')?;
                 block.fmt(f)
-            }
+            },
 
             Self::Leave(_) => f.write_str("leave"),
             Self::Break(_) => f.write_str("break"),
@@ -1282,11 +1277,11 @@ impl Display for pt::YulSwitchOptions {
                 expr.fmt(f)?;
                 f.write_str(" ")?;
                 block.fmt(f)
-            }
+            },
             Self::Default(_, block) => {
                 f.write_str("default ")?;
                 block.fmt(f)
-            }
+            },
         }
     }
 }

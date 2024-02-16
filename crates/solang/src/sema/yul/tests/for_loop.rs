@@ -134,10 +134,6 @@ contract testTypes {
 
     let ns = parse(file);
     assert_eq!(ns.diagnostics.len(), 2);
-    assert!(ns
-        .diagnostics
-        .contains_message("found contract 'testTypes'"));
-    assert!(ns
-        .diagnostics
-        .contains_message("yul variable 'x' has never been read"));
+    assert!(ns.diagnostics.contains_message("found contract 'testTypes'"));
+    assert!(ns.diagnostics.contains_message("yul variable 'x' has never been read"));
 }
