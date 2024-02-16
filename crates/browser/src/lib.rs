@@ -70,6 +70,7 @@ pub async fn serve(config: ServerConfig) -> Result<(), JsValue> {
         files: Mutex::new(Files {
             caches: HashMap::new(),
             text_buffers: HashMap::new(),
+            diagnostics: HashMap::new(),
         }),
         global_cache: Mutex::new(GlobalCache {
             definitions: HashMap::new(),

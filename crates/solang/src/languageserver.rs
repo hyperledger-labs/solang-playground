@@ -27,6 +27,7 @@ use std::{
     path::PathBuf,
 };
 use tokio::sync::Mutex;
+use tower_lsp::lsp_types::{DocumentDiagnosticParams, FullDocumentDiagnosticReport};
 use tower_lsp::{
     jsonrpc::Result,
     lsp_types::{
@@ -38,8 +39,8 @@ use tower_lsp::{
         CompletionTriggerKind, DeclarationCapability, Diagnostic, DiagnosticRelatedInformation, DiagnosticSeverity,
         DidChangeConfigurationParams, DidChangeTextDocumentParams, DidChangeWatchedFilesParams,
         DidChangeWorkspaceFoldersParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
-        DidSaveTextDocumentParams, ExecuteCommandOptions, ExecuteCommandParams, GotoDefinitionParams,
-        GotoDefinitionResponse, Hover, HoverContents, HoverParams, HoverProviderCapability,
+        DidSaveTextDocumentParams, DocumentDiagnosticReportResult, ExecuteCommandOptions, ExecuteCommandParams,
+        GotoDefinitionParams, GotoDefinitionResponse, Hover, HoverContents, HoverParams, HoverProviderCapability,
         ImplementationProviderCapability, InitializeParams, InitializeResult, InitializedParams, Location,
         MarkedString, MessageType, OneOf, Position, Range, ReferenceParams, RenameParams, ServerCapabilities,
         SignatureHelpOptions, TextDocumentSyncCapability, TextDocumentSyncKind, TextEdit,
@@ -124,6 +125,7 @@ type Properties = HashMap<DefinitionIndex, HashMap<String, Option<DefinitionInde
 pub struct Files {
     pub caches: HashMap<String, FileCache>,
     pub text_buffers: HashMap<String, String>,
+    pub diagnostics: HashMap<String, Vec<Diagnostic>>,
 }
 
 #[derive(Debug)]
@@ -280,7 +282,7 @@ impl SolangServer {
                 })
             }));
 
-            let res = self.client.publish_diagnostics(uri, diags, None);
+            let res = self.client.publish_diagnostics(uri, diags.clone(), None);
 
             let (file_caches, global_cache) = Builder::new(&ns).build();
 
@@ -290,6 +292,9 @@ impl SolangServer {
                     files.caches.insert(f.path.as_os_str().to_str().unwrap().to_string(), c);
                 }
             }
+
+            // save the diagnostics for this file
+            files.diagnostics.insert(path.to_str().unwrap().to_string(), diags);
 
             let mut gc = self.global_cache.lock().await;
             gc.extend(global_cache);
@@ -2025,6 +2030,37 @@ impl LanguageServer for SolangServer {
                 ..ServerCapabilities::default()
             },
         })
+    }
+
+    async fn diagnostic(&self, params: DocumentDiagnosticParams) -> Result<DocumentDiagnosticReportResult> {
+        let uri = params.text_document.uri;
+
+        let file_string = uri.to_string();
+
+        let diagnostics = self
+            .files
+            .lock()
+            .await
+            .diagnostics
+            .get(&file_string)
+            .cloned()
+            .unwrap_or_default();
+
+        let res = Ok(DocumentDiagnosticReportResult::Report(
+            tower_lsp::lsp_types::DocumentDiagnosticReport::Full(
+                tower_lsp::lsp_types::RelatedFullDocumentDiagnosticReport {
+                    related_documents: None,
+                    full_document_diagnostic_report: FullDocumentDiagnosticReport {
+                        result_id: None,
+                        items: diagnostics,
+                    },
+                },
+            ),
+        ));
+
+        println!("diagnostic result: {:?}", res);
+
+        res
     }
 
     async fn initialized(&self, _: InitializedParams) {
