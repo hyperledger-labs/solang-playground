@@ -1,8 +1,6 @@
 use anyhow::{Context, Result};
-use serde::{Deserialize, Serialize};
 use std::{
     ffi::OsStr,
-    fmt::Debug,
     fs::{self, File},
     io::{prelude::*, BufReader, ErrorKind},
     os::unix::prelude::PermissionsExt,
@@ -11,9 +9,8 @@ use std::{
 };
 use tempfile::TempDir;
 use tokio::process::Command;
-use typescript_type_def::TypeDef;
 
-use crate::docker_command;
+use crate::services::{CompilationRequest, CompilationResult};
 
 const DOCKER_PROCESS_TIMEOUT_SOFT: Duration = Duration::from_secs(20);
 const DOCKER_PROCESS_TIMEOUT_HARD: Duration = Duration::from_secs(60);
@@ -85,25 +82,6 @@ pub struct Sandbox {
     scratch: TempDir,
     input_file: PathBuf,
     output_dir: PathBuf,
-}
-
-#[derive(Deserialize, Serialize, TypeDef, Debug, Clone)]
-pub struct CompilationRequest {
-    pub source: String,
-}
-
-#[derive(Deserialize, Serialize, TypeDef, PartialEq, Debug, Clone, Eq)]
-#[serde(tag = "type", content = "payload", rename_all = "SCREAMING_SNAKE_CASE")]
-pub enum CompilationResult {
-    Success {
-        wasm: Vec<u8>,
-        stdout: String,
-        stderr: String,
-    },
-    Error {
-        stdout: String,
-        stderr: String,
-    },
 }
 
 impl Sandbox {

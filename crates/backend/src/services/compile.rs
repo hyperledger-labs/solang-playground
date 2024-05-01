@@ -1,8 +1,27 @@
-use crate::services::sandbox::Sandbox;
 use actix_web::{rt::task::spawn_blocking, web::Json, HttpResponse, Responder};
+use serde::{Deserialize, Serialize};
+use typescript_type_def::TypeDef;
 
-use super::sandbox;
-use sandbox::CompilationRequest;
+use crate::services::sandbox::Sandbox;
+
+#[derive(Deserialize, Serialize, TypeDef, Debug, Clone)]
+pub struct CompilationRequest {
+    pub source: String,
+}
+
+#[derive(Deserialize, Serialize, TypeDef, PartialEq, Debug, Clone, Eq)]
+#[serde(tag = "type", content = "payload", rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum CompilationResult {
+    Success {
+        wasm: Vec<u8>,
+        stdout: String,
+        stderr: String,
+    },
+    Error {
+        stdout: String,
+        stderr: String,
+    },
+}
 
 pub async fn route_compile(req: Json<CompilationRequest>) -> impl Responder {
     let compile_result = spawn_blocking(move || {

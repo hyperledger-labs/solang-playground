@@ -10,7 +10,7 @@ use actix_web::{
     App, HttpResponse, HttpServer,
 };
 
-use crate::services::compile::route_compile;
+use crate::services::route_compile;
 use clap::Parser;
 use std::path::Path;
 
