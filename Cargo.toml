@@ -4,7 +4,7 @@ lto = "fat"
 opt-level = "z"
 
 [workspace]
-members = [
+members = [ "crates/backend",
   "crates/browser",
   "crates/solang"
 ]
