@@ -53,7 +53,7 @@ cargo +nightly fmt --all
 
 [tasks.run]
 script = '''
-npm run app --workspace=packages/app
+cargo run -p backend -- --frontend_folder packages/app/dist --port 9000
 '''
 
 [tasks.test]
