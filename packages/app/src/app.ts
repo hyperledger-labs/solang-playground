@@ -80,8 +80,10 @@ export default class App {
       }, 200),
     );
 
-
-
+    document.querySelector("#compile")!.addEventListener("click", () => {
+      let code = model.getValue();
+      console.log("Compiling code: ", code);
+    });
 
 
     // eslint-disable-next-line @typescript-eslint/require-await
