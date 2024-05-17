@@ -4,9 +4,11 @@ lto = "fat"
 opt-level = "z"
 
 [workspace]
-members = [ "crates/backend",
+members = [
+  "crates/backend",
   "crates/browser",
-  "crates/solang"
+  "crates/generate-bindings",
+  "crates/solang",
 ]
 default-members = ["crates/browser"]
 resolver = "1"

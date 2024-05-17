@@ -1,6 +1,3 @@
-mod cli;
-mod services;
-use crate::cli::Opts;
 use actix_files as fs;
 use actix_web::Result;
 use actix_web::{
@@ -9,10 +6,10 @@ use actix_web::{
     web::post,
     App, HttpResponse, HttpServer,
 };
-
-use crate::services::route_compile;
 use clap::Parser;
 use std::path::Path;
+
+use backend::{route_compile, Opts};
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
