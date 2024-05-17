@@ -13,6 +13,8 @@ pub struct Cli {
 fn main() -> std::io::Result<()> {
     let opts: Cli = Cli::parse();
     let target = opts.target.unwrap();
+    std::fs::create_dir_all(&target)?;
+
     let target = format!("{:}/index.d.ts", target);
 
     println!("{}", target);

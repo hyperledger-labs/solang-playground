@@ -14,17 +14,27 @@ cargo build --release --target wasm32-unknown-unknown
 wasm-bindgen --out-dir ./packages/app/assets/wasm --target web --typescript ./target/wasm32-unknown-unknown/release/demo_lsp_browser.wasm
 '''
 
+[tasks.build-bindings]
+script = '''
+cargo run -p generate-bindings -- --target $(pwd)/packages/_generated/commontypes/src
+'''
+
 [tasks.build-app]
 script = '''
 npm run build --workspace=packages/app
 '''
 
 [tasks.build]
-dependencies = ["build-server", "build-app"]
+dependencies = ["build-server", "build-bindings", "build-app"]
 
 [tasks.clean-server]
 script = '''
 cargo clean
+'''
+
+[tasks.clean-bindings]
+script = '''
+rm -rf packages/_generated/commontypes/src
 '''
 
 [tasks.clean-app]
