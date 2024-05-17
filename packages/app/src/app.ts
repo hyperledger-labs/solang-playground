@@ -7,6 +7,84 @@ import Client from "./client";
 import { FromServer, IntoServer } from "./codec";
 import Language from "./language";
 import Server from "./server";
+import Common from '@solangide/commontypes';
+
+
+export type CompileApiRequest = Common.CompilationRequest;
+
+export type CompileApiResponse =
+  | {
+      type: 'OK';
+      payload: Common.CompilationResult;
+    }
+  | {
+      type: 'NETWORK_ERROR';
+    }
+  | {
+      type: 'SERVER_ERROR';
+      payload: { status: number };
+  };
+    
+export type Config = {
+  compileUrl: string;
+};
+
+const mapResponse = async (response: Response): Promise<CompileApiResponse> =>
+  response.status === 200
+    ? {
+        type: 'OK',
+        payload: await response.json(),
+      }
+    : {
+        type: 'SERVER_ERROR',
+        payload: { status: response.status },
+    };
+      
+export const compileRequest = (
+  config: Config,
+  request: CompileApiRequest
+): Promise<CompileApiResponse> => {
+  const opts: RequestInit = {
+    method: 'POST',
+    mode: 'cors',
+    credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(request),
+  };
+
+  return fetch(config.compileUrl || '', opts)
+    .then(mapResponse)
+    .catch(() => ({ type: 'NETWORK_ERROR' }));
+};
+
+export const extractContractSize = (stdout: string): number => {
+  const regex = /([0-9]+\.[0-9]+)K/g;
+  const result = stdout.match(regex);
+  if (!result || !result[1]) return NaN;
+  return parseFloat(result[1]);
+};
+
+
+
+
+export const downloadBlob = (code: number[]): void => {
+  const blob = new Blob([new Uint8Array(code).buffer]);
+
+  const a = document.createElement('a');
+  a.download = 'result.contract';
+  a.href = URL.createObjectURL(blob);
+  a.dataset.downloadurl = ['application/json', a.download, a.href].join(':');
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+
+  setTimeout(() => {
+    URL.revokeObjectURL(a.href);
+  }, 1500);
+};
+
+
 
 class Environment implements monaco.Environment {
   getWorkerUrl(moduleId: string, label: string) {
@@ -83,6 +161,25 @@ export default class App {
     document.querySelector("#compile")!.addEventListener("click", () => {
       let code = model.getValue();
       console.log("Compiling code: ", code);
+      (async () => {
+      const result = await compileRequest(
+        { compileUrl: "http://localhost:9000/compile" || '' },
+        { source: code }
+      );
+    
+    
+      if (result.type === 'OK' && result.payload.type === 'SUCCESS') {
+        const contractSize = extractContractSize(result.payload.payload.stdout);
+      }
+    
+      // Download the wasm file (result.payload.payload.wasm)
+      if (result.type === 'OK' && result.payload.type === 'SUCCESS') {
+        const wasm = result.payload.payload.wasm;
+        downloadBlob(wasm);
+      }
+
+        console.log("Compiling code: ", code);
+      })();
     });
 
 
