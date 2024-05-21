@@ -41,8 +41,8 @@ jobs:
         with:
           time: 120s
 
-      - name: Install jest
-        run: npm install -g jest
+      - name: Install npm dependencies
+        run: cargo make deps-npm
 
       - name: Test
         run: cargo make test-app
