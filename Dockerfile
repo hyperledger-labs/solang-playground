@@ -16,7 +16,6 @@ RUN rustup toolchain install nightly-2024-02-04
 RUN rustup target add wasm32-unknown-unknown
 RUN cargo install cargo-make
 
-
 # Install Node
 RUN apt-get --yes update
 RUN apt-get --yes upgrade
@@ -42,12 +41,14 @@ RUN cargo make build-backend
 
 # Final image
 
+# Start from a base image (comes with docker)
 FROM nestybox/ubuntu-bionic-compose:latest
 
+# Copy the built files
 COPY --from=builder /app/packages/app/dist /app/packages/app/dist
 COPY --from=builder /app/target/release/backend /app/target/release/backend
 
-# Provide startup scripts
+# Startup scripts
 COPY sysbox/on-start.sh /usr/bin
 RUN chmod +x /usr/bin/on-start.sh
 

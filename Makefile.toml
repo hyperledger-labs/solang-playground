@@ -68,9 +68,14 @@ script = '''
 /target/release/backend --frontend_folder packages/app/dist --port 9000
 '''
 
-[tasks.test]
+[tasks.test-backend]
 command = "cargo"
 args = ["test", "--target", "x86_64-unknown-linux-gnu"]
+
+[tasks.test-app]
+script = '''
+npm run test --workspace=packages/app
+'''
 
 
 [tasks.docker-build]

@@ -41,4 +41,5 @@ jobs:
         with:
           time: 120s
 
-      # We should also add docker tests here
+      - name: Test
+        run: cargo make test-app

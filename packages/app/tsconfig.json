@@ -9,5 +9,6 @@
       "@solangide/commontypes/*": ["../_generated/commontypes/src/*"]
     }
   },
+  "include": ["src/**/*.ts", "tests/**/*.ts"],
   "exclude": []
 }
