@@ -41,5 +41,8 @@ jobs:
         with:
           time: 120s
 
+      - name: Install jest
+        run: npm install -g jest
+
       - name: Test
         run: cargo make test-app
