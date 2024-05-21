@@ -1,0 +1,44 @@
+name: Docker
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: actions/checkout@v4
+
+      # Needed for cargo-make
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install cargo make
+        run: cargo install cargo-make
+
+      - name: get Sysbox
+        run: wget https://downloads.nestybox.com/sysbox/releases/v0.6.1/sysbox-ce_0.6.1-0.linux_amd64.deb
+
+      - name: Install Sysbox
+        run: sudo apt-get install ./sysbox-ce_0.6.1-0.linux_amd64.deb
+
+      - name: Configure Sysbox runtime
+        run: sudo cp sysbox/daemon.json /etc/docker/daemon.json
+
+      - name: Restart docker service
+        run: sudo systemctl restart docker.service
+
+      - name: Build docker
+        run: cargo make docker-build
+
+      - name: Run docker
+        run: cargo make docker-run
+
+      - name: Sleep for 120s, allow Docker image to boot up
+        uses: juliangruber/sleep-action@v1
+        with:
+          time: 120s
+
+      # We should also add docker tests here

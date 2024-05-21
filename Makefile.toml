@@ -2,11 +2,18 @@
 default_to_workspace = false
 skip_core_tasks = true
 
-[tasks.deps]
+[tasks.deps-wasm]
 script = '''
 cargo install wasm-bindgen-cli
+'''
+
+[tasks.deps-npm]
+script = '''
 npm install
 '''
+
+[tasks.deps]
+dependencies = ["deps-wasm", "deps-npm"]
 
 [tasks.build-server]
 script = '''
@@ -24,8 +31,13 @@ script = '''
 npm run build --workspace=packages/app
 '''
 
+[tasks.build-backend]
+script = '''
+cargo build -p backend --release
+'''
+
 [tasks.build]
-dependencies = ["build-server", "build-bindings", "build-app"]
+dependencies = ["build-server", "build-bindings", "build-app", "build-backend"]
 
 [tasks.clean-server]
 script = '''
@@ -53,9 +65,25 @@ cargo +nightly fmt --all
 
 [tasks.run]
 script = '''
-cargo run -p backend -- --frontend_folder packages/app/dist --port 9000
+/target/release/backend --frontend_folder packages/app/dist --port 9000
 '''
 
 [tasks.test]
 command = "cargo"
 args = ["test", "--target", "x86_64-unknown-linux-gnu"]
+
+
+[tasks.docker-build]
+script = '''
+docker build -t solang-playground .  
+'''
+
+[tasks.docker-run]
+script = '''
+docker run \
+	  --runtime=sysbox-runc \
+	  --detach \
+	  --volume /tmp:/tmp \
+	  --publish 9000:9000 \
+	  solang-playground
+'''

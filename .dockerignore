@@ -1,0 +1,5 @@
+.github
+node_modules
+packages/*/node_modules
+target
+Dockerfile
