@@ -42,7 +42,7 @@ RUN cargo make build-backend
 # Final image
 
 # Start from a base image (comes with docker)
-FROM nestybox/ubuntu-bionic-compose:latest
+FROM nestybox/debian-buster-docker:latest
 
 # Copy the built files
 COPY --from=builder /app/packages/app/dist /app/packages/app/dist
