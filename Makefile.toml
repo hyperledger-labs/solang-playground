@@ -65,7 +65,7 @@ cargo +nightly fmt --all
 
 [tasks.run]
 script = '''
-/target/release/backend --frontend_folder packages/app/dist --port 9000
+./target/release/backend --frontend_folder packages/app/dist --port 9000
 '''
 
 [tasks.test-backend]

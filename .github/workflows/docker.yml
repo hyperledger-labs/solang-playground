@@ -39,7 +39,7 @@ jobs:
       - name: Allow Docker image to boot up
         uses: juliangruber/sleep-action@v1
         with:
-          time: 360s
+          time: 120s
 
       - name: Install npm dependencies
         run: cargo make deps-npm
