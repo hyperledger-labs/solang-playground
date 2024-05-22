@@ -41,6 +41,9 @@ jobs:
         with:
           time: 120s
 
+      - name: Check if the docker container is running
+        run: docker ps && docker logs playground
+
       - name: Install npm dependencies
         run: cargo make deps-npm
 
