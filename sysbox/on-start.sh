@@ -8,4 +8,4 @@ sleep 2
 docker pull ghcr.io/hyperledger/solang:latest
 
 # start backend server
-/app/target/release/backend --port 9000 --host 0.0.0.0 --frontend_folder /app/packages/app/dist 
+./app/target/release/backend --port 9000 --host 0.0.0.0 --frontend_folder /app/packages/app/dist 
