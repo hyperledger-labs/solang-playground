@@ -93,3 +93,8 @@ docker run \
 	  --publish 9000:9000 \
 	  solang-playground
 '''
+
+[tasks.docker-log]
+script = '''
+docker logs playground
+'''

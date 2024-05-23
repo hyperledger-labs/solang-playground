@@ -4,7 +4,7 @@
 dockerd > /var/log/dockerd.log 2>&1 &
 sleep 2
 
-# pull inner images
+# pull latest solang image
 docker pull ghcr.io/hyperledger/solang:latest
 
 # start backend server

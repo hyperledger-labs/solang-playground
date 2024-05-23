@@ -2,7 +2,7 @@ version: "3.8"
 services:
   playground:
     image: tareknaser360/solang-playground:latest
-    container_name: solang-playground
+    container_name: playground
     restart: always
     volumes:
       - /tmp:/tmp

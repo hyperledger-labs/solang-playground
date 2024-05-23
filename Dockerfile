@@ -38,7 +38,6 @@ RUN cargo make build-app
 RUN cargo make build-backend
 
 
-
 # Final image
 
 # Start from a base image (comes with docker)
@@ -54,4 +53,3 @@ RUN chmod +x /usr/bin/on-start.sh
 
 # Entrypoint
 ENTRYPOINT [ "on-start.sh" ]
-
