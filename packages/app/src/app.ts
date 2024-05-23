@@ -11,7 +11,6 @@ import Common from '@solangide/commontypes';
 
 
 export type CompileApiRequest = Common.CompilationRequest;
-
 export type CompileApiResponse =
   | {
       type: 'OK';
@@ -24,11 +23,9 @@ export type CompileApiResponse =
       type: 'SERVER_ERROR';
       payload: { status: number };
   };
-    
 export type Config = {
   compileUrl: string;
 };
-
 const mapResponse = async (response: Response): Promise<CompileApiResponse> =>
   response.status === 200
     ? {
@@ -56,16 +53,6 @@ export const compileRequest = (
     .then(mapResponse)
     .catch(() => ({ type: 'NETWORK_ERROR' }));
 };
-
-export const extractContractSize = (stdout: string): number => {
-  const regex = /([0-9]+\.[0-9]+)K/g;
-  const result = stdout.match(regex);
-  if (!result || !result[1]) return NaN;
-  return parseFloat(result[1]);
-};
-
-
-
 
 export const downloadBlob = (code: number[]): void => {
   const blob = new Blob([new Uint8Array(code).buffer]);
@@ -162,23 +149,17 @@ export default class App {
       let code = model.getValue();
       console.log("Compiling code: ", code);
       (async () => {
-      const result = await compileRequest(
-        { compileUrl: "http://localhost:9000/compile" || '' },
+        const result = await compileRequest(
+      // FIXME: This should be configurable
+        { compileUrl: "http://localhost:9000/compile" },
         { source: code }
       );
-    
-    
-      if (result.type === 'OK' && result.payload.type === 'SUCCESS') {
-        const contractSize = extractContractSize(result.payload.payload.stdout);
-      }
     
       // Download the wasm file (result.payload.payload.wasm)
       if (result.type === 'OK' && result.payload.type === 'SUCCESS') {
         const wasm = result.payload.payload.wasm;
         downloadBlob(wasm);
       }
-
-        console.log("Compiling code: ", code);
       })();
     });
 

@@ -6,14 +6,14 @@ const BACKEND_URL = 'http://localhost:9000';
 
 jest.setTimeout(30000);
 
-describe('Given the server provides the built frontend', () => {
-  test('When a request is made', async () => {
+describe('Ensuring the server serves the built frontend', () => {
+  test('Verifying a successful response upon making a request', async () => {
     await expect(axios.get(`${BACKEND_URL}/`)).resolves.toHaveProperty('status', 200);
   });
 });
 
-describe('Given the server provides a working compile endpoint', () => {
-  test('When a compile request is made', async () => {
+describe('Ensuring the server’s compile endpoint is operational', () => {
+  test('Verifying a successful compile request', async () => {
     const source = fs
       .readFileSync(path.join(__dirname, '../../../crates/browser/tests/mock_document.sol'))
       .toString();
