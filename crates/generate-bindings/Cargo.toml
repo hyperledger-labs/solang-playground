@@ -7,5 +7,7 @@ edition = "2021"
 [dependencies]
 clap = { version = "4.3", features = ["derive"] }
 serde = "1.0"
-backend = { path = "../backend" }
+
 typescript-type-def = "0.5"
+
+backend = { path = "../backend" }

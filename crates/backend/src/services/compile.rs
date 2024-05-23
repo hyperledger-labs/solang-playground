@@ -1,18 +1,23 @@
-use actix_web::{rt::task::spawn_blocking, web::Json, HttpResponse, Responder};
 use serde::{Deserialize, Serialize};
+
+use actix_web::{rt::task::spawn_blocking, web::Json, HttpResponse, Responder};
 use typescript_type_def::TypeDef;
 
 use crate::services::sandbox::Sandbox;
 
+/// Request to compile a contract
 #[derive(Deserialize, Serialize, TypeDef, Debug, Clone)]
 pub struct CompilationRequest {
+    /// The source code of the contract
     pub source: String,
 }
 
+/// Response from compiling a contract
 #[derive(Deserialize, Serialize, TypeDef, PartialEq, Debug, Clone, Eq)]
 #[serde(tag = "type", content = "payload", rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum CompilationResult {
     Success {
+        /// The compiled contract
         wasm: Vec<u8>,
         stdout: String,
         stderr: String,
@@ -23,6 +28,9 @@ pub enum CompilationResult {
     },
 }
 
+/// Compile a contract
+///
+/// This function is called when a POST request is made to `/compile`
 pub async fn route_compile(req: Json<CompilationRequest>) -> impl Responder {
     let compile_result = spawn_blocking(move || {
         let sandbox = Sandbox::new()?;

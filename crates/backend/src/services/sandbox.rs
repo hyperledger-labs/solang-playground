@@ -1,4 +1,3 @@
-use anyhow::{Context, Result};
 use std::{
     ffi::OsStr,
     fs::{self, File},
@@ -7,13 +6,14 @@ use std::{
     path::{Path, PathBuf},
     time::Duration,
 };
+
+use anyhow::{Context, Result};
 use tempfile::TempDir;
 use tokio::process::Command;
 
 use crate::services::{CompilationRequest, CompilationResult};
 
-const DOCKER_PROCESS_TIMEOUT_SOFT: Duration = Duration::from_secs(20);
-const DOCKER_PROCESS_TIMEOUT_HARD: Duration = Duration::from_secs(60);
+const TIMEOUT: Duration = Duration::from_secs(60);
 const DOCKER_IMAGE_BASE_NAME: &str = "ghcr.io/hyperledger/solang";
 const DOCKER_WORKDIR: &str = "/builds/contract/";
 const DOCKER_OUTPUT: &str = "/playground-result";
@@ -27,7 +27,9 @@ macro_rules! docker_command {
     });
 }
 
+/// Builds the compile command using solang docker image
 pub fn build_compile_command(input_file: &Path, output_dir: &Path) -> Command {
+    // Base docker command
     let mut cmd = docker_command!(
         "run",
         "--detach",
@@ -42,16 +44,13 @@ pub fn build_compile_command(input_file: &Path, output_dir: &Path) -> Command {
         "--memory=1024m",
         "--memory-swap=1200m",
         "--env",
-        format!("PLAYGROUND_TIMEOUT={}", DOCKER_PROCESS_TIMEOUT_SOFT.as_secs()),
+        format!("PLAYGROUND_TIMEOUT={}", TIMEOUT.as_secs()),
         // The entry point of solang is /usr/bin/solang so we need to override it with /bin/sh
         "--entrypoint=/bin/sh",
     );
-
-    if cfg!(feature = "fork-bomb-prevention") {
-        cmd.args(["--pids-limit", "512"]);
-    }
     cmd.kill_on_drop(true);
 
+    // Mounting input file
     let file_name = "input.sol";
     let mut mount_input_file = input_file.as_os_str().to_os_string();
     mount_input_file.push(":");
@@ -59,13 +58,16 @@ pub fn build_compile_command(input_file: &Path, output_dir: &Path) -> Command {
     mount_input_file.push(file_name);
     cmd.arg("--volume").arg(&mount_input_file);
 
+    // Mounting output directory
     let mut mount_output_dir = output_dir.as_os_str().to_os_string();
     mount_output_dir.push(":");
     mount_output_dir.push(DOCKER_OUTPUT);
     cmd.arg("--volume").arg(&mount_output_dir);
 
+    // Using the latest solang image
     cmd.arg(format!("{}:latest", DOCKER_IMAGE_BASE_NAME));
 
+    // Building the compile command
     let remove_command = format!("rm -rf {}*.wasm {}*.contract", DOCKER_OUTPUT, DOCKER_OUTPUT);
     let compile_command = format!(
         "solang compile --target polkadot -o /playground-result {} 2>&1",
@@ -77,6 +79,9 @@ pub fn build_compile_command(input_file: &Path, output_dir: &Path) -> Command {
     cmd
 }
 
+/// Sandbox represents a temporary directory where the contract is compiled
+///
+/// The contract is compiled in a docker container
 pub struct Sandbox {
     #[allow(dead_code)]
     scratch: TempDir,
@@ -85,13 +90,15 @@ pub struct Sandbox {
 }
 
 impl Sandbox {
+    /// Creates a new sandbox
     pub fn new() -> Result<Self> {
         let scratch = TempDir::with_prefix("solang_playground").context("failed to create scratch directory")?;
         let input_file = scratch.path().join("input.rs");
         let output_dir = scratch.path().join("output");
         fs::create_dir(&output_dir).context("failed to create output directory")?;
 
-        fs::set_permissions(&output_dir, wide_open_permissions()).context("failed to set output permissions")?;
+        fs::set_permissions(&output_dir, PermissionsExt::from_mode(0o777))
+            .context("failed to set output permissions")?;
 
         Ok(Sandbox {
             scratch,
@@ -100,21 +107,22 @@ impl Sandbox {
         })
     }
 
+    /// Compiles the contract given the source code
     pub fn compile(&self, req: &CompilationRequest) -> Result<CompilationResult> {
         self.write_source_code(&req.source)?;
 
         let command = build_compile_command(&self.input_file, &self.output_dir);
         println!("Executing command: \n{:#?}", command);
 
-        let output = run_command_with_timeout(command)?;
+        let output = run_command(command)?;
         let file = fs::read_dir(&self.output_dir)
             .context("failed to read output directory")?
             .flatten()
             .map(|entry| entry.path())
             .find(|path| path.extension() == Some(OsStr::new("contract")));
 
-        let stdout = vec_to_str(output.stdout)?;
-        let stderr = vec_to_str(output.stderr)?;
+        let stdout = String::from_utf8(output.stdout).context("failed to convert vec to string")?;
+        let stderr = String::from_utf8(output.stderr).context("failed to convert vec to string")?;
 
         let compile_response = match file {
             Some(file) => match read(&file) {
@@ -128,14 +136,17 @@ impl Sandbox {
         Ok(compile_response)
     }
 
+    /// A helper function to write the source code to the input file
     fn write_source_code(&self, code: &str) -> Result<()> {
         fs::write(&self.input_file, code).context("failed to write source code")?;
-        fs::set_permissions(&self.input_file, wide_open_permissions()).context("failed to set source permissions")?;
+        fs::set_permissions(&self.input_file, PermissionsExt::from_mode(0o777))
+            .context("failed to set source permissions")?;
         println!("Wrote {} bytes of source to {}", code.len(), self.input_file.display());
         Ok(())
     }
 }
 
+/// Reads a file from the given path
 fn read(path: &Path) -> Result<Option<Vec<u8>>> {
     let f = match File::open(path) {
         Ok(f) => f,
@@ -150,11 +161,15 @@ fn read(path: &Path) -> Result<Option<Vec<u8>>> {
     Ok(Some(buffer))
 }
 
+/// Runs a command and waits for it to finish
+///
+/// If the command takes longer than the timeout, it will be
+/// killed and an error will be returned
 #[tokio::main]
-async fn run_command_with_timeout(mut command: Command) -> Result<std::process::Output> {
+async fn run_command(mut command: Command) -> Result<std::process::Output> {
     use std::os::unix::process::ExitStatusExt;
 
-    let timeout = DOCKER_PROCESS_TIMEOUT_HARD;
+    let timeout = TIMEOUT;
     println!("executing command!");
     let output = command.output().await.context("failed to start compiler")?;
     println!("Done! {:?}", output);
@@ -191,12 +206,4 @@ async fn run_command_with_timeout(mut command: Command) -> Result<std::process::
     output.stderr = stderr.to_owned();
 
     Ok(output)
-}
-
-fn wide_open_permissions() -> std::fs::Permissions {
-    PermissionsExt::from_mode(0o777)
-}
-
-fn vec_to_str(v: Vec<u8>) -> Result<String> {
-    String::from_utf8(v).context("failed to convert vec to string")
 }

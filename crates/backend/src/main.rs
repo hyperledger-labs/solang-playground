@@ -1,15 +1,30 @@
+use std::path::Path;
+
+use clap::Parser;
+
 use actix_files as fs;
-use actix_web::Result;
 use actix_web::{
     middleware::{self, DefaultHeaders},
     web,
     web::post,
-    App, HttpResponse, HttpServer,
+    App, HttpResponse, HttpServer, Result,
 };
-use clap::Parser;
-use std::path::Path;
 
 use backend::{route_compile, Opts};
+
+pub struct FrontendState {
+    pub frontend_folder: String,
+}
+
+pub fn route_frontend(at: &str, dir: &str) -> actix_files::Files {
+    fs::Files::new(at, dir).index_file("index.html")
+}
+
+pub async fn route_frontend_version(data: web::Data<FrontendState>) -> Result<actix_files::NamedFile> {
+    Ok(fs::NamedFile::open(
+        Path::new(&data.frontend_folder).join("index.html"),
+    )?)
+}
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -20,7 +35,10 @@ async fn main() -> std::io::Result<()> {
 
     if let Some(path) = &opts.frontend_folder {
         if !Path::new(path).is_dir() {
-            panic!("{} is not a valid directory.", path);
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                format!("Frontend folder not found: {}", path),
+            ));
         }
     }
 
@@ -34,6 +52,7 @@ async fn main() -> std::io::Result<()> {
 
         let mut app = App::new()
             .service(web::resource("/health").to(health))
+            // Enable GZIP compression
             .wrap(middleware::Compress::default())
             .wrap(
                 DefaultHeaders::new()
@@ -42,6 +61,7 @@ async fn main() -> std::io::Result<()> {
             )
             .route("/compile", post().to(|body| route_compile(body)));
 
+        // Serve frontend files if configured via CLI
         match frontend_folder {
             Some(path) => {
                 app = app
@@ -65,18 +85,4 @@ async fn main() -> std::io::Result<()> {
     .await?;
 
     Ok(())
-}
-
-pub struct FrontendState {
-    pub frontend_folder: String,
-}
-
-pub fn route_frontend(at: &str, dir: &str) -> actix_files::Files {
-    fs::Files::new(at, dir).index_file("index.html")
-}
-
-pub async fn route_frontend_version(data: web::Data<FrontendState>) -> Result<actix_files::NamedFile> {
-    Ok(fs::NamedFile::open(
-        Path::new(&data.frontend_folder).join("index.html"),
-    )?)
 }
