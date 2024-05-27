@@ -1,0 +1,11 @@
+version: "3.8"
+services:
+  playground:
+    image: tareknaser360/solang-playground:latest
+    container_name: playground
+    restart: always
+    volumes:
+      - /tmp:/tmp
+    ports:
+      - "9000:9000"
+    runtime: sysbox-runc

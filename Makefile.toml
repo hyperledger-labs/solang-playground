@@ -2,11 +2,18 @@
 default_to_workspace = false
 skip_core_tasks = true
 
-[tasks.deps]
+[tasks.deps-wasm]
 script = '''
 cargo install wasm-bindgen-cli
+'''
+
+[tasks.deps-npm]
+script = '''
 npm install
 '''
+
+[tasks.deps]
+dependencies = ["deps-wasm", "deps-npm"]
 
 [tasks.build-server]
 script = '''
@@ -14,17 +21,32 @@ cargo build --release --target wasm32-unknown-unknown
 wasm-bindgen --out-dir ./packages/app/assets/wasm --target web --typescript ./target/wasm32-unknown-unknown/release/demo_lsp_browser.wasm
 '''
 
+[tasks.build-bindings]
+script = '''
+cargo run -p generate-bindings -- --target $(pwd)/packages/_generated/commontypes/src
+'''
+
 [tasks.build-app]
 script = '''
 npm run build --workspace=packages/app
 '''
 
+[tasks.build-backend]
+script = '''
+cargo build -p backend --release
+'''
+
 [tasks.build]
-dependencies = ["build-server", "build-app"]
+dependencies = ["build-server", "build-bindings", "build-app", "build-backend"]
 
 [tasks.clean-server]
 script = '''
 cargo clean
+'''
+
+[tasks.clean-bindings]
+script = '''
+rm -rf packages/_generated/commontypes/src
 '''
 
 [tasks.clean-app]
@@ -43,9 +65,36 @@ cargo +nightly fmt --all
 
 [tasks.run]
 script = '''
-npm run app --workspace=packages/app
+./target/release/backend --frontend_folder packages/app/dist --port 9000
 '''
 
-[tasks.test]
+[tasks.test-backend]
 command = "cargo"
 args = ["test", "--target", "x86_64-unknown-linux-gnu"]
+
+[tasks.test-app]
+script = '''
+npm run test --workspace=packages/app
+'''
+
+
+[tasks.docker-build]
+script = '''
+docker build -t solang-playground .  
+'''
+
+[tasks.docker-run]
+script = '''
+docker run \
+	  --runtime=sysbox-runc \
+	  --name playground \
+	  --detach \
+	  --volume /tmp:/tmp \
+	  --publish 9000:9000 \
+	  solang-playground
+'''
+
+[tasks.docker-log]
+script = '''
+docker logs playground
+'''

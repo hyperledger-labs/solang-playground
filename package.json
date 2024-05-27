@@ -3,6 +3,9 @@
   "workspaces": [
     "packages/app"
   ],
+  "scripts": {
+    "test": "npm run test --workspaces"
+  },
   "dependencies": {
     "tree-sitter-javascript": "^0.19.0",
     "web-tree-sitter-wasm-bindgen": "silvanshade/web-tree-sitter-wasm-bindgen"
