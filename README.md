@@ -51,4 +51,4 @@ Our Dockerfile for Solang Playground relies on Nestybox's Sysbox runtime. This h
 ## Acknowledgments
 
 - This project started out as a fork of https://github.com/silvanshade/tower-lsp-web-demo. [Darin Morrison](https://github.com/silvanshade) created a demo project where an example tower-lsp language server was compiled to WASM and integrated in a Monaco web editor.
-- The structure of `solang-playground` is significantly inspired by `ink-playground`. This includes, but is not limited to, the implementation of running the Solang compiler functionality in a sandboxed environment.
+- The structure of `solang-playground` is significantly inspired by [`ink-playground`](https://github.com/use-ink/ink-playground). This includes, but is not limited to, the implementation of running the Solang compiler functionality in a sandboxed environment.
