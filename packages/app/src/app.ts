@@ -13,15 +13,15 @@ import Common from '@solangide/commontypes';
 export type CompileApiRequest = Common.CompilationRequest;
 export type CompileApiResponse =
   | {
-      type: 'OK';
-      payload: Common.CompilationResult;
-    }
+    type: 'OK';
+    payload: Common.CompilationResult;
+  }
   | {
-      type: 'NETWORK_ERROR';
-    }
+    type: 'NETWORK_ERROR';
+  }
   | {
-      type: 'SERVER_ERROR';
-      payload: { status: number };
+    type: 'SERVER_ERROR';
+    payload: { status: number };
   };
 export type Config = {
   compileUrl: string;
@@ -29,14 +29,14 @@ export type Config = {
 const mapResponse = async (response: Response): Promise<CompileApiResponse> =>
   response.status === 200
     ? {
-        type: 'OK',
-        payload: await response.json(),
-      }
+      type: 'OK',
+      payload: await response.json(),
+    }
     : {
-        type: 'SERVER_ERROR',
-        payload: { status: response.status },
+      type: 'SERVER_ERROR',
+      payload: { status: response.status },
     };
-      
+
 export const compileRequest = (
   config: Config,
   request: CompileApiRequest
@@ -99,20 +99,33 @@ export default class App {
   createModel(client: Client): monaco.editor.ITextModel {
     const language = Language.initialize(client);
 
-    const value = `
-    // SPDX-License-Identifier: MIT
-    pragma solidity >=0.6.12 <0.9.0;
-    
-    contract HelloWorld {
-      /**
-       * @dev Prints Hello World string
-       */
-      function print() public pure returns (string memory) {
-        return "Hello World!";
-      }
-    }
-    
-`.replace(/^\s*\n/gm, "");
+
+
+    // FIXME: There should be a way to load the initial code from a file. `fs` is not available in the browser.
+    const value =
+      `contract flipper {
+  bool private value;
+
+  /// Constructor that initializes the \`bool\` value to the given \`init_value\`.
+  constructor(bool initvalue) {
+    value = initvalue;
+  }
+
+  /// A message that can be called on instantiated contracts.
+  /// This one flips the value of the stored \`bool\` from \`true\`
+  /// to \`false\` and vice versa.
+  function flip() public {
+    value = !value;
+  }
+
+  /// Simply returns the current value of our \`bool\`.
+  function get() public view returns (bool) {
+    return value;
+  }
+}
+`;
+
+
     const id = language.id;
     const uri = monaco.Uri.parse("inmemory://demo.js");
 
@@ -150,16 +163,16 @@ export default class App {
       console.log("Compiling code: ", code);
       (async () => {
         const result = await compileRequest(
-      // FIXME: This should be configurable
-        { compileUrl: "http://localhost:9000/compile" },
-        { source: code }
-      );
-    
-      // Download the wasm file (result.payload.payload.wasm)
-      if (result.type === 'OK' && result.payload.type === 'SUCCESS') {
-        const wasm = result.payload.payload.wasm;
-        downloadBlob(wasm);
-      }
+          // FIXME: This should be configurable
+          { compileUrl: "http://localhost:9000/compile" },
+          { source: code }
+        );
+
+        // Download the wasm file (result.payload.payload.wasm)
+        if (result.type === 'OK' && result.payload.type === 'SUCCESS') {
+          const wasm = result.payload.payload.wasm;
+          downloadBlob(wasm);
+        }
       })();
     });
 
