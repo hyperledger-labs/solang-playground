@@ -69,14 +69,17 @@ script = '''
 '''
 
 [tasks.test-backend]
-command = "cargo"
-args = ["test", "--target", "x86_64-unknown-linux-gnu"]
+script = '''
+cargo test
+'''
 
 [tasks.test-app]
 script = '''
 npm run test --workspace=packages/app
 '''
 
+[tasks.test]
+dependencies = ["test-backend", "test-app"]
 
 [tasks.docker-build]
 script = '''

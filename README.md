@@ -22,6 +22,16 @@ cargo make build
 cargo make run
 ```
 
+By default, the server will be available at `http://localhost:9000`.
+
+## Testing
+
+Solang Playground test suite includes tests for the backend and the frontend. To run all available tests, you have to first start the server with `cargo make run` in a separate terminal, and then run the following command:
+
+```sh
+cargo make test
+```
+
 ## Project Structure
 
 This repository has two main parts:
@@ -33,9 +43,25 @@ This repository has two main parts:
   - `browser`: Contains the monaco editor web server
 - **`packages`**: TypeScript project for the frontend app, served by the Rust backend.
 
-## Docker Setup
+## Docker
 
-Our Dockerfile for Solang Playground relies on Nestybox's Sysbox runtime. This helps compile Solang Smart Contracts within a protected Docker environment. We also use a multi-stage build process to improve image size.
+### Pre-requisites
+
+The Dockerfile for Solang Playground relies on Nestybox's Sysbox runtime. This helps compile Solang Smart Contracts within a protected Docker environment. We also use a multi-stage build process to improve image size.
+
+Here are the [instructions to install Sysbox](https://github.com/nestybox/sysbox/blob/master/docs/user-guide/install-package.md#installing-sysbox)
+
+### Building the Docker Image
+
+```sh
+docker build -t solang-playground .
+```
+
+The docker image is also available on Docker Hub:
+
+```sh
+docker pull tareknaser360/solang-playground-amd64
+```
 
 ## Roadmap and Status
 
@@ -51,4 +77,4 @@ Our Dockerfile for Solang Playground relies on Nestybox's Sysbox runtime. This h
 ## Acknowledgments
 
 - This project started out as a fork of https://github.com/silvanshade/tower-lsp-web-demo. [Darin Morrison](https://github.com/silvanshade) created a demo project where an example tower-lsp language server was compiled to WASM and integrated in a Monaco web editor.
-- The structure of `solang-playground` is significantly inspired by [`ink-playground`](https://github.com/use-ink/ink-playground). This includes, but is not limited to, the implementation of running the Solang compiler functionality in a sandboxed environment.
+- The structure of `solang-playground` is significantly inspired by [`ink-playground`](https://github.com/use-ink/ink-playground). This includes the implementation of running the Solang compiler functionality in a sandboxed environment.
