@@ -64,8 +64,8 @@ pub fn build_compile_command(input_file: &Path, output_dir: &Path) -> Command {
     mount_output_dir.push(DOCKER_OUTPUT);
     cmd.arg("--volume").arg(&mount_output_dir);
 
-    // Using the latest solang image
-    cmd.arg(format!("{}:latest", DOCKER_IMAGE_BASE_NAME));
+    // Using the solang image version v0.3.3
+    cmd.arg(format!("{}:v0.3.3", DOCKER_IMAGE_BASE_NAME));
 
     // Building the compile command
     let remove_command = format!("rm -rf {}*.wasm {}*.contract", DOCKER_OUTPUT, DOCKER_OUTPUT);

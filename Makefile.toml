@@ -12,8 +12,13 @@ script = '''
 npm install
 '''
 
+[tasks.deps-docker]
+script = '''
+docker pull ghcr.io/hyperledger/solang:v0.3.3
+'''
+
 [tasks.deps]
-dependencies = ["deps-wasm", "deps-npm"]
+dependencies = ["deps-wasm", "deps-npm", "deps-docker"]
 
 [tasks.build-server]
 script = '''

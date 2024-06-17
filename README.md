@@ -51,10 +51,16 @@ The Dockerfile for Solang Playground relies on Nestybox's Sysbox runtime. This h
 
 Here are the [instructions to install Sysbox](https://github.com/nestybox/sysbox/blob/master/docs/user-guide/install-package.md#installing-sysbox)
 
-### Building the Docker Image
+### Building the Docker Image Locally
 
 ```sh
 docker build -t solang-playground .
+```
+
+You can then run the image with:
+
+```sh
+cargo make docker-run
 ```
 
 The docker image is also available on Docker Hub:
