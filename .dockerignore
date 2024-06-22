@@ -1,5 +1,6 @@
 .github
 node_modules
 packages/*/node_modules
+docs
 target
 Dockerfile
