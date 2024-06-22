@@ -14,7 +14,7 @@ npm install
 
 [tasks.deps-docker]
 script = '''
-docker pull ghcr.io/hyperledger/solang:v0.3.3
+docker pull ghcr.io/hyperledger/solang@sha256:8776a9bd756664f7bf8414710d1a799799bf6fedc1c8f9f0bda17e76749dea7a 
 '''
 
 [tasks.deps]

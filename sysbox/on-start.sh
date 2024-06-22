@@ -4,8 +4,8 @@
 dockerd > /var/log/dockerd.log 2>&1 &
 sleep 2
 
-# pull solang image version v0.3.3
-docker pull ghcr.io/hyperledger/solang:v0.3.3
+# pull solang image 
+docker pull ghcr.io/hyperledger/solang@sha256:8776a9bd756664f7bf8414710d1a799799bf6fedc1c8f9f0bda17e76749dea7a 
 
 # start backend server
 ./app/target/release/backend --port 9000 --host 0.0.0.0 --frontend_folder /app/packages/app/dist 
