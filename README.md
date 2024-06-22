@@ -24,6 +24,10 @@ cargo make run
 
 By default, the server will be available at `http://localhost:9000`.
 
+## Interacting with Smart Contracts on Chain
+
+Once you have compiled your smart contracts using Solang Playground, you can deploy and interact with them on-chain. See [tutorial](docs/interact_with_contracts_on_chain.md) for detailed instructions.
+
 ## Testing
 
 Solang Playground test suite includes tests for the backend and the frontend. To run all available tests, you have to first start the server with `cargo make run` in a separate terminal, and then run the following command:
