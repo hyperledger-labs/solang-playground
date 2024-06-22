@@ -176,6 +176,11 @@ export default class App {
       })();
     });
 
+    document.querySelector("#interact")!.addEventListener("click", () => {
+      console.log("Redirecting to https://ui.use.ink/");
+      window.open("https://ui.use.ink/");
+    });
+
 
     // eslint-disable-next-line @typescript-eslint/require-await
     client.pushAfterInitializeHook(async () => {
