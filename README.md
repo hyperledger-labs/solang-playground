@@ -68,7 +68,7 @@ cargo make docker-run
 The docker image is also available on Docker Hub:
 
 ```sh
-docker pull tareknaser360/solang-playground-amd64
+docker pull salaheldin18/solang-playground-amd64
 ```
 
 ## Roadmap and Status
