@@ -161,12 +161,26 @@ export default class App {
     document.querySelector("#compile")!.addEventListener("click", () => {
       let code = model.getValue();
       console.log("Compiling code: ", code);
+      client.printToConsole(proto.MessageType.Info, "Compiling contract...");
+
       (async () => {
         const result = await compileRequest(
           // FIXME: This should be configurable
           { compileUrl: "http://localhost:9000/compile" },
           { source: code }
         );
+
+        if (result.type === 'OK' && result.payload.type === 'SUCCESS') {
+          client.notify(proto.LogMessageNotification.type.method, {
+            type: proto.MessageType.Info,
+            message: "Compilation successful",
+          });
+        } else {
+          let message = result.type === 'SERVER_ERROR'
+            ? `Server error: ${result.payload.status}`
+            : 'Network error';
+          client.printToConsole(proto.MessageType.Error, message);
+        }
 
         // Download the wasm file (result.payload.payload.wasm)
         if (result.type === 'OK' && result.payload.type === 'SUCCESS') {
