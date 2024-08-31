@@ -181,6 +181,16 @@ export default class App {
       window.open("https://ui.use.ink/");
     });
 
+    document.querySelector("#docs")!.addEventListener("click", () => {
+      console.log("Redirecting to https://solang.readthedocs.io/");
+      window.open("https://solang.readthedocs.io/");
+    });
+
+    document.querySelector("#github")!.addEventListener("click", () => {
+      console.log("Redirecting to github.com/hyperledger-labs/solang-playground");
+      window.open("https://github.com/hyperledger-labs/solang-playground");
+    });
+
 
     // eslint-disable-next-line @typescript-eslint/require-await
     client.pushAfterInitializeHook(async () => {
