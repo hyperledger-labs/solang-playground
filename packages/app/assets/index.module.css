@@ -1,36 +1,39 @@
 :root {
-  --blue:#033c73;
-  --indigo:#6610f2;
-  --purple:#6f42c1;
-  --pink:#e83e8c;
-  --red:#c71c22;
-  --orange:#fd7e14;
-  --yellow:#dd5600;
-  --green:#73a839;
-  --teal:#20c997;
-  --cyan:#2fa4e7;
-  --white:#fff;
-  --gray:#868e96;
-  --gray-dark:#343a40;
-  --primary:#2fa4e7;
-  --secondary:#e9ecef;
-  --success:#73a839;
-  --info:#033c73;
-  --warning:#dd5600;
-  --danger:#c71c22;
-  --light:#f8f9fa;
-  --text:#343a40;
-  --dark:#343a40;
+  --blue: #033c73;
+  --indigo: #6610f2;
+  --purple: #6f42c1;
+  --pink: #e83e8c;
+  --red: #c71c22;
+  --orange: #fd7e14;
+  --yellow: #dd5600;
+  --green: #73a839;
+  --teal: #20c997;
+  --cyan: #2fa4e7;
+  --white: #fff;
+  --gray: #868e96;
+  --gray-dark: #343a40;
+  --primary: #2fa4e7;
+  --secondary: #e9ecef;
+  --success: #73a839;
+  --info: #033c73;
+  --warning: #dd5600;
+  --danger: #c71c22;
+  --light: #f8f9fa;
+  --text: #343a40;
+  --dark: #343a40;
   --body-bg: #fff;
   --text-bg-mark: #fcf8e3;
   --custom-select: #fff;
-  --breakpoint-xs:0;
-  --breakpoint-sm:576px;
-  --breakpoint-md:768px;
-  --breakpoint-lg:992px;
-  --breakpoint-xl:1200px;
-  --font-family-sans-serif:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";
-  --font-family-monospace:SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace
+  --breakpoint-xs: 0;
+  --breakpoint-sm: 576px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 992px;
+  --breakpoint-xl: 1200px;
+  --font-family-sans-serif: -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-family-monospace: SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
 }
 
 a {
@@ -43,112 +46,128 @@ a:visited {
 
 body {
   display: flex;
+  flex-direction: column;
   height: 100vh;
-  background-color: black;
+  background-color:#1e1e1e;
   color: white;
 }
 
-div[id=container] {
+/* Top Bar */
+
+div[id="left-section"],
+div[id="right-section"] {
   display: flex;
-  flex-direction: column; 
   justify-content: space-between;
-  width: 75%;
-  height: 90%;
-  min-width: 800px;
-  min-height: 600px;
-  margin: auto;
+  margin-top: 16px;
+  margin-left: 16px;
+  margin-right: 16px;
 }
 
-#buttonContainer {
+
+/* Main Content */
+
+div[id="container"] {
   display: flex;
-  justify-content: flex-start; 
-  gap: 10px; 
-  margin: 10px 0; 
+  flex-direction: column;
+  justify-content: space-between;
+  height: calc(100% - 50px);
+  width: 100%;
+  margin: auto;
+  padding: 20px;
+  box-sizing: border-box;
 }
 
-#compile, #interact {
-  margin: 10px;
-}
-
-h1[id=title] {
+h1[id="title"] {
   grid-column: 1 / 3;
   grid-row: 1;
   font-family: monospace;
   font-size: 2em;
 }
 
-p[id=synopsis] {
-  color: lightgrey;
-  grid-column: 1 / 3;
-  grid-row: 2;
-  margin: 0;
-  font-family: sans-serif;
-  font-size: 10pt;
-  line-height: 1.5em;
-}
-
-p[id=features] {
-  grid-column: 1 / 3;
-  grid-row: 3;
-  text-align: center;
-  font-family: sans-serif;
-  font-style: italic;
-  font-size: 10pt;
-  line-height: 1.5em;
-  color: lightgrey;
-}
-
-div[id=cell-editor] {
+div[id="cell-editor"] {
+  flex-grow: 1;
+  min-height: 0;
+  max-height: 70%;
   grid-column: 1 / 2;
   grid-row: 4;
+  border-top: 2px solid black;
 }
 
-[id=cell-editor] div[id=editor] {
-  border: 1px solid black;
-  height: calc(100% - 1px);
-  padding-right: 1.5em;
+[id="cell-editor"] div[id="editor"] {
+  height: 100%; 
 }
 
-div[id=cell-syntax] {
+div[id="cell-syntax"] {
   grid-column: 2 / 3;
   grid-row: 4;
 }
 
-div[id=cell-syntax] textarea {
+div[id="cell-syntax"] textarea {
   height: 100%;
 }
 
-[id=container] label {
+[id="container"] label {
   display: block;
   font-family: monospace;
   font-size: 14pt;
 }
 
-div[id=cell-console] {
+div[id="cell-console"] {
+  flex-grow: 3; 
   grid-column: 1 / 3;
   grid-row: 5;
   margin-top: 2em;
   overflow: hidden;
+  background-color: #1e1e1e; 
+  color: #d4d4d4; 
+  padding: 10px; 
+  border-radius: 4px; 
+  border-top: 2px solid black;
 }
 
-div[id=cell-client] {
+div[id="cell-console"] textarea {
+  background-color: #1e1e1e; 
+  color: #d4d4d4; 
+  border: none; 
+  width: 100%;
+  height: 100%; 
+  resize: none;
+  font-family: monospace;
+  font-size: 10pt;
+  overflow-y: auto;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+div[id="cell-console"] textarea:focus {
+  outline: none; 
+  border: 1px solid #007acc; 
+}
+
+div[id="cell-client"],
+div[id="cell-server"] {
+  grid-column: 1 / 3;
+  overflow: hidden;
+}
+
+div[id="cell-client"] {
   grid-column: 1 / 3;
   grid-row: 6;
   overflow: hidden;
 }
 
-div[id=cell-server] {
+div[id="cell-server"] {
   grid-column: 1 / 3;
   grid-row: 7;
   overflow: hidden;
 }
 
-div[id=container] textarea {
+div[id="container"] textarea {
   display: block;
   box-sizing: border-box;
   width: 100%;
   resize: none;
   overflow-y: auto;
   font-family: monospace;
-  font-family: 10pt;
+  font-size: 10pt;
 }
