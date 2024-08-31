@@ -42,11 +42,12 @@
       <label for="channel-console">console</label>
       <textarea id="channel-console" autocomplete="off" spellcheck="off" wrap="off" readonly rows="3"></textarea>
     </div>
-    <div id="cell-client">
+    <!--Note: Remove "display: none" to show the message trace (For debugging purposes) -->
+    <div id="cell-client" style="display: none;">
       <label for="channel-client">message trace (client ⇒ server)</label>
       <textarea id="channel-client" autocomplete="off" spellcheck="off" wrap="off" readonly rows="4"></textarea>
     </div>
-    <div id="cell-server">
+    <div id="cell-server" style="display: none;">
       <label for="channel-server">message trace (client ⇐ server)</label>
       <textarea id="channel-server" autocomplete="off" spellcheck="off" wrap="off" readonly rows="8"></textarea>
     </div>
