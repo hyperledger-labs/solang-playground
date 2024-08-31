@@ -79,8 +79,8 @@ docker pull salaheldin18/solang-playground-amd64
 | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ----------- |
 | Compile Solang language server to WASM, and integrate it to a Monaco editor. | Allow editing Solidity source files in the browser, with smarts provided from the server (Diagnostics, code completion, etc..) | Completed   |
 | Host Solang on a backend service                                             | Allow compiling smart contracts on the web editor                                                                              | Completed   |
-| Support Polkadot API                                                         | Allow the deployment and interaction with Solidity contracts on Polkadot                                                       | In progress |
-| IDE Improvements                                                             | Improve developer experience when trying out the IDE, making it a more attractive option for Solidity devs                     | Not started |
+| Support Polkadot API                                                         | Allow the deployment and interaction with Solidity contracts on Polkadot                                                       | Completed   |
+| IDE Improvements                                                             | Improve developer experience when trying out the IDE, making it a more attractive option for Solidity devs                     | In progress |
 
 ## Acknowledgments
 
