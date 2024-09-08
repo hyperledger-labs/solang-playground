@@ -170,11 +170,11 @@ export default class App {
           { source: code }
         );
 
+        // If the compilation was successful, download the wasm blob and print a success message
         if (result.type === 'OK' && result.payload.type === 'SUCCESS') {
-          client.notify(proto.LogMessageNotification.type.method, {
-            type: proto.MessageType.Info,
-            message: "Compilation successful",
-          });
+          client.printToConsole(proto.MessageType.Info, "Compilation successful");
+          const wasm = result.payload.payload.wasm;
+          downloadBlob(wasm);
         } else {
           let message = result.type === 'SERVER_ERROR'
             ? `Server error: ${result.payload.status}`
@@ -182,11 +182,7 @@ export default class App {
           client.printToConsole(proto.MessageType.Error, message);
         }
 
-        // Download the wasm file (result.payload.payload.wasm)
-        if (result.type === 'OK' && result.payload.type === 'SUCCESS') {
-          const wasm = result.payload.payload.wasm;
-          downloadBlob(wasm);
-        }
+
       })();
     });
 
