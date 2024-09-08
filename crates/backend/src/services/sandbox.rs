@@ -73,7 +73,7 @@ pub fn build_compile_command(input_file: &Path, output_dir: &Path) -> Command {
     // Building the compile command
     let remove_command = format!("rm -rf {}*.wasm {}*.contract", DOCKER_OUTPUT, DOCKER_OUTPUT);
     let compile_command = format!(
-        "solang compile --target polkadot -o /playground-result {} 2>&1",
+        "solang compile --target polkadot -o /playground-result {} > /playground-result/stdout.log 2> /playground-result/stderr.log",
         file_name
     );
     let sh_command = format!("{} && {}", remove_command, compile_command);
@@ -96,7 +96,7 @@ impl Sandbox {
     /// Creates a new sandbox
     pub fn new() -> Result<Self> {
         let scratch = TempDir::with_prefix("solang_playground").context("failed to create scratch directory")?;
-        let input_file = scratch.path().join("input.rs");
+        let input_file = scratch.path().join("input.sol");
         let output_dir = scratch.path().join("output");
         fs::create_dir(&output_dir).context("failed to create output directory")?;
 
@@ -124,16 +124,62 @@ impl Sandbox {
             .map(|entry| entry.path())
             .find(|path| path.extension() == Some(OsStr::new("contract")));
 
+        // The file `stdout.log` is in the same directory as the contract file
+        let compile_log_stdout_file_path = fs::read_dir(&self.output_dir)
+            .context("failed to read output directory")?
+            .flatten()
+            .find(|entry| entry.file_name() == "stdout.log")
+            .map(|entry| entry.path());
+
+        // The file `stderr.log` is in the same directory as the contract file
+        let compile_log_stderr_file_path = fs::read_dir(&self.output_dir)
+            .context("failed to read output directory")?
+            .flatten()
+            .find(|entry| entry.file_name() == "stderr.log")
+            .map(|entry| entry.path());
+
+        let compile_stdout = match compile_log_stdout_file_path {
+            Some(path) => fs::read_to_string(&path).context("failed to read compile stdout")?,
+            None => "No stdout.log file found".to_string(),
+        };
+
+        let compile_stderr = match compile_log_stderr_file_path {
+            Some(path) => fs::read_to_string(&path).context("failed to read compile stderr")?,
+            None => "No stderr.log file found".to_string(),
+        };
+        let compile_stderr = extract_error_message(&compile_stderr);
+
         let stdout = String::from_utf8(output.stdout).context("failed to convert vec to string")?;
         let stderr = String::from_utf8(output.stderr).context("failed to convert vec to string")?;
 
         let compile_response = match file {
             Some(file) => match read(&file) {
-                Ok(Some(wasm)) => CompilationResult::Success { wasm, stderr, stdout },
-                Ok(None) => CompilationResult::Error { stderr, stdout },
-                Err(_) => CompilationResult::Error { stderr, stdout },
+                Ok(Some(wasm)) => CompilationResult::Success {
+                    wasm,
+                    stderr,
+                    stdout,
+                    compile_stdout,
+                    compile_stderr,
+                },
+                Ok(None) => CompilationResult::Error {
+                    stderr,
+                    stdout,
+                    compile_stdout,
+                    compile_stderr,
+                },
+                Err(_) => CompilationResult::Error {
+                    stderr,
+                    stdout,
+                    compile_stdout,
+                    compile_stderr,
+                },
             },
-            None => CompilationResult::Error { stderr, stdout },
+            None => CompilationResult::Error {
+                stderr,
+                stdout,
+                compile_stdout,
+                compile_stderr,
+            },
         };
 
         Ok(compile_response)
@@ -175,9 +221,8 @@ async fn run_command(mut command: Command) -> Result<std::process::Output> {
     let timeout = TIMEOUT;
     println!("executing command!");
     let output = command.output().await.context("failed to start compiler")?;
-    println!("Done! {:?}", output);
-    let stdout = String::from_utf8_lossy(&output.stdout);
 
+    let stdout = String::from_utf8_lossy(&output.stdout);
     let id = stdout.lines().next().context("missing compiler ID")?.trim();
     let stderr = &output.stderr;
 
@@ -209,4 +254,26 @@ async fn run_command(mut command: Command) -> Result<std::process::Output> {
     output.stderr = stderr.to_owned();
 
     Ok(output)
+}
+
+pub fn extract_error_message(log: &str) -> String {
+    // Remove ANSI escape codes (used for terminal colors)
+    let cleaned_log = remove_ansi_escape_codes(log);
+
+    // Find the start of the actual error message by looking for the keyword "error:"
+    if let Some(start) = cleaned_log.find("error:") {
+        // Extract the error message starting from the keyword "error:" but ignore the keyword itself
+        let error_message = &cleaned_log[start + "error:".len()..];
+        error_message.to_string()
+    } else {
+        // If no error message is found, return a default message
+        "No error message found".to_string()
+    }
+}
+
+/// Helper function to remove ANSI escape codes from a string
+fn remove_ansi_escape_codes(log: &str) -> String {
+    // Use a regex pattern to remove ANSI escape codes
+    let re = regex::Regex::new(r"\x1B\[[0-9;]*[a-zA-Z]").unwrap();
+    re.replace_all(log, "").to_string()
 }

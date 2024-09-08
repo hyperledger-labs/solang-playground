@@ -2,12 +2,9 @@ use solang::languageserver::{Files, GlobalCache, SolangServer};
 use std::collections::HashMap;
 use std::str::FromStr;
 use tokio::sync::Mutex;
-use tower_lsp::lsp_types::{
-    Diagnostic, DiagnosticSeverity,Position, Range,
-};
+use tower_lsp::lsp_types::{Diagnostic, DiagnosticSeverity, Position, Range};
 use tower_lsp::LspService;
 use tower_test::mock::Spawn;
-
 
 use solang::Target;
 
@@ -15,8 +12,6 @@ use solang::Target;
 mod tests {
 
     use super::*;
-
-    
 
     const INITIALIZE_REQUEST: &'static str = r#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"processId":null,"clientInfo":{"name":"demo-language-client"},"capabilities":{},"rootUri":null}}"#;
     const INITIALIZE_EXPECTED_RESPONSE: &'static str = r#"{"jsonrpc":"2.0","result":{"capabilities":{"completionProvider":{"resolveProvider":false,"triggerCharacters":["."]},"declarationProvider":true,"definitionProvider":true,"documentFormattingProvider":true,"executeCommandProvider":{"commands":[]},"hoverProvider":true,"implementationProvider":true,"referencesProvider":true,"renameProvider":true,"signatureHelpProvider":{},"textDocumentSync":2,"typeDefinitionProvider":true,"workspace":{"workspaceFolders":{"changeNotifications":true,"supported":true}},"workspaceSymbolProvider":true}},"id":1}"#;
@@ -28,7 +23,6 @@ mod tests {
     const DIAGNOSTIC_REQUEST: &str = r#"{"jsonrpc":"2.0","id":3,"method":"textDocument/diagnostic","params":{"textDocument":{"uri":"inmemory://demo.js","languageId":"solidity","version":0,"text":"    // SPDX-License-Identifier: MIT\n    pragma solidity >=0.6.12 <0.9.0;\n    contract HelloWorld {\n      /**\n       * @dev Prints Hello World string\n       */\n      function print() public pure returns (string memory) {\n        return \"Hello World!\";\n      }\n    }\n"}}}"#;
 
     const CHANGE_DOCUMENT_REQUEST: &str = r#"{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"version":0,"uri":"inmemory://demo.js"},"contentChanges":[{"range":{"start":{"line":0,"character":0},"end":{"line":11,"character":0}},"text":"    // SPDX-License-Identifier: MIT\n    pragma solidity >=0.6.12 <0.9.0;\n    contract HelloWorld {\n      uint sesa;\n      /**\n       * @dev Prints Hello World string\n       */\n      function print() public pure returns (string memory) {\n        return \"Hello World!\";\n      }\n    }\n"}]}}"#;
-
 
     fn create_mock_service() -> Spawn<LspService<SolangServer>> {
         let importpaths = Vec::new();

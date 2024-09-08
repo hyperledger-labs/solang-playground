@@ -2065,10 +2065,7 @@ impl LanguageServer for SolangServer {
 
     async fn initialized(&self, _: InitializedParams) {
         self.client
-            .log_message(
-                MessageType::INFO,
-                format!("Solang language server initialized"),
-            )
+            .log_message(MessageType::INFO, format!("Solang language server initialized"))
             .await;
     }
 
