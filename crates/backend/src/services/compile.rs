@@ -19,12 +19,24 @@ pub enum CompilationResult {
     Success {
         /// The compiled contract
         wasm: Vec<u8>,
+        /// The standard output of the docker command   
         stdout: String,
+        /// The standard error of the docker command
         stderr: String,
+        /// The standard output of the compile command
+        compile_stdout: String,
+        /// The standard error of the compile command
+        compile_stderr: String,
     },
     Error {
+        /// The standard output of the docker command
         stdout: String,
+        /// The standard error of the docker command
         stderr: String,
+        /// The standard output of the compile command
+        compile_stdout: String,
+        /// The standard error of the compile command
+        compile_stderr: String,
     },
 }
 

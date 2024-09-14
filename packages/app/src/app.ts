@@ -161,6 +161,8 @@ export default class App {
     document.querySelector("#compile")!.addEventListener("click", () => {
       let code = model.getValue();
       console.log("Compiling code: ", code);
+      client.printToConsole(proto.MessageType.Info, "Compiling contract...");
+
       (async () => {
         const result = await compileRequest(
           // FIXME: This should be configurable
@@ -168,17 +170,43 @@ export default class App {
           { source: code }
         );
 
-        // Download the wasm file (result.payload.payload.wasm)
-        if (result.type === 'OK' && result.payload.type === 'SUCCESS') {
-          const wasm = result.payload.payload.wasm;
-          downloadBlob(wasm);
+        console.log("Compilation result: ", result);
+
+        // If the compilation was successful, download the wasm blob and print a success message
+        if (result.type === 'OK') {
+          if (result.payload.type === 'SUCCESS') {
+            client.printToConsole(proto.MessageType.Info, "Compilation successful");
+            const wasm = result.payload.payload.wasm;
+            downloadBlob(wasm);
+          }
+          else {
+            let message = result.payload.payload.compile_stderr;
+            client.printToConsole(proto.MessageType.Error, message);
+          }
+        } else {
+          let message = result.type === 'SERVER_ERROR'
+            ? `Server error: ${result.payload.status}`
+            : 'Network error';
+          client.printToConsole(proto.MessageType.Error, message);
         }
+
+
       })();
     });
 
     document.querySelector("#interact")!.addEventListener("click", () => {
       console.log("Redirecting to https://ui.use.ink/");
       window.open("https://ui.use.ink/");
+    });
+
+    document.querySelector("#docs")!.addEventListener("click", () => {
+      console.log("Redirecting to https://solang.readthedocs.io/");
+      window.open("https://solang.readthedocs.io/");
+    });
+
+    document.querySelector("#github")!.addEventListener("click", () => {
+      console.log("Redirecting to github.com/hyperledger-labs/solang-playground");
+      window.open("https://github.com/hyperledger-labs/solang-playground");
     });
 
 

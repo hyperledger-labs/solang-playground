@@ -17,6 +17,7 @@ tokio = { version = "1.28.2", features = [
 ] }
 anyhow = "1.0"
 log = "0.4"
+regex = "1.10"
 
 typescript-type-def = "0.5"
 actix-web = "4.5"

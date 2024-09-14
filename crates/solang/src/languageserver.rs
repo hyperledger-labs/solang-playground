@@ -2065,10 +2065,7 @@ impl LanguageServer for SolangServer {
 
     async fn initialized(&self, _: InitializedParams) {
         self.client
-            .log_message(
-                MessageType::INFO,
-                format!("solang language server {} initialized", "solang"),
-            )
+            .log_message(MessageType::INFO, format!("Solang language server initialized"))
             .await;
     }
 
@@ -2078,24 +2075,24 @@ impl LanguageServer for SolangServer {
 
     async fn did_change_workspace_folders(&self, _: DidChangeWorkspaceFoldersParams) {
         self.client
-            .log_message(MessageType::INFO, "workspace folders changed!")
+            .log_message(MessageType::INFO, "Workspace folders changed!")
             .await;
     }
 
     async fn did_change_configuration(&self, _: DidChangeConfigurationParams) {
         self.client
-            .log_message(MessageType::INFO, "configuration changed!")
+            .log_message(MessageType::INFO, "Configuration changed!")
             .await;
     }
 
     async fn did_change_watched_files(&self, _: DidChangeWatchedFilesParams) {
         self.client
-            .log_message(MessageType::INFO, "watched files have changed!")
+            .log_message(MessageType::INFO, "Watched files have changed!")
             .await;
     }
 
     async fn execute_command(&self, _: ExecuteCommandParams) -> Result<Option<Value>> {
-        self.client.log_message(MessageType::INFO, "command executed!").await;
+        self.client.log_message(MessageType::INFO, "Command executed!").await;
         Ok(None)
     }
 

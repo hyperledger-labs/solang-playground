@@ -1,55 +1,88 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <style>
-    body, html {
-      height: 100%;
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-    }
-    #container {
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-    }
-    #cell-editor {
-      flex-grow: 1;
-      min-height: 0;
-    }
-    #editor {
-      width: 100%;
-      height: 100%;
-      overflow: auto;
-    }
-    textarea {
-      width: 100%;
-      resize: none;
-    }
-  </style>
-</head>
-<body>
-  <div id="container">
-    <div id="buttonContainer">
-      <button id="compile">Compile for Polkadot Target</button>
-      <button id="interact">Deploy/Interact with Compiled Contracts on chain</button>
+  <head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <style>
+      .button-12 {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        padding: 8px 16px;
+        font-family: -apple-system, BlinkMacSystemFont, "Roboto", sans-serif;
+        font-size: 16px;
+        font-weight: 500;
+        border-radius: 8px;
+        border: none;
+        background-color: #1e1e1e;
+        outline: none;
+        border: 0;
+
+        color: #dfdedf;
+        user-select: none;
+        -webkit-user-select: none;
+        touch-action: manipulation;
+        cursor: pointer;
+        transition: background 0.3s ease;
+      }
+
+      .button-12 i {
+        margin-right: 8px;
+        font-size: 18px;
+      }
+
+      .button-12:focus {
+        box-shadow: inset 0px 1px 0px -0.25px rgba(255, 255, 255, 0.2), 0px 1px 2px rgba(0, 0, 0, 0.1),
+          0px 0px 0px 3.5px rgba(58, 108, 217, 0.5);
+        outline: 0;
+      }
+
+      .button-12:hover {
+        background: #383838;
+        color: #dfdedf;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="top-bar">
+      <div id="left-section">
+        <div style="display: flex">
+          <div style="width: 160px; margin-right: 16px; margin-left: 16px">
+            <img
+              id="logo"
+              src="https://raw.githubusercontent.com/hyperledger/solang/main/docs/hl_solang_horizontal-color.svg"
+              alt="Solang Logo"
+            />
+          </div>
+          <div style="display: flex; gap: 12px">
+            <button class="button-12" id="compile"><i class="fas fa-rocket"></i> Compile for Polkadot Target</button>
+            <button class="button-12" id="interact">
+              <i class="fas fa-network-wired"></i> Deploy/Interact with Compiled Contracts on Chain
+            </button>
+          </div>
+        </div>
+        <div style="display: flex; gap: 12px; margin-right: 16px">
+          <button class="button-12" id="docs"><i class="fas fa-book"></i> Solang Docs</button>
+          <button class="button-12" id="github"><i class="fab fa-github"></i> GitHub Repo</button>
+        </div>
+      </div>
     </div>
-    <div id="cell-editor">
-      <label for="editor">editor</label>
-      <div id="editor"></div>
+    <div id="container">
+      <div id="cell-editor">
+        <div id="editor"></div>
+      </div>
+      <div id="cell-console">
+        <label for="channel-console">Console</label>
+        <textarea id="channel-console" autocomplete="off" spellcheck="off" wrap="off" readonly rows="3"></textarea>
+      </div>
+      <!--Note: Remove "display: none" to show the message trace (For debugging purposes) -->
+      <div id="cell-client" style="display: none">
+        <label for="channel-client">message trace (client ⇒ server)</label>
+        <textarea id="channel-client" autocomplete="off" spellcheck="off" wrap="off" readonly rows="4"></textarea>
+      </div>
+      <div id="cell-server" style="display: none">
+        <label for="channel-server">message trace (client ⇐ server)</label>
+        <textarea id="channel-server" autocomplete="off" spellcheck="off" wrap="off" readonly rows="8"></textarea>
+      </div>
     </div>
-    <div id="cell-console">
-      <label for="channel-console">console</label>
-      <textarea id="channel-console" autocomplete="off" spellcheck="off" wrap="off" readonly rows="3"></textarea>
-    </div>
-    <div id="cell-client">
-      <label for="channel-client">message trace (client ⇒ server)</label>
-      <textarea id="channel-client" autocomplete="off" spellcheck="off" wrap="off" readonly rows="4"></textarea>
-    </div>
-    <div id="cell-server">
-      <label for="channel-server">message trace (client ⇐ server)</label>
-      <textarea id="channel-server" autocomplete="off" spellcheck="off" wrap="off" readonly rows="8"></textarea>
-    </div>
-  </div>
-</body>
+  </body>
 </html>

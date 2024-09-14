@@ -35,19 +35,19 @@ export default class Client extends jsrpc.JSONRPCServerAndClient {
       const { type, message } = params as { type: proto.MessageType; message: string };
       switch (type) {
         case proto.MessageType.Error: {
-          consoleChannel.value += "[error] ";
+          consoleChannel.value += "   ERROR: ";
           break;
         }
         case proto.MessageType.Warning: {
-          consoleChannel.value += " [warn] ";
+          consoleChannel.value += "   WARNING: ";
           break;
         }
         case proto.MessageType.Info: {
-          consoleChannel.value += " [info] ";
+          consoleChannel.value += "   INFO: ";
           break;
         }
         case proto.MessageType.Log: {
-          consoleChannel.value += "  [log] ";
+          consoleChannel.value += "   LOG: ";
           break;
         }
       }
@@ -95,6 +95,33 @@ export default class Client extends jsrpc.JSONRPCServerAndClient {
   async processRequests(): Promise<void> {
     for await (const request of this.#fromServer.requests) {
       await this.receiveAndSend(request);
+    }
+  }
+  
+  printToConsole(type: proto.MessageType, message: string): void {
+    if (consoleChannel) {
+      switch (type) {
+        case proto.MessageType.Error: {
+          consoleChannel.value += "   ERROR: ";
+          break;
+        }
+        case proto.MessageType.Warning: {
+          consoleChannel.value += "   WARNING: ";
+          break;
+        }
+        case proto.MessageType.Info: {
+          consoleChannel.value += "   INFO: ";
+          break;
+        }
+        case proto.MessageType.Log: {
+          consoleChannel.value += "   LOG: ";
+          break;
+        }
+      }
+      consoleChannel.value += message;
+      consoleChannel.value += "\n";
+    } else {
+      console.error("consoleChannel is not defined");
     }
   }
 
