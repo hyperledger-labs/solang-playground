@@ -4,7 +4,7 @@ Welcome to Solang Playground, a Solidity web editor for that enables editing, co
 
 ## Demo
 
-You can experiment with a [hosted version of Solang Playground](http://16.171.148.219:9000/).
+You can experiment with a [hosted version of Solang Playground](http://solang-pg.duckdns.org:9000/).
 
 ## Building
 
