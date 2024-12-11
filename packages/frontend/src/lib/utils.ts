@@ -1,3 +1,10 @@
+import { clsx, type ClassValue } from "clsx"
+import { twMerge } from "tailwind-merge"
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
+}
+
 export const downloadBlob = (code: number[]): void => {
   const blob = new Blob([new Uint8Array(code).buffer]);
 
