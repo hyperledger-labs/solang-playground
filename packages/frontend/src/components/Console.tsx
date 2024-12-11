@@ -7,17 +7,13 @@ function Console() {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const id = setTimeout(() => {
-      const element = containerRef.current;
-      if (element) {
-        element.scrollTo({
-          top: element.scrollHeight,
-          behavior: "smooth",
-        });
-      }
-    }, 500);
-
-    return () => clearTimeout(id);
+    const element = containerRef.current;
+    if (element) {
+      element.scrollTo({
+        top: element.scrollHeight,
+        behavior: "smooth",
+      });
+    }
   }, [state]);
 
   return (
