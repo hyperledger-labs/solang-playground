@@ -55,7 +55,7 @@ function Header() {
         downloadBlob(wasm);
         addConsole("Info: Contract compiled successfully!");
       } else {
-        const message = result.payload.payload.compile_stderr;
+        const message = result.payload.compile_stderr;
         addConsole(`Error: ${message}`);
       }
     } else {
