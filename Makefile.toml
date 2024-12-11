@@ -36,13 +36,18 @@ script = '''
 npm run build --workspace=packages/app
 '''
 
+[tasks.build-frontend]
+script = '''
+npm run build --workspace=packages/frontend
+'''
+
 [tasks.build-backend]
 script = '''
 cargo build -p backend --release
 '''
 
 [tasks.build]
-dependencies = ["build-server", "build-bindings", "build-app", "build-backend"]
+dependencies = ["build-server", "build-bindings", "build-app","build-frontend", "build-backend"]
 
 [tasks.clean-server]
 script = '''
@@ -60,8 +65,13 @@ rm -rf packages/app/dist
 rm -rf packages/app/assets/wasm
 '''
 
+[tasks.clean-frontend]
+script = '''
+rm -rf packages/frontend/.next
+'''
+
 [tasks.clean]
-dependencies = ["clean-server", "clean-app"]
+dependencies = ["clean-server", "clean-app", "clean-frontend"]
 
 [tasks.format]
 script = '''
@@ -70,7 +80,8 @@ cargo +nightly fmt --all
 
 [tasks.run]
 script = '''
-./target/release/backend --frontend_folder packages/app/dist --port 9000
+./target/release/backend --frontend_folder packages/app/dist --port 4444 & 
+cd packages/frontend && npm start -- --port 9000
 '''
 
 [tasks.test-backend]
@@ -83,8 +94,13 @@ script = '''
 npm run test --workspace=packages/app
 '''
 
+[tasks.test-frontend]
+script = '''
+npm run test --workspace=packages/frontend
+'''
+
 [tasks.test]
-dependencies = ["test-backend", "test-app"]
+dependencies = ["test-backend", "test-app", "test-frontend"]
 
 [tasks.docker-build]
 script = '''
