@@ -6,10 +6,10 @@ import Header from "@/components/Header";
 
 export default function Home() {
   return (
-    <div className="mx-5 mt-6 min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col">
       <Header />
 
-      <div className="mt-6 border-t border-black pt-2">
+      <div className="border-t border-black">
         <Editor />
         <Console />
       </div>

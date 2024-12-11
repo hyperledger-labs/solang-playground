@@ -5,16 +5,20 @@ import { downloadBlob } from "@/lib/utils";
 import { FaBook, FaGithub, FaNetworkWired, FaRocket } from "react-icons/fa";
 import { Button } from "./ui/button";
 import Link from "next/link";
+import { useAddConsole } from "@/app/state";
 
 function Header() {
   const editor = useEditor();
+  const addConsole = useAddConsole();
 
   async function handleCompile() {
     const code = editor.current?.getValue();
 
     if (!code) {
-      return console.log("No Source Code Found");
+      return addConsole("Error: No Source Code Found");
     }
+
+    addConsole("Info: Compiling contract...");
 
     const opts: RequestInit = {
       method: "POST",
@@ -26,20 +30,43 @@ function Header() {
       }),
     };
 
-    const result = await fetch("/compile", opts).then((res) => res.json());
-    console.log("Compilation result: ", result);
+    const { result, success, message } = await fetch("/compile", opts).then(async (res) => {
+      console.log(res);
+      const result = await res.json().catch(() => null);
 
-    if (result.type === "SUCCESS") {
-      const wasm = result.payload.wasm;
-      downloadBlob(wasm);
+      if (!result) {
+        return {
+          success: false,
+          message: res.statusText,
+          result: null,
+        };
+      }
+
+      return {
+        success: res.ok,
+        message: res.statusText,
+        result: result,
+      };
+    });
+
+    if (success) {
+      if (result.type === "SUCCESS") {
+        const wasm = result.payload.wasm;
+        downloadBlob(wasm);
+        addConsole("Info: Contract compiled successfully!");
+      } else {
+        const message = result.payload.payload.compile_stderr;
+        addConsole(`Error: ${message}`);
+      }
     } else {
-      const message = result.payload.payload.compile_stderr;
-      console.info(message);
+      addConsole(`Error: ${message}`);
     }
   }
 
+  // return null;
+
   return (
-    <div className="flex justify-between">
+    <div className="flex justify-between h-20 items-center">
       <div className="flex gap-3">
         <div className="w-[160px] mx-4">
           <img
@@ -55,7 +82,7 @@ function Header() {
           </Button>
           <Link href="https://ui.use.ink/" target="_blank">
             <Button variant="ghost" className="flex items-center gap-2 text-base font-medium">
-              <FaNetworkWired className="!size-[18px]"/>
+              <FaNetworkWired className="!size-[18px]" />
               <span>Deploy/Interact with Compiled Contracts on Chain</span>
             </Button>
           </Link>

@@ -21,3 +21,17 @@ export const downloadBlob = (code: number[]): void => {
     URL.revokeObjectURL(a.href);
   }, 1500);
 };
+
+/**
+ * Generates a random ID.
+ * @param length - The desired length of the ID. Default is 10.
+ * @returns A randomly generated ID as a string.
+ */
+export function generateRandomId(length: number = 10): string {
+  const characters: string = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result: string = '';
+  for (let i = 0; i < length; i++) {
+    result += characters.charAt(Math.floor(Math.random() * characters.length));
+  }
+  return result;
+}

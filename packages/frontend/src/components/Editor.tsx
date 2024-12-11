@@ -36,10 +36,11 @@ function Editor() {
   return (
     <MonacoEditor
       onMount={handleEditorDidMount}
-      className="h-[70vh]"
+      height="calc(100vh - 270px)"
       defaultLanguage="java"
       defaultValue={defaultCode}
       theme="vs-dark"
+      className="bg-red-500"
     />
   );
 }
