@@ -1,3 +1,5 @@
+'use client';
+
 import { ConsoleState } from "@/app/state";
 import { useAtomValue } from "jotai";
 import { useEffect, useRef } from "react";
@@ -19,7 +21,7 @@ function Console() {
   return (
     <div
       ref={containerRef}
-      className="block w-full bg-transparent flex-1 rounded text-sm text-white/60 font-medium overflow-auto"
+      className="text-sm text-card-foreground/70 font-medium overflow-auto bg-card h-[195px] p-3 border-t"
     >
       {state.map((item) => (
         <span key={item.id} className="mb-2 block">

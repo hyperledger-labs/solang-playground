@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import EditorProvider from "@/context/EditorProvider";
 import { Provider } from "jotai";
+import ThemeProvider from "@/components/ThemeProvider";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -26,11 +27,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <Provider>
-          <EditorProvider>{children}</EditorProvider>
-        </Provider>
+        <ThemeProvider attribute="class" enableSystem >
+          <Provider>
+            <EditorProvider>{children}</EditorProvider>
+          </Provider>
+        </ThemeProvider>
       </body>
     </html>
   );

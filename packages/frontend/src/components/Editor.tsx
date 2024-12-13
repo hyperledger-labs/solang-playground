@@ -3,6 +3,8 @@
 import useEditor from "@/hooks/useEditor";
 import MonacoEditor, { Monaco } from "@monaco-editor/react";
 import { editor } from "monaco-editor";
+import Spinner from "./Spinner";
+import { useTheme } from "next-themes";
 
 const defaultCode = `
 contract flipper {
@@ -28,6 +30,8 @@ contract flipper {
 `;
 
 function Editor() {
+  const { resolvedTheme } = useTheme();
+  const theme = { dark: "vs-dark", light: "vs-light" }[resolvedTheme!] || resolvedTheme;
   const editorRef = useEditor();
   function handleEditorDidMount(editor: editor.IStandaloneCodeEditor) {
     editorRef.current = editor;
@@ -39,8 +43,8 @@ function Editor() {
       height="calc(100vh - 256px)"
       defaultLanguage="java"
       defaultValue={defaultCode}
-      theme="vs-dark"
-      className="bg-red-500"
+      theme={theme}
+      loading={<Spinner />}
     />
   );
 }
