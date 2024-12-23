@@ -22,7 +22,7 @@ dependencies = ["deps-wasm", "deps-npm", "deps-docker"]
 
 [tasks.build-server]
 script = '''
-cargo build --release --target wasm32-unknown-unknown
+cargo build --target wasm32-unknown-unknown
 wasm-bindgen --out-dir ./packages/app/assets/wasm --target web --typescript ./target/wasm32-unknown-unknown/release/demo_lsp_browser.wasm
 '''
 
@@ -80,8 +80,7 @@ cargo +nightly fmt --all
 
 [tasks.run]
 script = '''
-./target/release/backend --frontend_folder packages/app/dist --port 4444 & 
-cd packages/frontend && npm start -- --port 9000
+./target/release/backend --frontend_folder packages/app/dist --port 4444
 '''
 
 [tasks.test-backend]

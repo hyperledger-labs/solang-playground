@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
 import { SidebarView, useAppStore } from "@/app/state";
-import FileExplorer from "./FileExplorer";
+import FileExplorer, { ExpNodeType } from "./FileExplorer";
 import Settings from "./Settings";
 
 function Sidebar() {
@@ -13,7 +13,25 @@ function Sidebar() {
 
   return (
     <div className="">
-      <FileExplorer />
+      <FileExplorer
+        root={{
+          type: ExpNodeType.FOLDER,
+          name: "src",
+          path: "/",
+          items: [
+            { type: ExpNodeType.FILE, name: "index.tsx", path: "/src/index.tsx", content: "" },
+            {
+              type: ExpNodeType.FOLDER,
+              name: "components",
+              path: "/src/components",
+              items: [
+                { type: ExpNodeType.FILE, name: "Sidebar.tsx", path: "/src/components/Sidebar.tsx", content: "" },
+                { type: ExpNodeType.FILE, name: "Settings.tsx", path: "/src/components/Settings.tsx", content: "" },
+              ],
+            },
+          ],
+        }}
+      />
     </div>
   );
 }

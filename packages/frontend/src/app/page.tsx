@@ -3,7 +3,6 @@ import Editor from "@/components/Editor";
 import Header from "@/components/Header";
 import SidePanel from "@/components/SidePanel";
 import Footer from "@/components/Footer";
-import FileExplorer from "@/components/FileExplorer";
 import Sidebar from "@/components/Sidebar";
 
 export default function Home() {
@@ -19,6 +18,10 @@ export default function Home() {
               <Editor />
             </div>
             <Console />
+            <div id="channel-console">
+            </div>
+            <div id="channel-client"></div>
+            <div id="channel-server"></div>
           </div>
         </div>
         <Footer />

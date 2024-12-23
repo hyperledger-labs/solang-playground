@@ -7,7 +7,8 @@
 } */
 
 @layer base {
-  :root,.vs-light {
+  :root,
+  .vs-light {
     --background: 0 0% 100%;
     --foreground: 0 0% 3.9%;
     --card: 0 0% 100%;
@@ -33,8 +34,43 @@
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
+
+    --blue: #033c73;
+    --indigo: #6610f2;
+    --purple: #6f42c1;
+    --pink: #e83e8c;
+    --red: #c71c22;
+    --orange: #fd7e14;
+    --yellow: #dd5600;
+    --green: #73a839;
+    --teal: #20c997;
+    --cyan: #2fa4e7;
+    --white: #fff;
+    --gray: #868e96;
+    --gray-dark: #343a40;
+    --primary: #2fa4e7;
+    --secondary: #e9ecef;
+    --success: #73a839;
+    --info: #033c73;
+    --warning: #dd5600;
+    --danger: #c71c22;
+    --light: #f8f9fa;
+    --text: #343a40;
+    --dark: #343a40;
+    --body-bg: #fff;
+    --text-bg-mark: #fcf8e3;
+    --custom-select: #fff;
+    --breakpoint-xs: 0;
+    --breakpoint-sm: 576px;
+    --breakpoint-md: 768px;
+    --breakpoint-lg: 992px;
+    --breakpoint-xl: 1200px;
+    --font-family-sans-serif: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+      "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    --font-family-monospace: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   }
-  .vs-dark,.dark {
+  .vs-dark,
+  .dark {
     --background: 234 20% 21%;
     --foreground: 238 17% 69%;
     --card: 237 23% 17%;

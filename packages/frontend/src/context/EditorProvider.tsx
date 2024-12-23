@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, MutableRefObject, ReactNode, useRef } from "react";
-import { editor } from "monaco-editor";
+import { editor } from "monaco-editor-core";
 
 export const EditorContext = createContext<MutableRefObject<editor.IStandaloneCodeEditor | null>>(null as never);
 
