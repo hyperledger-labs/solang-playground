@@ -85,7 +85,7 @@ script = '''
 
 [tasks.run-frontend]
 script = '''
-npm run dev --workspace=packages/frontend
+npm run start --workspace=packages/frontend
 '''
 
 [tasks.run]

@@ -44,8 +44,8 @@ export async function mountService(editor: monaco.editor.IStandaloneCodeEditor, 
       editorService.fileChanged(model);
 
       setTimeout(() => {
-        let diagnostic = client.diagnostic;
-        let markers = protocolToMonaco.asDiagnostics(diagnostic.diagnostics);
+        const diagnostic = client.diagnostic;
+        const markers = protocolToMonaco.asDiagnostics(diagnostic.diagnostics);
         monaco.editor.setModelMarkers(model, "solidity", markers);
       }, 500);
     }, 200),

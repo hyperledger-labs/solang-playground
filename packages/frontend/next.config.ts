@@ -14,14 +14,6 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-
-  webpack: (config, { isServer }) => {
-    config.resolve.alias = {
-      ...(config.resolve.alias || {}),
-      vscode: require.resolve("monaco-languageclient/vscode-compatibility"),
-    };
-    return config;
-  },
 };
 
 export default nextConfig;

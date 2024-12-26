@@ -1,10 +1,11 @@
 import * as monaco from "monaco-editor";
-import { MonacoToProtocolConverter, ProtocolToMonacoConverter } from "monaco-languageclient";
+// import { MonacoToProtocolConverter, ProtocolToMonacoConverter } from "";
 import contributes from "./contributes.json";
 import { solidityTokensProvider, solidityLanguageConfig } from "./solidity_syntax";
 import * as proto from "vscode-languageserver-protocol";
 import { Monaco } from "@monaco-editor/react";
 import Client from "../client";
+import { monacoToProtocol, protocolToMonaco } from "../utils";
 
 const themeType = "vs-dark";
 const themeName = "remix-dark";
@@ -37,8 +38,8 @@ const greenColor = formatColor("--green");
 const orangeColor = formatColor("--orange");
 const grayColor = formatColor("--gray");
 
-export const protocolToMonaco = new ProtocolToMonacoConverter(monaco);
-const monacoToProtocol = new MonacoToProtocolConverter(monaco);
+// export const protocolToMonaco = new ProtocolToMonacoConverter(monaco);
+// const monacoToProtocol = new MonacoToProtocolConverter(monaco);
 
 let language: null | Language;
 
@@ -224,9 +225,9 @@ export default class Language implements monaco.languages.ILanguageExtensionPoin
     monaco.editor.onDidCreateModel((model) => {
       setTimeout(() => {
         console.log("content changed", event);
-        let diagnostic = client.diagnostic;
+        const diagnostic = client.diagnostic;
 
-        let markers = protocolToMonaco.asDiagnostics(diagnostic.diagnostics);
+        const markers = protocolToMonaco.asDiagnostics(diagnostic.diagnostics);
 
         monaco.editor.setModelMarkers(model, "solidity", markers);
       }, 500);

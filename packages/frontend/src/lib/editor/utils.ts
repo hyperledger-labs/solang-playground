@@ -1,4 +1,4 @@
-import { MonacoToProtocolConverter, ProtocolToMonacoConverter } from "monaco-languageclient";
+import { MonacoToProtocolConverter, ProtocolToMonacoConverter } from "./converter";
 import * as monaco from "monaco-editor";
 
 export const protocolToMonaco = new ProtocolToMonacoConverter(monaco);

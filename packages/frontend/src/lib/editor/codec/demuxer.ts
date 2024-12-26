@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import * as vsrpc from "vscode-jsonrpc";
 
 import Bytes from "./bytes";
