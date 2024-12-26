@@ -7,6 +7,8 @@ import Language from "./language";
 import { EditorService } from "./services";
 import debounce from "debounce";
 import { protocolToMonaco } from "./utils";
+import { store } from "@/state";
+import { defaultCode } from "@/state/initstate";
 
 const intoServer = new IntoServer();
 const fromServer = FromServer.create();
@@ -16,6 +18,14 @@ const editorService = new EditorService(client);
 let language: Language;
 
 export async function init(monaco: Monaco) {
+  store.send({ type: "setMonaco", monaco });
+  store.send({
+    type: "addFile",
+    path: "explorer.items.src",
+    name: "main",
+    model: monaco.editor.createModel(defaultCode, "solidity"),
+  });
+  store.send({ type: "setCurrentPath", path: "explorer.items.src.items.main" });
   const server = await Server.initialize(intoServer, fromServer);
   language = Language.initialize(client, monaco);
 

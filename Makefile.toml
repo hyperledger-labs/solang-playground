@@ -78,10 +78,18 @@ script = '''
 cargo +nightly fmt --all
 '''
 
-[tasks.run]
+[tasks.run-server]
 script = '''
 ./target/release/backend --frontend_folder packages/app/dist --port 4444
 '''
+
+[tasks.run-frontend]
+script = '''
+npm run dev --workspace=packages/frontend
+'''
+
+[tasks.run]
+run_task = { name = ["run-server", "run-frontend"], parallel = true }
 
 [tasks.test-backend]
 script = '''

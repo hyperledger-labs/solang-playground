@@ -1,11 +1,14 @@
 "use client";
 
 import { SidebarView, useAppStore } from "@/app/state";
-import FileExplorer, { ExpNodeType } from "./FileExplorer";
+import FileExplorer from "./FileExplorer";
 import Settings from "./Settings";
+import { ExpNodeType } from "@/types/explorer";
+import { store } from "@/state";
 
 function Sidebar() {
   const { sidebar } = useAppStore();
+  const { explorer } = store.getSnapshot().context;
 
   if (sidebar === SidebarView.SETTINGS) {
     return <Settings />;
@@ -13,25 +16,7 @@ function Sidebar() {
 
   return (
     <div className="">
-      <FileExplorer
-        root={{
-          type: ExpNodeType.FOLDER,
-          name: "src",
-          path: "/",
-          items: [
-            { type: ExpNodeType.FILE, name: "index.tsx", path: "/src/index.tsx", content: "" },
-            {
-              type: ExpNodeType.FOLDER,
-              name: "components",
-              path: "/src/components",
-              items: [
-                { type: ExpNodeType.FILE, name: "Sidebar.tsx", path: "/src/components/Sidebar.tsx", content: "" },
-                { type: ExpNodeType.FILE, name: "Settings.tsx", path: "/src/components/Settings.tsx", content: "" },
-              ],
-            },
-          ],
-        }}
-      />
+      <FileExplorer root={explorer} />
     </div>
   );
 }

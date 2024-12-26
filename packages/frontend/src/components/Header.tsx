@@ -6,13 +6,14 @@ import { FaBook, FaGithub, FaNetworkWired, FaPlay, FaRocket, FaTimes } from "rea
 import { Button } from "./ui/button";
 import Link from "next/link";
 import { useAddConsole } from "@/app/state";
+import { useCurrentFile } from "@/state/hooks";
 
 function Header() {
-  const editor = useEditor();
+  const file = useCurrentFile();
   const addConsole = useAddConsole();
 
   async function handleCompile() {
-    const code = editor.current?.getValue();
+    const code = file?.model?.getValue(); 
 
     if (!code) {
       return addConsole("Error: No Source Code Found");

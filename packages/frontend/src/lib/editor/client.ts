@@ -4,7 +4,7 @@ import * as proto from "vscode-languageserver-protocol";
 import { Codec, FromServer, IntoServer } from "./codec";
 
 
-const consoleChannel = document.getElementById("channel-console") as HTMLTextAreaElement;
+// const consoleChannel = document.getElementById("channel-console") as HTMLTextAreaElement;
 
 export default class Client extends jsrpc.JSONRPCServerAndClient {
   afterInitializedHooks: (() => Promise<void>)[] = [];
@@ -37,26 +37,26 @@ export default class Client extends jsrpc.JSONRPCServerAndClient {
     this.addMethod(proto.LogMessageNotification.type.method, (params) => {
       const { type, message } = params as { type: proto.MessageType; message: string };
       console.log({ type, message });
-      switch (type) {
-        case proto.MessageType.Error: {
-          consoleChannel.value += "   ERROR: ";
-          break;
-        }
-        case proto.MessageType.Warning: {
-          consoleChannel.value += "   WARNING: ";
-          break;
-        }
-        case proto.MessageType.Info: {
-          consoleChannel.value += "   INFO: ";
-          break;
-        }
-        case proto.MessageType.Log: {
-          consoleChannel.value += "   LOG: ";
-          break;
-        }
-      }
-      consoleChannel.value += message;
-      consoleChannel.value += "\n";
+      // switch (type) {
+      //   case proto.MessageType.Error: {
+      //     consoleChannel.value += "   ERROR: ";
+      //     break;
+      //   }
+      //   case proto.MessageType.Warning: {
+      //     consoleChannel.value += "   WARNING: ";
+      //     break;
+      //   }
+      //   case proto.MessageType.Info: {
+      //     consoleChannel.value += "   INFO: ";
+      //     break;
+      //   }
+      //   case proto.MessageType.Log: {
+      //     consoleChannel.value += "   LOG: ";
+      //     break;
+      //   }
+      // }
+      // consoleChannel.value += message;
+      // consoleChannel.value += "\n";
       return;
     });
 
@@ -104,30 +104,30 @@ export default class Client extends jsrpc.JSONRPCServerAndClient {
 
   printToConsole(type: proto.MessageType, message: string): void {
     console.log({ type, message });
-    if (consoleChannel) {
-      switch (type) {
-        case proto.MessageType.Error: {
-          consoleChannel.value += "   ERROR: ";
-          break;
-        }
-        case proto.MessageType.Warning: {
-          consoleChannel.value += "   WARNING: ";
-          break;
-        }
-        case proto.MessageType.Info: {
-          consoleChannel.value += "   INFO: ";
-          break;
-        }
-        case proto.MessageType.Log: {
-          consoleChannel.value += "   LOG: ";
-          break;
-        }
-      }
-      consoleChannel.value += message;
-      consoleChannel.value += "\n";
-    } else {
-      console.error("consoleChannel is not defined");
-    }
+    // if (consoleChannel) {
+    //   switch (type) {
+    //     case proto.MessageType.Error: {
+    //       consoleChannel.value += "   ERROR: ";
+    //       break;
+    //     }
+    //     case proto.MessageType.Warning: {
+    //       consoleChannel.value += "   WARNING: ";
+    //       break;
+    //     }
+    //     case proto.MessageType.Info: {
+    //       consoleChannel.value += "   INFO: ";
+    //       break;
+    //     }
+    //     case proto.MessageType.Log: {
+    //       consoleChannel.value += "   LOG: ";
+    //       break;
+    //     }
+    //   }
+    //   consoleChannel.value += message;
+    //   consoleChannel.value += "\n";
+    // } else {
+    //   console.error("consoleChannel is not defined");
+    // }
   }
 
   pushAfterInitializeHook(...hooks: (() => Promise<void>)[]): void {

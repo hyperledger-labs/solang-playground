@@ -24,7 +24,7 @@ export default function Home() {
             <div id="channel-server"></div>
           </div>
         </div>
-        <Footer />
+        {/* <Footer /> */}
       </div>
     </div>
   );

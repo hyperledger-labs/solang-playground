@@ -16,12 +16,10 @@ const nextConfig: NextConfig = {
   },
 
   webpack: (config, { isServer }) => {
-    // Add alias
     config.resolve.alias = {
       ...(config.resolve.alias || {}),
       vscode: require.resolve("monaco-languageclient/vscode-compatibility"),
     };
-
     return config;
   },
 };
