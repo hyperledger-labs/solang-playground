@@ -22,6 +22,7 @@ function Console() {
     <div
       ref={containerRef}
       className="text-sm text-card-foreground/70 font-medium overflow-auto bg-card h-[195px] p-3 border-t"
+      style={{maxWidth: "calc(100vw - 350px)"}}
     >
       {state.map((item) => (
         <span key={item.id} className="mb-2 block">

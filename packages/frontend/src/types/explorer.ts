@@ -11,8 +11,6 @@ export interface FileType {
   type: ExpNodeType.FILE;
   path: string;
   name: string;
-  content: string;
-  model: editor.ITextModel;
 }
 
 export interface FolderType {

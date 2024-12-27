@@ -21,9 +21,9 @@ export async function init(monaco: Monaco) {
   store.send({ type: "setMonaco", monaco });
   store.send({
     type: "addFile",
-    path: "explorer.items.src",
+    basePath: "explorer.items.src",
     name: "main",
-    model: monaco.editor.createModel(defaultCode, "solidity"),
+    content: defaultCode,
   });
   store.send({ type: "setCurrentPath", path: "explorer.items.src.items.main" });
   const server = await Server.initialize(intoServer, fromServer);

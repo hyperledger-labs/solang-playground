@@ -30,3 +30,14 @@ export function useCurrentFile() {
 
   return file;
 }
+
+export function useFileContent() {
+  const path = useSelector(store, (state) => state.context.currentFile);
+  return useSelector(store, (state) => {
+    if (!path) {
+      return "";
+    }
+
+    return state.context.files[path];
+  });
+}

@@ -15,7 +15,7 @@ export const store = createStoreWithProducer(produce, {
   context: {
     monaco: null as Monaco | null,
     currentFile: null as string | null,
-    files: {} as Record<string, File>,
+    files: {} as Record<string, string>,
     explorer: {
       type: ExpNodeType.FOLDER,
       open: true,
@@ -37,14 +37,21 @@ export const store = createStoreWithProducer(produce, {
       const state = set(context, event.path + ".open", event.value);
       console.log({ updated: state });
     },
-    addFile: (context, event: { path: string; name: string; model: editor.ITextModel }) => {
-      set(context, event.path + ".items." + event.name, {
+    addFile: (context, event: { basePath: string; name: string; content: string }) => {
+      const path = event.basePath + ".items." + event.name;
+      set(context, path, {
         type: ExpNodeType.FILE,
-        content: event.model.getValue(),
         name: event.name,
-        path: event.path + ".items." + event.name,
-        model: event.model,
+        path: path,
       } satisfies FileType);
+
+      context.files[path] = event.content;
+    },
+    changeContent: (context, event: { content: string }) => {
+      const path = context.currentFile;
+      if (path) {
+        context.files[path] = event.content;
+      }
     },
     setMonaco: (context, event: { monaco: Monaco }) => {
       context.monaco = event.monaco;
@@ -54,7 +61,5 @@ export const store = createStoreWithProducer(produce, {
     },
   },
 });
-
-
 
 // Path: explorer.items.components.items

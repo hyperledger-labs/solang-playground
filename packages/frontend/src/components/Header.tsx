@@ -1,19 +1,15 @@
 "use client";
 
-import useEditor from "@/hooks/useEditor";
 import { downloadBlob } from "@/lib/utils";
-import { FaBook, FaGithub, FaNetworkWired, FaPlay, FaRocket, FaTimes } from "react-icons/fa";
-import { Button } from "./ui/button";
-import Link from "next/link";
+import { FaPlay, FaTimes } from "react-icons/fa";
 import { useAddConsole } from "@/app/state";
-import { useCurrentFile } from "@/state/hooks";
+import { useFileContent } from "@/state/hooks";
 
 function Header() {
-  const file = useCurrentFile();
   const addConsole = useAddConsole();
+  const code = useFileContent();
 
   async function handleCompile() {
-    const code = file?.model?.getValue(); 
 
     if (!code) {
       return addConsole("Error: No Source Code Found");
