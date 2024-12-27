@@ -38,11 +38,11 @@ function Folder({ path }: { path: string }) {
     e.preventDefault();
     e.stopPropagation();
 
-    if (monaco) {
-      const name = "new-file" + keys.length;
-      const model = monaco.editor.createModel("", "solidity", monaco.Uri.parse("file:///src/" + name));
-      store.send({ type: "addFile", path, name: "new-file" + keys.length, model });
-    }
+    // if (monaco) {
+    //   const name = "new-file" + keys.length;
+    //   const model = monaco.editor.createModel("", "solidity", monaco.Uri.parse("file:///src/" + name));
+    //   store.send({ type: "addFile", path, name: "new-file" + keys.length, model });
+    // }
   }
 
   return (
