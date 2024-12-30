@@ -4,6 +4,7 @@ import { Monaco } from "@monaco-editor/react";
 export const context = {
   monaco: null as Monaco | null,
   currentFile: null as string | null,
+  tabs: new Set<string>(),
   files: {} as Record<string, string>,
   explorer: {
     type: ExpNodeType.FOLDER,

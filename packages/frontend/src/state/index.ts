@@ -1,8 +1,10 @@
 import { createStoreWithProducer } from "@xstate/store";
 import { createBrowserInspector } from "@statelyai/inspect";
-import { produce } from "immer";
+import { produce, enableMapSet } from "immer";
 import { context } from "./context";
 import { events } from "./events";
+
+enableMapSet();
 
 export const store = createStoreWithProducer(produce, {
   context,

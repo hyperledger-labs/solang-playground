@@ -22,6 +22,16 @@ export const events = {
   },
   setCurrentPath: (context: Context, event: { path: string }) => {
     context.currentFile = event.path;
+    events.addTab(context, { path: event.path });
+  },
+  removeNestedTabs: (context: Context, event: { path: string }) => {
+    const path = event.path;
+    const tabs = context.tabs;
+    for (const tab of tabs) {
+      if (tab.startsWith(path)) {
+        tabs.delete(tab);
+      }
+    }
   },
   addFile(context: Context, event: { basePath: string; name: string; content: string }) {
     const path = createPath(event.basePath, event.name);
@@ -34,6 +44,7 @@ export const events = {
     set(context, path, file);
     context.files[path] = event.content;
     context.currentFile = path;
+    events.addTab(context, { path });
   },
   addFolder(context: Context, event: { basePath: string; name: string }) {
     const folder = get(context, event.basePath) as FolderType;
@@ -50,11 +61,13 @@ export const events = {
     const folder = get(context, event.basePath) as FolderType;
     const file = get(context, event.path) as FileType;
 
+    events.removeTab(context, { path: event.path });
     delete folder.items[file.name];
     delete context.files[event.path];
   },
   deleteFolder(context: Context, event: { path: string }) {
     unset(context, event.path);
+    events.removeNestedTabs(context, event);
   },
   renameFile(context: Context, event: { path: string; name: string; basePath: string }) {
     const newPath = createPath(event.basePath, event.name);
@@ -83,5 +96,15 @@ export const events = {
 
     set(context, newPath, newFolder);
     events.deleteFolder(context, { path: event.path });
+  },
+  removeTab(context: Context, event: { path: string }) {
+    context.tabs.delete(event.path);
+
+    if (event.path === context.currentFile) {
+      context.currentFile = Array.from(context.tabs).pop() || null;
+    }
+  },
+  addTab(context: Context, event: { path: string }) {
+    context.tabs.add(event.path);
   },
 };
