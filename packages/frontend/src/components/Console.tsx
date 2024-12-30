@@ -1,11 +1,12 @@
-'use client';
+"use client";
 
-import { ConsoleState } from "@/app/state";
-import { useAtomValue } from "jotai";
+import { store } from "@/state";
+import { MessageTypeName } from "@/types/log";
+import { useSelector } from "@xstate/store/react";
 import { useEffect, useRef } from "react";
 
 function Console() {
-  const state = useAtomValue(ConsoleState);
+  const logs = useSelector(store, (state) => state.context.logs);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -16,17 +17,19 @@ function Console() {
         behavior: "smooth",
       });
     }
-  }, [state]);
+  }, [logs]);
 
   return (
     <div
       ref={containerRef}
       className="text-sm text-card-foreground/70 font-medium overflow-auto bg-card h-[195px] p-3 border-t"
-      style={{maxWidth: "calc(100vw - 350px)"}}
+      style={{ maxWidth: "calc(100vw - 350px)" }}
     >
-      {state.map((item) => (
-        <span key={item.id} className="mb-2 block">
-          <pre>{item.message}</pre>
+      {logs.map((item) => (
+        <span key={item.id} className="block mb-2">
+          <pre>
+            {MessageTypeName[item.type]}: {item.message}
+          </pre>
         </span>
       ))}
     </div>

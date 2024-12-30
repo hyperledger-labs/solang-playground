@@ -8,6 +8,7 @@ import { useSelector } from "@xstate/store/react";
 import { store } from "@/state";
 import IconButton from "./IconButton";
 import { useEffect, useRef } from "react";
+import { logger } from "@/state/utils";
 
 function TabItem({ path }: { path: string }) {
   const file = useExplorerItem(path);
@@ -41,17 +42,16 @@ function TabItem({ path }: { path: string }) {
 }
 
 function Header() {
-  const addConsole = useAddConsole();
   const code = useFileContent();
   const tabs = useSelector(store, (state) => state.context.tabs);
   const containerRef = useRef<HTMLDivElement>(null);
 
   async function handleCompile() {
     if (!code) {
-      return addConsole("Error: No Source Code Found");
+      return logger.error("Error: No Source Code Found");
     }
 
-    addConsole("Info: Compiling contract...");
+    logger.info("Compiling contract...");
 
     const opts: RequestInit = {
       method: "POST",
@@ -86,21 +86,15 @@ function Header() {
       if (result.type === "SUCCESS") {
         const wasm = result.payload.wasm;
         downloadBlob(wasm);
-        addConsole("Info: Contract compiled successfully!");
+        logger.info("Contract compiled successfully!");
       } else {
         const message = result.payload.compile_stderr;
-        addConsole(`Error: ${message}`);
+        logger.error(message);
       }
     } else {
-      addConsole(`Error: ${message}`);
+      logger.error(message);
     }
   }
-
-  // useEffect(() => {
-  //   if (containerRef.current) {
-  //     containerRef.current.scrollLeft = containerRef.current.scrollWidth;
-  //   }
-  // }, [tabs]);
 
   return (
     <div className="bg-card h-[35px] text-sm border-b flex">

@@ -5,6 +5,8 @@ import unset from "lodash/unset";
 import { Context } from "./context";
 import { Monaco } from "@monaco-editor/react";
 import { createPath } from "./utils";
+import { MessageType } from "vscode-languageserver-protocol";
+import { nanoid } from "nanoid";
 
 export const events = {
   toggleFolder: (context: Context, event: { path: string }) => {
@@ -106,5 +108,12 @@ export const events = {
   },
   addTab(context: Context, event: { path: string }) {
     context.tabs.add(event.path);
+  },
+  addLog(context: Context, event: { logType: MessageType; message: string }) {
+    context.logs.push({
+      id: nanoid(),
+      type: event.logType,
+      message: event.message,
+    });
   },
 };

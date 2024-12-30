@@ -2,7 +2,7 @@ import * as jsrpc from "json-rpc-2.0";
 import * as proto from "vscode-languageserver-protocol";
 
 import { Codec, FromServer, IntoServer } from "./codec";
-
+import { store } from "@/state";
 
 // const consoleChannel = document.getElementById("channel-console") as HTMLTextAreaElement;
 
@@ -36,28 +36,7 @@ export default class Client extends jsrpc.JSONRPCServerAndClient {
     // process "window/logMessage": client <- server
     this.addMethod(proto.LogMessageNotification.type.method, (params) => {
       const { type, message } = params as { type: proto.MessageType; message: string };
-      console.log({ type, message });
-      // switch (type) {
-      //   case proto.MessageType.Error: {
-      //     consoleChannel.value += "   ERROR: ";
-      //     break;
-      //   }
-      //   case proto.MessageType.Warning: {
-      //     consoleChannel.value += "   WARNING: ";
-      //     break;
-      //   }
-      //   case proto.MessageType.Info: {
-      //     consoleChannel.value += "   INFO: ";
-      //     break;
-      //   }
-      //   case proto.MessageType.Log: {
-      //     consoleChannel.value += "   LOG: ";
-      //     break;
-      //   }
-      // }
-      // consoleChannel.value += message;
-      // consoleChannel.value += "\n";
-      return;
+      store.send({ type: "addLog", message: message, logType: type });
     });
 
     // request "initialize": client <-> server

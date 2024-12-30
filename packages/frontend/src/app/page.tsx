@@ -18,10 +18,6 @@ export default function Home() {
               <Editor />
             </div>
             <Console />
-            <div id="channel-console">
-            </div>
-            <div id="channel-client"></div>
-            <div id="channel-server"></div>
           </div>
         </div>
         {/* <Footer /> */}
