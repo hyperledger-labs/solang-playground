@@ -7,8 +7,9 @@ export interface LogType {
 }
 
 export const MessageTypeName = {
-    [MessageType.Error]: "Error",
-    [MessageType.Info]: "Info",
-    [MessageType.Warning]: "Warning",
-    [MessageType.Log]: "Log",
-}
+  [MessageType.Error]: "Error",
+  [MessageType.Info]: "Info",
+  [MessageType.Warning]: "Warning",
+  [MessageType.Log]: "Log",
+  [MessageType.Debug]: "Debug",
+};

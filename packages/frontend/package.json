@@ -36,7 +36,7 @@
     "react-icons": "^5.4.0",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
-    "vscode-languageserver-protocol": "^3.17.1",
+    "vscode-languageserver-protocol": "^3.17.5",
     "zustand": "^5.0.2"
   },
   "devDependencies": {
