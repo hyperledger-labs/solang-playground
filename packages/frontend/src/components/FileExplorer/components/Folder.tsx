@@ -8,12 +8,14 @@ import FolderActions from "./FolderActions";
 import { useState } from "react";
 import { ParentContext } from "../provider/ParentContext";
 import RenderNode from "./RenderNode";
+import { logger } from "@/state/utils";
 
 function Folder({ path, basePath }: { path: string; basePath: string }) {
   const { items, open, name } = useExplorer(path);
   const keys = Object.keys(items);
   const [editing, setEditing] = useState(name === "");
   const [newName, setNewName] = useState(name);
+  const [dropping, setDropping] = useState(false);
 
   function handleToggle() {
     store.send({ type: "toggleFolder", path });
@@ -22,11 +24,54 @@ function Folder({ path, basePath }: { path: string; basePath: string }) {
   function confirmFolderEdit() {
     store.send({ type: "renameFolder", path, basePath, name: newName });
     setEditing(false);
-    console.log({ path, basePath, name: newName });
+  }
+
+  async function handleFileDrop(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const fileArray = Array.from(e.dataTransfer.files);
+    const readFiles = fileArray.map(async (file) => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+
+        reader.onload = (e) => {
+          resolve({ name: file.name, content: e.target?.result });
+        };
+
+        reader.onerror = (e) => {
+          reject(`Error reading file ${file.name}`);
+        };
+
+        // Read as text (adjust if needed for images or binary files)
+        reader.readAsText(file);
+      });
+    });
+
+    const files = (await Promise.all(readFiles).catch(() => {
+      logger.error("Error reading files");
+      return [];
+    })) as any;
+
+    if (files) {
+      store.send({ type: "addFiles", basePath: path, files });
+    }
+
+    setDropping(false);
   }
 
   return (
-    <Accordion open={open} className="pl-1 border-l">
+    <Accordion
+      open={open}
+      className={cn("pl-1 border-l explorer-bg-drag", dropping && "active")}
+      onDragOver={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setDropping(true);
+      }}
+      onDragLeave={() => setDropping(false)}
+      onDrop={handleFileDrop}
+    >
       <AccordionTrigger
         onClick={handleToggle}
         className={cn(

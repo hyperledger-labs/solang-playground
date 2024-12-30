@@ -48,6 +48,11 @@ export const events = {
     context.currentFile = path;
     events.addTab(context, { path });
   },
+  addFiles(context: Context, event: { basePath: string; files: { name: string; content: string }[] }) {
+    for (const file of event.files) {
+      events.addFile(context, { basePath: event.basePath, name: file.name, content: file.content });
+    }
+  },
   addFolder(context: Context, event: { basePath: string; name: string }) {
     const folder = get(context, event.basePath) as FolderType;
     folder.items[event.name] = {
