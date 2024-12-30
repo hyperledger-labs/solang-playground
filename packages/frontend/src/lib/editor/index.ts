@@ -25,7 +25,7 @@ export async function init(monaco: Monaco) {
     name: "main",
     content: defaultCode,
   });
-  store.send({ type: "setCurrentPath", path: "explorer.items.src.items.main" });
+  store.send({ type: "setCurrentPath", path: "explorer.items.src.items['main']" });
   const server = await Server.initialize(intoServer, fromServer);
   language = Language.initialize(client, monaco);
 

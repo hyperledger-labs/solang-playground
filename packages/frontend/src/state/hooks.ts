@@ -1,16 +1,24 @@
-import { FileType } from "@/types/explorer";
+import { FileType, FolderType } from "@/types/explorer";
 import { useSelector } from "@xstate/store/react";
 import get from "lodash/get";
 import { store } from ".";
 
 export function useExplorer(path: string) {
-  const open = useSelector(store, (state) => get(state.context, path + ".open"));
-  const name = useSelector(store, (state) => get(state.context, path + ".name"));
-  const keys = useSelector(store, (state) => Object.keys(get(state.context, path + ".items")).join(","));
+  const open = useSelector(store, (state) => get(state.context, path).open);
+  const name = useSelector(store, (state) => get(state.context, path).name);
+  useSelector(store, (state) => {
+    const folder = get(state.context, path) as FolderType;
+    const keys = Object.keys(folder.items);
+    return `${keys.length}:${keys.join(",")}`;
+  });
   const state = store.getSnapshot().context;
-  const items = get(state, path + ".items");
+  const folder = get(state, path) as FolderType;
 
-  return { open, items, name };
+  return { open, items: folder.items, name };
+}
+
+export function useExplorerItem(path: string) {
+  return useSelector(store, (state) => get(state.context, path)) as FileType;
 }
 
 export function useMonaco() {
@@ -19,7 +27,6 @@ export function useMonaco() {
 
 export function useCurrentFile() {
   const path = useSelector(store, (state) => state.context.currentFile);
-  console.log({ currentPath: path });
   const file = useSelector(store, (state) => {
     if (!path) {
       return null;

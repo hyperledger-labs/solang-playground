@@ -23,7 +23,7 @@ function Sidebar() {
 
 function SidebarLayout() {
   return (
-    <div className="w-[300px] border-r bg-card h-full px-3 pt-2">
+    <div className="w-[300px] border-r bg-card h-full pt-2">
       <Sidebar />
     </div>
   );

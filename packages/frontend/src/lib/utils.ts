@@ -35,3 +35,12 @@ export function generateRandomId(length: number = 10): string {
   }
   return result;
 }
+
+
+export function onEnter(callback: () => void) {
+  return (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      callback();
+    }
+  };
+}

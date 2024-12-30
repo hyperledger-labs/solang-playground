@@ -8,15 +8,15 @@ const AccordionContext = createContext({
   // setOpen: ((open: boolean) => {}) as React.Dispatch<React.SetStateAction<boolean>>,
 });
 
-export function AccordionTrigger({ className, children, ...props }: ComponentProps<"button">) {
+export function AccordionTrigger({ className, children, ...props }: ComponentProps<"div">) {
   // const { open } = useContext(AccordionContext);
   return (
-    <button
-      className={cn("w-full text-left bg-foreground/5 px-2 flex items-center justify-between", className)}
+    <div
+      className={cn("w-full text-left pr-2 flex items-center justify-between", className)}
       {...props}
     >
       {children}
-    </button>
+    </div>
   );
 }
 
