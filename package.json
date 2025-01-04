@@ -1,7 +1,8 @@
 {
   "private": true,
   "workspaces": [
-    "packages/app"
+    "packages/app",
+    "packages/frontend"
   ],
   "scripts": {
     "test": "npm run test --workspaces"

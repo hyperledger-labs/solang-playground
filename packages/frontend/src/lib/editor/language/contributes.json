@@ -1,0 +1,68 @@
+{
+	"contributes": {
+		"configuration": {
+			"type": "object",
+			"title:": "Solang Solidity Compiler",
+			"properties": {
+				"solang.target": {
+					"scope": "window",
+					"type": "string",
+					"enum": [
+						"solana",
+						"polkadot",
+						"evm"
+					],
+					"default": "solana",
+					"description": "Chain to build for. The Solidity language changes in subtle ways depending on the target."
+				},
+				"solang.updates.askBeforeDownload": {
+					"type": "boolean",
+					"default": false,
+					"description": "Whether to ask for permission before downloading any files from the Internet"
+				},
+				"solidity.trace.server": {
+					"scope": "window",
+					"type": "string",
+					"enum": [
+						"off",
+						"messages",
+						"verbose"
+					],
+					"default": "verbose"
+				}
+			}
+		},
+		"capabilities": {
+			"hoverProvider": "true",
+			"formatting": {
+				"dynamicRegistration": true
+			}
+		},
+		"languages": [
+			{
+				"id": "solidity",
+				"aliases": [
+					"Solidity",
+					"solidity"
+				],
+				"extensions": [
+					".sol"
+				],
+				"configuration": "./language_configuration/solidity.configuration.json"
+			}
+		],
+		"snippets": [
+			{
+				"language": "solidity",
+				"path": "./snippets_solidity.json"
+			}
+		],
+		"grammars": [
+			{
+				"language": "solidity",
+				"scopeName": "source.solidity",
+				"path": "./syntaxes_solidity.json"
+			}
+		]
+	}
+}
