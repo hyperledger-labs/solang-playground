@@ -5,6 +5,12 @@ import { Monaco } from "@monaco-editor/react";
 export const context = {
   monaco: null as Monaco | null,
   currentFile: null as string | null,
+  preferences: {
+    theme: "vs-dark",
+    fontSize: 14,
+    autoSave: true,
+    autoFormat: true,
+  },
   logs: [] as LogType[],
   tabs: new Set<string>(),
   files: {} as Record<string, string>,

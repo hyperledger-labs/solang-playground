@@ -121,4 +121,7 @@ export const events = {
       message: event.message,
     });
   },
+  changeFontSize(context: Context, event: { fontSize: number }) {
+    context.preferences.fontSize = isNaN(event.fontSize) ? 14 : event.fontSize;
+  },
 };

@@ -6,11 +6,13 @@ import { useTheme } from "next-themes";
 import { init, mountService } from "@/lib/editor";
 import { useFileContent } from "@/state/hooks";
 import { store } from "@/state";
+import { useSelector } from "@xstate/store/react";
 
 function Editor() {
   const { resolvedTheme } = useTheme();
   const theme = { dark: "vs-dark", light: "vs-light" }[resolvedTheme!] || resolvedTheme;
   const code = useFileContent();
+  const { fontSize } = useSelector(store, (state) => state.context.preferences);
 
   return (
     <div className="">
@@ -23,6 +25,7 @@ function Editor() {
         theme={theme}
         loading={<Spinner />}
         onChange={(value) => store.send({ type: "changeContent", content: value || "" })}
+        options={{ fontSize }}
       />
     </div>
   );
