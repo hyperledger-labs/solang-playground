@@ -22,10 +22,10 @@ export async function init(monaco: Monaco) {
   store.send({
     type: "addFile",
     basePath: "explorer.items.src",
-    name: "main",
+    name: "main.sol",
     content: defaultCode,
   });
-  store.send({ type: "setCurrentPath", path: "explorer.items.src.items['main']" });
+  store.send({ type: "setCurrentPath", path: "explorer.items.src.items['main.sol']" });
   const server = await Server.initialize(intoServer, fromServer);
   language = Language.initialize(client, monaco);
 

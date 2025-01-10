@@ -4,6 +4,7 @@ import "./globals.scss";
 import EditorProvider from "@/context/EditorProvider";
 import { Provider } from "jotai";
 import ThemeProvider from "@/components/ThemeProvider";
+import { SessionProvider } from "next-auth/react";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -29,11 +30,13 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <ThemeProvider attribute="class" enableSystem >
-          <Provider>
-            <EditorProvider>{children}</EditorProvider>
-          </Provider>
-        </ThemeProvider>
+        <SessionProvider>
+          <ThemeProvider attribute="class" enableSystem >
+            <Provider>
+              <EditorProvider>{children}</EditorProvider>
+            </Provider>
+          </ThemeProvider>
+        </SessionProvider>
       </body>
     </html>
   );
