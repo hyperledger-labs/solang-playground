@@ -1,13 +1,16 @@
 import Hide from "@/components/Hide";
+import Spinner from "@/components/Spinner";
 import { Button } from "@/components/ui/button";
 import createGoogleBackup from "@/lib/googlebackup";
 import { store } from "@/state";
 import { logger } from "@/state/utils";
 import { LogOut } from "lucide-react";
 import { signIn, signOut, useSession } from "next-auth/react";
+import { useState } from "react";
 
 function GoogleBackup() {
   const { status, data: session } = useSession();
+  const [loading, setLoading] = useState(false);
 
   async function handleCreateBackup() {
     if (status === "unauthenticated") {
@@ -18,9 +21,14 @@ function GoogleBackup() {
       return;
     }
 
+    setLoading(true);
+    logger.info("Creating Google Drive Backup");
+
     const state = store.getSnapshot();
 
-    await createGoogleBackup(state.context.explorer, (session as any).accessToken, state.context.files);
+    await createGoogleBackup(state.context.explorer, (session as any).accessToken, state.context.files).finally(() => {
+      setLoading(false);
+    });
 
     logger.info("Google Drive Backup Complete");
   }
@@ -36,7 +44,10 @@ function GoogleBackup() {
         </Hide>
       </h3>
       <div className="mt-3">
-        <Button className="w-full" size="sm" onClick={handleCreateBackup}>
+        <Button disabled={loading} className="w-full" size="sm" onClick={handleCreateBackup}>
+          <Hide open={loading}>
+            <Spinner className="w-4" />
+          </Hide>
           {status === "authenticated" ? "Create Backup" : "Sign In with Google"}
         </Button>
       </div>
