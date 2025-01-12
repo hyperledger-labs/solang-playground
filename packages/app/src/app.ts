@@ -166,7 +166,7 @@ export default class App {
       (async () => {
         const result = await compileRequest(
           // FIXME: This should be configurable
-          { compileUrl: "http://localhost:9000/compile" },
+          { compileUrl: "http://localhost:4444/compile" },
           { source: code }
         );
 
