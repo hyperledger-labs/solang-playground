@@ -1,5 +1,5 @@
 # Start from a rust base image
-FROM rust:1.81.0 as base
+FROM rust:1.83.0 as base
 
 # Set the current directory
 WORKDIR /app
