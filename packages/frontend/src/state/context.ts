@@ -1,6 +1,7 @@
 import { ExpNodeType, FolderType } from "@/types/explorer";
 import { LogType } from "@/types/log";
 import { Monaco } from "@monaco-editor/react";
+import { Networks } from "@stellar/stellar-sdk";
 
 export const context = {
   monaco: null as Monaco | null,

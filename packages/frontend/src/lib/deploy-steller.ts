@@ -20,12 +20,12 @@ export function xdrToTransaction(signedTxXdr: string, networkPassphrase: string)
   return tx;
 }
 
-async function uploadWasm(contract: Buffer, deployer: string) {
+async function uploadWasm(contract: Buffer, deployer: string, network: Networks) {
   const account = await server.getAccount(deployer);
   const operation = Operation.uploadContractWasm({ wasm: contract });
-  return await buildAndSendTransaction(account, operation);
+  return await buildAndSendTransaction(account, operation, network);
 }
-async function deployContract(response: rpc.Api.GetSuccessfulTransactionResponse, deployer: string) {
+async function deployContract(response: rpc.Api.GetSuccessfulTransactionResponse, deployer: string, network: Networks) {
   const account = await server.getAccount(deployer);
   const operation = Operation.createCustomContract({
     wasmHash: response?.returnValue?.bytes()!,
@@ -33,16 +33,16 @@ async function deployContract(response: rpc.Api.GetSuccessfulTransactionResponse
     // @ts-ignore
     salt: response?.hash!,
   });
-  const responseDeploy = await buildAndSendTransaction(account, operation);
+  const responseDeploy = await buildAndSendTransaction(account, operation, network);
   const contractAddress = StrKey.encodeContract(
     Address.fromScAddress(responseDeploy?.returnValue?.address?.()!).toBuffer(),
   );
   console.log(contractAddress);
 }
-async function buildAndSendTransaction(account: Account, operations: xdr.Operation) {
+async function buildAndSendTransaction(account: Account, operations: xdr.Operation, network: Networks) {
   const transaction = new TransactionBuilder(account, {
     fee: BASE_FEE,
-    networkPassphrase: Networks.TESTNET,
+    networkPassphrase: network,
   })
     .addOperation(operations)
     .setTimeout(30)
@@ -50,11 +50,11 @@ async function buildAndSendTransaction(account: Account, operations: xdr.Operati
 
   const preparedTx = await server.prepareTransaction(transaction);
   const { signedTxXdr } = await signTransaction(preparedTx.toXDR(), {
-    networkPassphrase: Networks.TESTNET
+    networkPassphrase: network,
   });
 
   console.log("Submitting transaction...");
-  const signedTx = xdrToTransaction(signedTxXdr, Networks.TESTNET);
+  const signedTx = xdrToTransaction(signedTxXdr, network);
   let response = await server.sendTransaction(signedTx);
 
   const hash = response.hash;
@@ -80,10 +80,10 @@ async function buildAndSendTransaction(account: Account, operations: xdr.Operati
   }
 }
 
-async function deployStellerContract(contract: Buffer, deployer: string) {
+async function deployStellerContract(contract: Buffer, deployer: string, network: Networks) {
   try {
-    let uploadResponse = await uploadWasm(contract, deployer);
-    await deployContract(uploadResponse, deployer);
+    let uploadResponse = await uploadWasm(contract, deployer, network);
+    await deployContract(uploadResponse, deployer, network);
   } catch (error) {
     console.error(error);
   }
@@ -92,7 +92,7 @@ async function deployStellerContract(contract: Buffer, deployer: string) {
 export default deployStellerContract;
 
 // export async function submitSignedXdr(signedTxXdr: string) {
-//   const tx = xdrToTransaction(signedTxXdr, Networks.TESTNET);
+//   const tx = xdrToTransaction(signedTxXdr, network);
 
 //   console.log("Submitting transaction...");
 //   let response = await server.sendTransaction(tx);
