@@ -4,6 +4,7 @@ import Header from "@/components/Header";
 import SidePanel from "@/components/SidePanel";
 import Sidebar from "@/components/Sidebar";
 import HomeTab from "@/components/HomeTab";
+import { Toaster } from "@/components/ui/sonner"
 
 export default function Home() {
   return (
@@ -23,6 +24,7 @@ export default function Home() {
         </div>
         {/* <Footer /> */}
       </div>
+      <Toaster />
     </div>
   );
 }

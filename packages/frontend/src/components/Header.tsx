@@ -10,6 +10,7 @@ import IconButton from "./IconButton";
 import { useEffect, useRef } from "react";
 import { logger } from "@/state/utils";
 import Hide from "./Hide";
+import DeployToSteller from "./DeployToSteller";
 
 function TabItem({ path }: { path: string }) {
   const file = useExplorerItem(path);
@@ -134,6 +135,7 @@ function Header() {
           <FaPlay className="text-[#32ba89]" size={12} />
         </button>
       </div>
+      <DeployToSteller />
       <div className="flex flex-1 w-0">
         <div ref={containerRef} className="overflow-x-auto flex scroll-smooth">
           {[...tabs].map((tab) => (
