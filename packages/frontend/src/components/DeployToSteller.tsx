@@ -14,12 +14,8 @@ import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { ChangeEvent, useId, useState } from "react";
 import deployStellerContract from "@/lib/deploy-steller";
-import Hide from "./Hide";
-import { LoaderIcon } from "lucide-react";
 import { toast, useSonner } from "sonner";
-import useFreighter from "@/hooks/useFreighter";
-import { getAddress, isAllowed, isConnected, setAllowed } from "@stellar/freighter-api";
-import { Networks } from "@stellar/stellar-sdk";
+import { Keypair, Networks } from "@stellar/stellar-sdk";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 function DeployToSteller() {
@@ -29,24 +25,15 @@ function DeployToSteller() {
   const [network, setNetowrk] = useState(Networks.TESTNET);
 
   async function handleDeploy() {
-    const connected = await isConnected();
-    if (!contract || !connected.isConnected) {
+    if (!contract) {
       return;
     }
 
-    const allowed = await isAllowed();
-
-    if (!allowed.isAllowed) {
-      await setAllowed();
-    }
-
-    const address = await getAddress();
-
-    console.log({ address });
+    const keypair = Keypair.random();
 
     setOpen(false);
     toast.loading("Deploying contract...", { id: toastId });
-    await deployStellerContract(contract, address.address, network);
+    await deployStellerContract(contract, keypair, network);
     toast.success("Contract deployed successfully", { id: toastId });
   }
 

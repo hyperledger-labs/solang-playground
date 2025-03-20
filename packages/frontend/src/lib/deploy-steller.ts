@@ -1,3 +1,4 @@
+import { logger } from "@/state/utils";
 import { signTransaction } from "@stellar/freighter-api";
 import {
   Account,
@@ -13,33 +14,48 @@ import {
   xdr,
 } from "@stellar/stellar-sdk";
 
-const server = new rpc.Server("https://soroban-testnet.stellar.org:443");
+const networkRpc = {
+  [Networks.TESTNET]: "https://soroban-testnet.stellar.org:443",
+  [Networks.PUBLIC]: "https://soroban.stellar.org:443",
+  [Networks.FUTURENET]: "https://horizon-futurenet.stellar.org:443",
+} as Record<Networks, string>;
 
 export function xdrToTransaction(signedTxXdr: string, networkPassphrase: string) {
   const tx = new Transaction(signedTxXdr, networkPassphrase);
   return tx;
 }
 
-async function uploadWasm(contract: Buffer, deployer: string, network: Networks) {
-  const account = await server.getAccount(deployer);
+async function uploadWasm(contract: Buffer, deployer: Keypair, network: Networks, server: rpc.Server) {
+  const account = await server.getAccount(deployer.publicKey());
   const operation = Operation.uploadContractWasm({ wasm: contract });
-  return await buildAndSendTransaction(account, operation, network);
+  return await buildAndSendTransaction(account, operation, network, server, deployer);
 }
-async function deployContract(response: rpc.Api.GetSuccessfulTransactionResponse, deployer: string, network: Networks) {
-  const account = await server.getAccount(deployer);
+async function deployContract(
+  response: rpc.Api.GetSuccessfulTransactionResponse,
+  deployer: Keypair,
+  network: Networks,
+  server: rpc.Server,
+) {
+  const account = await server.getAccount(deployer.publicKey());
   const operation = Operation.createCustomContract({
     wasmHash: response?.returnValue?.bytes()!,
-    address: Address.fromString(deployer),
+    address: Address.fromString(deployer.publicKey()),
     // @ts-ignore
     salt: response?.hash!,
   });
-  const responseDeploy = await buildAndSendTransaction(account, operation, network);
+  const responseDeploy = await buildAndSendTransaction(account, operation, network, server, deployer);
   const contractAddress = StrKey.encodeContract(
     Address.fromScAddress(responseDeploy?.returnValue?.address?.()!).toBuffer(),
   );
   console.log(contractAddress);
 }
-async function buildAndSendTransaction(account: Account, operations: xdr.Operation, network: Networks) {
+async function buildAndSendTransaction(
+  account: Account,
+  operations: xdr.Operation,
+  network: Networks,
+  server: rpc.Server,
+  deployer: Keypair,
+) {
   const transaction = new TransactionBuilder(account, {
     fee: BASE_FEE,
     networkPassphrase: network,
@@ -48,18 +64,16 @@ async function buildAndSendTransaction(account: Account, operations: xdr.Operati
     .setTimeout(30)
     .build();
 
-  const preparedTx = await server.prepareTransaction(transaction);
-  const { signedTxXdr } = await signTransaction(preparedTx.toXDR(), {
-    networkPassphrase: network,
-  });
+  const signedTx = await server.prepareTransaction(transaction);
+  signedTx.sign(deployer);
 
-  console.log("Submitting transaction...");
-  const signedTx = xdrToTransaction(signedTxXdr, network);
+  logger.info("Submitting transaction...");
+  // const signedTx = xdrToTransaction(signedTxXdr, network);
   let response = await server.sendTransaction(signedTx);
 
   const hash = response.hash;
-  console.log(`Transaction hash: ${hash}`);
-  console.log("Awaiting confirmation...");
+  logger.info(`Transaction hash: ${hash}`);
+  logger.info("Awaiting confirmation...");
 
   let getResponse;
 
@@ -72,18 +86,22 @@ async function buildAndSendTransaction(account: Account, operations: xdr.Operati
   }
 
   if (getResponse.status === "SUCCESS") {
-    console.log("Transaction successful.");
+    logger.info("Transaction successful.");
     return getResponse;
   } else {
-    console.log("Transaction failed.");
+    logger.error("Transaction failed.");
     throw new Error("Transaction failed");
   }
 }
 
-async function deployStellerContract(contract: Buffer, deployer: string, network: Networks) {
+async function deployStellerContract(contract: Buffer, deployer: Keypair, network: Networks) {
   try {
-    let uploadResponse = await uploadWasm(contract, deployer, network);
-    await deployContract(uploadResponse, deployer, network);
+    logger.info("Starting Contract Deployment to Steller Network...");
+    const server = new rpc.Server(networkRpc[network]);
+    await server.requestAirdrop(deployer.publicKey());
+    logger.info(`Got airdrop address: ${deployer.publicKey()}`)
+    let uploadResponse = await uploadWasm(contract, deployer, network, server);
+    await deployContract(uploadResponse, deployer, network, server);
   } catch (error) {
     console.error(error);
   }
