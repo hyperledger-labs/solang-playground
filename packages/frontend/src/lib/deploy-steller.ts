@@ -38,14 +38,14 @@ async function deployContract(
 ) {
   const account = await server.getAccount(deployer.publicKey());
   const operation = Operation.createCustomContract({
-    wasmHash: response?.returnValue?.bytes()!,
+    wasmHash: response?.returnValue?.bytes() as any,
     address: Address.fromString(deployer.publicKey()),
     // @ts-ignore
-    salt: response?.hash!,
+    salt: response?.hash as any,
   });
   const responseDeploy = await buildAndSendTransaction(account, operation, network, server, deployer);
   const contractAddress = StrKey.encodeContract(
-    Address.fromScAddress(responseDeploy?.returnValue?.address?.()!).toBuffer(),
+    Address.fromScAddress(responseDeploy?.returnValue?.address?.() as any).toBuffer(),
   );
   console.log(contractAddress);
 }

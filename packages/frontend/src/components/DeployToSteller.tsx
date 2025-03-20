@@ -82,7 +82,7 @@ function DeployToSteller() {
                     value: Networks.FUTURENET,
                   },
                 ].map((network) => (
-                  <SelectItem value={network.value}>{network.label}</SelectItem>
+                  <SelectItem key={network.value} value={network.value}>{network.label}</SelectItem>
                 ))}
               </SelectContent>
             </Select>

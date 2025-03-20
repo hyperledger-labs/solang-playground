@@ -16,7 +16,7 @@ function useFreighter() {
       const allowed = await isAllowed();
       setState({
         connected: connected.isConnected,
-        address: address?.address!,
+        address: address?.address as any,
         allowed: allowed.isAllowed,
       });
     })();
@@ -33,7 +33,7 @@ function useFreighter() {
     const address = connected ? await getAddress() : null;
     setState({
       connected: connected.isConnected,
-      address: address?.address!,
+      address: address?.address as any,
       allowed: true,
     });
   }
