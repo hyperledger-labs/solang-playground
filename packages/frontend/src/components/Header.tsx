@@ -138,7 +138,7 @@ function Header() {
         <div ref={containerRef} className="overflow-x-auto flex scroll-smooth">
           {[...tabs].map((tab) => (
             <Hide key={tab} open={tab !== "home"} fallback={<TabHome path={tab} />}>
-              <TabItem path={tab} />
+              <TabItem key={tab} path={tab} />
             </Hide>
           ))}
         </div>

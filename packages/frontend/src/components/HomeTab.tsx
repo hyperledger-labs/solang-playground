@@ -5,12 +5,15 @@ import { store } from "@/state";
 import { useSelector } from "@xstate/store/react";
 import React from "react";
 import { FaDiscord, FaGithub, FaTwitter } from "react-icons/fa";
+import { Button } from "./ui/button";
 
 function Item({ title, href, className }: { title: string; href: string; className?: string }) {
   return (
-    <a target="_blank" className={cn("bg-card rounded p-6 block flex-1 text-center", className)} href={href}>
-      {title}
-    </a>
+    <Button asChild>
+      <a target="_blank" className={cn("rounded p-6 block flex-1 text-center min-h-12", className)} href={href}>
+        {title}
+      </a>
+    </Button>
   );
 }
 
@@ -22,7 +25,7 @@ function HomeTab() {
   }
 
   return (
-    <div className="absolute inset-0 bg-[#2a2c3f] z-50 p-4">
+    <div className="absolute inset-0 bg-background z-50 p-4">
       <div className="flex gap-10">
         <div className="">
           <h1 className="text-4xl">Solang </h1>

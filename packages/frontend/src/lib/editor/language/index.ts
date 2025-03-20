@@ -186,7 +186,6 @@ export default class Language implements monaco.languages.ILanguageExtensionPoin
       ],
       colors: {},
     });
-    monaco.editor.setTheme(themeName);
 
     monaco.languages.registerDocumentSymbolProvider(this.id, {
       // eslint-disable-next-line
