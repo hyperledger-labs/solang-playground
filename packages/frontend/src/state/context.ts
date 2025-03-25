@@ -1,7 +1,10 @@
 import { ExpNodeType, FolderType } from "@/types/explorer";
 import { LogType } from "@/types/log";
 import { Monaco } from "@monaco-editor/react";
-import { Networks } from "@stellar/stellar-sdk";
+import { Contract, IDL } from "@/types/idl";
+export * from "@stellar/stellar-sdk";
+export * as contract from "@stellar/stellar-sdk/contract";
+export * as rpc from "@stellar/stellar-sdk/rpc";
 
 export const context = {
   monaco: null as Monaco | null,
@@ -30,6 +33,7 @@ export const context = {
       },
     },
   } satisfies FolderType,
+  contract: null as null | Contract,
 };
 
 export type Context = typeof context;

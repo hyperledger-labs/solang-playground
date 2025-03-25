@@ -17,6 +17,7 @@ import deployStellerContract from "@/lib/deploy-steller";
 import { toast, useSonner } from "sonner";
 import { Keypair, Networks } from "@stellar/stellar-sdk";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { store } from "@/state";
 
 function DeployToSteller() {
   const [contract, setContract] = useState<null | Buffer>(null);
@@ -35,6 +36,7 @@ function DeployToSteller() {
     toast.loading("Deploying contract...", { id: toastId });
     await deployStellerContract(contract, keypair, network);
     toast.success("Contract deployed successfully", { id: toastId });
+    store.send({ type: "setContractAddress", address: keypair.publicKey() });
   }
 
   async function handleContractUpload(event: ChangeEvent<HTMLInputElement>) {
@@ -82,7 +84,9 @@ function DeployToSteller() {
                     value: Networks.FUTURENET,
                   },
                 ].map((network) => (
-                  <SelectItem key={network.value} value={network.value}>{network.label}</SelectItem>
+                  <SelectItem key={network.value} value={network.value}>
+                    {network.label}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>

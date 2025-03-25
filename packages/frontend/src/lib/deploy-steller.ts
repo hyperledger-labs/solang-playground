@@ -13,12 +13,7 @@ import {
   TransactionBuilder,
   xdr,
 } from "@stellar/stellar-sdk";
-
-const networkRpc = {
-  [Networks.TESTNET]: "https://soroban-testnet.stellar.org:443",
-  [Networks.PUBLIC]: "https://soroban.stellar.org:443",
-  [Networks.FUTURENET]: "https://horizon-futurenet.stellar.org:443",
-} as Record<Networks, string>;
+import { networkRpc } from "./web3";
 
 export function xdrToTransaction(signedTxXdr: string, networkPassphrase: string) {
   const tx = new Transaction(signedTxXdr, networkPassphrase);
@@ -49,7 +44,7 @@ async function deployContract(
   );
   console.log(contractAddress);
 }
-async function buildAndSendTransaction(
+export async function buildAndSendTransaction(
   account: Account,
   operations: xdr.Operation,
   network: Networks,
