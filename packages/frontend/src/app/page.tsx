@@ -2,8 +2,9 @@ import Console from "@/components/Console";
 import Editor from "@/components/Editor";
 import Header from "@/components/Header";
 import SidePanel from "@/components/SidePanel";
-import Footer from "@/components/Footer";
 import Sidebar from "@/components/Sidebar";
+import HomeTab from "@/components/HomeTab";
+import { Toaster } from "@/components/ui/sonner"
 
 export default function Home() {
   return (
@@ -14,14 +15,16 @@ export default function Home() {
           <Sidebar />
           <div className="flex-1 flex flex-col">
             <Header />
-            <div className="flex-1">
+            <div className="flex-1 relative">
               <Editor />
+              <HomeTab />
             </div>
             <Console />
           </div>
         </div>
         {/* <Footer /> */}
       </div>
+      <Toaster />
     </div>
   );
 }

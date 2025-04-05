@@ -7,6 +7,7 @@ import { Monaco } from "@monaco-editor/react";
 import { createPath } from "./utils";
 import { MessageType } from "vscode-languageserver-protocol";
 import { nanoid } from "nanoid";
+import { IDL } from "@/types/idl";
 
 export const events = {
   toggleFolder: (context: Context, event: { path: string }) => {
@@ -120,5 +121,20 @@ export const events = {
       type: event.logType,
       message: event.message,
     });
+  },
+  changeFontSize(context: Context, event: { fontSize: number }) {
+    context.preferences.fontSize = isNaN(event.fontSize) ? 14 : event.fontSize;
+  },
+
+  setContractIdl(context: Context, event: { idl: IDL }) {
+    context.contract = {
+      methods: event.idl,
+    };
+  },
+  setContractAddress(context: Context, event: { address: string }) {
+    context.contract = {
+      methods: context.contract?.methods || [],
+      address: event.address,
+    };
   },
 };

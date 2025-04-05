@@ -77,6 +77,29 @@ export default class Language implements monaco.languages.ILanguageExtensionPoin
 
     monaco.languages.setMonarchTokensProvider("solidity", solidityTokensProvider as any);
     monaco.languages.setLanguageConfiguration("solidity", solidityLanguageConfig as any);
+
+    monaco.languages.registerCompletionItemProvider(this.id, {
+      async provideCompletionItems(model, position, context, token): Promise<monaco.languages.CompletionList> {
+        void token;
+        const response = await (client.request(proto.CompletionRequest.type.method, {
+          textDocument: monacoToProtocol.asTextDocumentIdentifier(model),
+          position: monacoToProtocol.asPosition(position.column, position.lineNumber),
+          context: monacoToProtocol.asCompletionContext(context),
+        } as proto.CompletionParams) as Promise<proto.CompletionList>);
+        console.log(response);
+
+        const word = model.getWordUntilPosition(position);
+        const result: monaco.languages.CompletionList = protocolToMonaco.asCompletionResult(response, {
+          startLineNumber: position.lineNumber,
+          startColumn: word.startColumn,
+          endLineNumber: position.lineNumber,
+          endColumn: word.endColumn,
+        });
+
+        return result;
+      },
+    });
+
     monaco.editor.defineTheme(themeName, {
       base: themeType,
       inherit: true, // can also be false to completely replace the builtin rules
@@ -163,7 +186,6 @@ export default class Language implements monaco.languages.ILanguageExtensionPoin
       ],
       colors: {},
     });
-    monaco.editor.setTheme(themeName);
 
     monaco.languages.registerDocumentSymbolProvider(this.id, {
       // eslint-disable-next-line

@@ -5,6 +5,10 @@ import FileExplorer from "./FileExplorer";
 import Settings from "./Settings";
 import { ExpNodeType } from "@/types/explorer";
 import { store } from "@/state";
+// import ContractExplorer from "./ContractExplorer";
+import dynamic from "next/dynamic";
+
+const ContractExplorer = dynamic(() => import("./ContractExplorer"), { ssr: false });
 
 function Sidebar() {
   const { sidebar } = useAppStore();
@@ -12,6 +16,10 @@ function Sidebar() {
 
   if (sidebar === SidebarView.SETTINGS) {
     return <Settings />;
+  }
+
+  if (sidebar === SidebarView.CONTRACT) {
+    return <ContractExplorer />;
   }
 
   return (
