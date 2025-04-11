@@ -42,7 +42,8 @@ async function deployContract(
   const contractAddress = StrKey.encodeContract(
     Address.fromScAddress(responseDeploy?.returnValue?.address?.() as any).toBuffer(),
   );
-  console.log(contractAddress);
+  
+  return contractAddress;
 }
 export async function buildAndSendTransaction(
   account: Account,
@@ -94,9 +95,11 @@ async function deployStellerContract(contract: Buffer, deployer: Keypair, networ
     logger.info("Starting Contract Deployment to Steller Network...");
     const server = new rpc.Server(networkRpc[network]);
     await server.requestAirdrop(deployer.publicKey());
-    logger.info(`Got airdrop address: ${deployer.publicKey()}`)
+    logger.info(`Got airdrop address: ${deployer.publicKey()}`);
     let uploadResponse = await uploadWasm(contract, deployer, network, server);
-    await deployContract(uploadResponse, deployer, network, server);
+    const address = await deployContract(uploadResponse, deployer, network, server);
+
+    return address;
   } catch (error) {
     console.error(error);
   }

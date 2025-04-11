@@ -1,4 +1,4 @@
-import init, { InitOutput, serve, ServerConfig } from "@/lib/wasm/demo_lsp_browser";
+import init, { InitOutput, serve, ServerConfig } from "@/lib/lsp-wasm/demo_lsp_browser";
 import { FromServer, IntoServer } from "./codec";
 
 let server: null | Server;

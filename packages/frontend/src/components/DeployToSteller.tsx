@@ -13,11 +13,12 @@ import { FaPlay } from "react-icons/fa";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { ChangeEvent, useId, useState } from "react";
-import deployStellerContract from "@/lib/deploy-steller";
-import { toast, useSonner } from "sonner";
+import { toast } from "sonner";
 import { Keypair, Networks } from "@stellar/stellar-sdk";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { store } from "@/state";
+import generateIdl from "@/lib/idl-wasm";
+import deployStellerContract from "@/lib/deploy-steller";
 
 function DeployToSteller() {
   const [contract, setContract] = useState<null | Buffer>(null);
@@ -34,9 +35,11 @@ function DeployToSteller() {
 
     setOpen(false);
     toast.loading("Deploying contract...", { id: toastId });
-    await deployStellerContract(contract, keypair, network);
+    const idl = await generateIdl(contract);
+    store.send({ type: "setContractIdl", idl });
+    const contractAddress = await deployStellerContract(contract, keypair, network);
     toast.success("Contract deployed successfully", { id: toastId });
-    store.send({ type: "setContractAddress", address: keypair.publicKey() });
+    contractAddress && store.send({ type: "setContractAddress", address: contractAddress });
   }
 
   async function handleContractUpload(event: ChangeEvent<HTMLInputElement>) {
