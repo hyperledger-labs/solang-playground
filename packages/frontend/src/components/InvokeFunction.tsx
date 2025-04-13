@@ -15,7 +15,7 @@ import { logger } from "@/state/utils";
 import { callContract } from "@/actions";
 import { networkRpc } from "@/lib/web3";
 import { Server } from "@stellar/stellar-sdk/rpc";
-import { Networks } from "@stellar/stellar-sdk";
+import { Networks, scValToNative } from "@stellar/stellar-sdk";
 
 function InvokeFunction({ method }: { method: FunctionSpec }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -60,6 +60,9 @@ function InvokeFunction({ method }: { method: FunctionSpec }) {
       if (response.status === "SUCCESS") {
         logger.info("Transaction successful.");
         logger.info(`TxId: ${result.hash}`);
+        if (response.returnValue) {
+          logger.info(`TX Result: ${scValToNative(response.returnValue)}`);
+        }
         toast.success(`Function invoked successfully`);
         return response;
       } else {
