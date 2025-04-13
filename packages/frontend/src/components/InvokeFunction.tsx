@@ -11,7 +11,6 @@ import { toast } from "sonner";
 import { FunctionSpec } from "@/types/idl";
 import { DialogTrigger } from "@radix-ui/react-dialog";
 import { ChevronsLeftRightEllipsis } from "lucide-react";
-import { invokeContract } from "@/lib/invoke-contract";
 import { logger } from "@/state/utils";
 import { callContract } from "@/actions";
 import { networkRpc } from "@/lib/web3";
@@ -20,13 +19,16 @@ import { Networks } from "@stellar/stellar-sdk";
 
 function InvokeFunction({ method }: { method: FunctionSpec }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [args, setArgs] = useState<Record<string, string>>({});
+  const [args, setArgs] = useState<Record<string, { type: string; value: string }>>({});
   const contractAddress = useSelector(store, (state) => state.context.contract?.address);
 
-  const handleInputChange = (name: string, value: string) => {
+  const handleInputChange = (name: string, value: string, type: string) => {
     setArgs((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: {
+        type,
+        value,
+      },
     }));
   };
 
@@ -95,8 +97,8 @@ function InvokeFunction({ method }: { method: FunctionSpec }) {
               </Label>
               <Input
                 id={arg.name}
-                value={args[arg.name] || ""}
-                onChange={(e) => handleInputChange(arg.name, e.target.value)}
+                value={args[arg.name]?.value || ""}
+                onChange={(e) => handleInputChange(arg.name, e.target.value, arg.value.type)}
                 className="col-span-3"
                 placeholder={`Enter '${arg.name}' value`}
               />

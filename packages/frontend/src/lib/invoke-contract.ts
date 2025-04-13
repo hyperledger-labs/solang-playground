@@ -1,18 +1,19 @@
-import { Address, BASE_FEE, Contract, Keypair, Networks, TransactionBuilder, xdr } from "@stellar/stellar-sdk";
-import { assembleTransaction, Server } from "@stellar/stellar-sdk/rpc";
+import { BASE_FEE, Contract, Keypair, nativeToScVal, Networks, TransactionBuilder } from "@stellar/stellar-sdk";
 import { networkRpc } from "./web3";
-import { buildAndSendTransaction } from "./deploy-steller";
+import { Server } from "@stellar/stellar-sdk/rpc";
 
-function buildOperation({ contractId, method, args }: { method: string; contractId: string; args: any[] }) {
+function buildOperation({
+  contractId,
+  method,
+  args,
+}: {
+  method: string;
+  contractId: string;
+  args: { type: string; value: string }[];
+}) {
   const contract = new Contract(contractId);
-  const scArgs = args.map((arg) => {
-    if (typeof arg === "string" && arg.startsWith("G")) {
-      return Address.fromString(arg).toScVal(); // Address
-    } else if (typeof arg === "number") {
-      return xdr.ScVal.scvI32(arg); // Integer
-    } else {
-      return xdr.ScVal.scvString(arg); // String (adjust as needed)
-    }
+  const scArgs = args.map(({ type, value }) => {
+    return nativeToScVal(value, { type });
   });
   const operation = contract.call(method, ...scArgs);
   return operation;
@@ -25,7 +26,7 @@ export async function invokeContract({
 }: {
   method: string;
   contractId: string;
-  args: any[];
+  args: { type: string; value: string }[];
 }) {
   const sourceKeypair = Keypair.random();
   const rpcUrl = networkRpc[Networks.TESTNET];
