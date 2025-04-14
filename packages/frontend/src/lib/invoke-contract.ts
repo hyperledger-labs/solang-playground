@@ -9,10 +9,15 @@ function buildOperation({
 }: {
   method: string;
   contractId: string;
-  args: { type: string; value: string }[];
+  args: { type: string; value: string; subType: string }[];
 }) {
   const contract = new Contract(contractId);
-  const scArgs = args.map(({ type, value }) => {
+  
+  const scArgs = args.map(({ type, value, subType }) => {
+    if (type === "vec") {
+      value = JSON.parse(value).map((x: any) => nativeToScVal(x, { type: subType }));
+    }
+
     return nativeToScVal(value, { type });
   });
   const operation = contract.call(method, ...scArgs);
@@ -26,7 +31,7 @@ export async function invokeContract({
 }: {
   method: string;
   contractId: string;
-  args: { type: string; value: string }[];
+  args: { type: string; value: string; subType: string }[];
 }) {
   const sourceKeypair = Keypair.random();
   const rpcUrl = networkRpc[Networks.TESTNET];

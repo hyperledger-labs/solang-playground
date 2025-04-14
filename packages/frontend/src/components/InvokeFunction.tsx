@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { store } from "@/state";
 import { useSelector } from "@xstate/store/react";
 import { Button } from "./ui/button";
@@ -18,16 +18,17 @@ import { Server } from "@stellar/stellar-sdk/rpc";
 import { Networks, scValToNative } from "@stellar/stellar-sdk";
 
 function InvokeFunction({ method }: { method: FunctionSpec }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [args, setArgs] = useState<Record<string, { type: string; value: string }>>({});
+  const [isOpen, setIsOpen] = useState("");
+  const [args, setArgs] = useState<Record<string, { type: string; value: string; subType: string }>>({});
   const contractAddress = useSelector(store, (state) => state.context.contract?.address);
 
-  const handleInputChange = (name: string, value: string, type: string) => {
+  const handleInputChange = (name: string, value: string, type: string, subType: string) => {
     setArgs((prev) => ({
       ...prev,
       [name]: {
         type,
         value,
+        subType,
       },
     }));
   };
@@ -62,6 +63,7 @@ function InvokeFunction({ method }: { method: FunctionSpec }) {
         logger.info(`TxId: ${result.hash}`);
         if (response.returnValue) {
           logger.info(`TX Result: ${scValToNative(response.returnValue)}`);
+          setIsOpen(JSON.stringify(response.returnValue, null, 2));
         }
         toast.success(`Function invoked successfully`);
         return response;
@@ -78,51 +80,72 @@ function InvokeFunction({ method }: { method: FunctionSpec }) {
   };
 
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="outline" key={method.name} className="w-full text-left justify-start items-center">
-          <span>{method.name}</span>
-          <ChevronsLeftRightEllipsis className="ml-auto" />
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Invoke {method.name}</DialogTitle>
-          <DialogDescription>{method.doc || "Enter arguments to invoke this function"}</DialogDescription>
-        </DialogHeader>
+    <Fragment>
+      <Dialog>
+        <DialogTrigger asChild>
+          <Button variant="outline" key={method.name} className="w-full text-left justify-start items-center">
+            <span>{method.name}</span>
+            <ChevronsLeftRightEllipsis className="ml-auto" />
+          </Button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Invoke {method.name}</DialogTitle>
+            <DialogDescription>{method.doc || "Enter arguments to invoke this function"}</DialogDescription>
+          </DialogHeader>
 
-        <div className="grid gap-4 py-4">
-          {method.inputs?.map((arg, index) => (
-            <div key={index} className="flex flex-col gap-2">
-              <Label htmlFor={arg.name} className="">
-                <span>{arg.name}</span>{" "}
-                <span className="text-xs text-muted-foreground bg-black/10 p-1 rounded">({arg.value.type})</span>
-              </Label>
-              <Input
-                id={arg.name}
-                value={args[arg.name]?.value || ""}
-                onChange={(e) => handleInputChange(arg.name, e.target.value, arg.value.type)}
-                className="col-span-3"
-                placeholder={`Enter '${arg.name}' value`}
-              />
-            </div>
-          ))}
+          <div className="grid gap-4 py-4">
+            {method.inputs?.map((arg, index) => (
+              <div key={index} className="flex flex-col gap-2">
+                <Label htmlFor={arg.name} className="">
+                  <span>{arg.name}</span>{" "}
+                  <span className="text-xs text-muted-foreground bg-black/10 p-1 rounded">({arg.value.type})</span>
+                </Label>
+                <Input
+                  id={arg.name}
+                  value={args[arg.name]?.value || ""}
+                  onChange={(e) =>
+                    handleInputChange(arg.name, e.target.value, arg.value.type, (arg as any).value?.element?.type)
+                  }
+                  className="col-span-3"
+                  placeholder={`Enter '${arg.name}' value`}
+                />
+              </div>
+            ))}
 
-          {method.inputs?.length === 0 && (
-            <p className="text-center text-sm text-muted-foreground">This function takes no arguments</p>
-          )}
-        </div>
+            {method.inputs?.length === 0 && (
+              <p className="text-center text-sm text-muted-foreground">This function takes no arguments</p>
+            )}
+          </div>
 
-        <DialogFooter>
-          <DialogTrigger asChild>
-            <Button variant="outline">Cancel</Button>
-          </DialogTrigger>
-          <DialogTrigger asChild>
-            <Button onClick={handleInvoke}>Invoke</Button>
-          </DialogTrigger>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          <DialogFooter>
+            <DialogTrigger asChild>
+              <Button variant="outline">Cancel</Button>
+            </DialogTrigger>
+            <DialogTrigger asChild>
+              <Button onClick={handleInvoke}>Invoke</Button>
+            </DialogTrigger>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={Boolean(isOpen)} onOpenChange={(val) => setIsOpen(val ? isOpen : "")}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Function Returned Value</DialogTitle>
+          </DialogHeader>
+
+          <div className="">
+            <textarea defaultValue={isOpen} rows={12} className="w-full resize-none p-2 text-white bg-black/10" />
+          </div>
+
+          <DialogFooter>
+            <DialogTrigger asChild>
+              <Button variant="outline">Cancel</Button>
+            </DialogTrigger>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </Fragment>
   );
 }
 

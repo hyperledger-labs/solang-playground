@@ -9,7 +9,7 @@ export async function callContract({
 }: {
   method: string;
   contractId: string;
-  args: { type: string; value: string }[];
+  args: { type: string; value: string,subType: string }[];
 }) {
   const result = await invokeContract({ contractId, method, args });
   return result;
