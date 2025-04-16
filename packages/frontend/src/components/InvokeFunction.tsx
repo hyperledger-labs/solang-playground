@@ -15,26 +15,37 @@ import { logger } from "@/state/utils";
 import { callContract } from "@/actions";
 import { networkRpc } from "@/lib/web3";
 import { Server } from "@stellar/stellar-sdk/rpc";
-import { Networks, scValToNative } from "@stellar/stellar-sdk";
+import { Networks, scValToNative, xdr, rpc } from "@stellar/stellar-sdk";
 
 function createLogSingnature(method: FunctionSpec, args: any, result: any) {
-  const strArgs = method.inputs.map((arg) => {
+  const mappedArgs = method.inputs.map((arg) => {
     const value = args[arg.name]?.value;
-    return `${arg.name}: ${arg.value.type} = ${value}`;
+    return {
+      name: arg.name,
+      type: arg.value.type,
+      value: (arg as any)?.value?.type === "string" ? `"${value}"` : value,
+    };
   });
   const output = method.outputs.at(0);
-  const signature = 
-`fn ${method.name} 
-${strArgs.join(", ")}
-result: ${output?.type} = ${result}
-`;
-  return signature;
+  return {
+    name: method.name,
+    args: mappedArgs,
+    result: {
+      type: output?.type as any,
+      value: (output as any)?.type === "vec" ? `[${result}]` : result,
+    },
+  };
 }
-
+const defaultState = {
+  args: [],
+  result: { type: "", value: "" },
+  name: "",
+};
 function InvokeFunction({ method }: { method: FunctionSpec }) {
-  const [isOpen, setIsOpen] = useState("");
+  const [sg, setSignature] = useState<ReturnType<typeof createLogSingnature>>(defaultState);
   const [args, setArgs] = useState<Record<string, { type: string; value: string; subType: string }>>({});
   const contractAddress = useSelector(store, (state) => state.context.contract?.address);
+  const [logs, setLogs] = useState<string[]>(["Hello wrold", "Mango World"]);
 
   const handleInputChange = (name: string, value: string, type: string, subType: string) => {
     setArgs((prev) => ({
@@ -72,13 +83,37 @@ function InvokeFunction({ method }: { method: FunctionSpec }) {
         await new Promise((resolve) => setTimeout(resolve, 1000));
       }
 
+      const logs =
+        response.diagnosticEventsXdr
+          ?.map((eventXdr) => {
+            const diagnosticEvent = eventXdr;
+            const contractEvent = diagnosticEvent.event();
+            const eventBody = contractEvent.body().v0();
+            const data = scValToNative(eventBody.data());
+            const topics = eventBody.topics().map((topic) => scValToNative(topic));
+
+            if (topics.includes("log")) {
+              try {
+                return JSON.stringify(data);
+              } catch (error) {
+                return data;
+              }
+            }
+
+            return null as never;
+          })
+          .filter(Boolean) || [];
+
+      setLogs(logs);
+
       if (response.status === "SUCCESS") {
         logger.info("Transaction successful.");
         logger.info(`TxId: ${result.hash}`);
+        logger.info(`Contract Logs: \n${logs.join("\n")}`);
         if (response.returnValue) {
           logger.info(`TX Result: ${scValToNative(response.returnValue)}`);
           const logSignature = createLogSingnature(method, args, scValToNative(response.returnValue));
-          setIsOpen(logSignature);
+          setSignature(logSignature);
         }
         toast.success(`Function invoked successfully`);
         return response;
@@ -143,14 +178,47 @@ function InvokeFunction({ method }: { method: FunctionSpec }) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      <Dialog open={Boolean(isOpen)} onOpenChange={(val) => setIsOpen(val ? isOpen : "")}>
+      <Dialog open={Boolean(sg.name)} onOpenChange={(val) => setSignature(val ? sg : defaultState)}>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Function Signature</DialogTitle>
-          </DialogHeader>
-
+          <DialogDescription className="sr-only">
+            <DialogTitle>Invocation result</DialogTitle>
+          </DialogDescription>
           <div className="">
-            <textarea defaultValue={isOpen} rows={6} className="w-full font-medium text-lg resize-none p-2 text-white bg-black/10" />
+            <p className="text-lg font-bold mb-2">Function Signature</p>
+            <div className="w-full font-medium text-lg resize-none p-2 text-white bg-[rgb(31,31,31)] rounded min-h-16">
+              <div className="flex gap-1">
+                <span className="text-[#569cd6]">function&nbsp;:-&nbsp;</span>
+                <span className="text-[#dcdcaa]">{sg.name}</span>
+              </div>
+              {sg.args.map((arg, index) => (
+                <div className="flex gap-1" key={arg.name}>
+                  <span className="text-[#5c9284]">
+                    <span className="">Input{index + 1}</span>&nbsp;:-&nbsp;
+                  </span>
+                  <span className="text-[#9cdcaa]">{arg.name}:</span>
+                  <span className="text-[#4ec9b0]">{arg.type}</span>
+                  <span className="text-[#d4d4d4]">=</span>
+                  <span className="text-[#ce9178]">{arg.value}</span>
+                </div>
+              ))}
+              <div className="flex gap-1">
+                <span className="text-[#755c92]">Result&nbsp;:-&nbsp;</span>
+                <span className="text-[#c586c0]">return:</span>
+                <span className="text-[#4ec9b0]">{sg.result.type}</span>
+                <span className="text-[#d4d4d4]">=</span>
+                <span className="text-[#ce9178]">{sg.result.value}</span>
+              </div>
+            </div>
+
+            <p className="text-lg font-bold mb-2 mt-3">Logs:</p>
+            <div className="w-full grid gap-1 font-medium text-lg resize-none p-2  bg-[rgb(31,31,31)] rounded min-h-16">
+              {logs.map((log, index) => (
+                <p key={index} className="text-base">
+                  <span className="text-[#947291]">{"->"}&nbsp;</span>
+                  {log}
+                </p>
+              ))}
+            </div>
           </div>
 
           <DialogFooter>
