@@ -17,6 +17,20 @@ import { networkRpc } from "@/lib/web3";
 import { Server } from "@stellar/stellar-sdk/rpc";
 import { Networks, scValToNative } from "@stellar/stellar-sdk";
 
+function createLogSingnature(method: FunctionSpec, args: any, result: any) {
+  const strArgs = method.inputs.map((arg) => {
+    const value = args[arg.name]?.value;
+    return `${arg.name}: ${arg.value.type} = ${value}`;
+  });
+  const output = method.outputs.at(0);
+  const signature = 
+`fn ${method.name} 
+${strArgs.join(", ")}
+result: ${output?.type} = ${result}
+`;
+  return signature;
+}
+
 function InvokeFunction({ method }: { method: FunctionSpec }) {
   const [isOpen, setIsOpen] = useState("");
   const [args, setArgs] = useState<Record<string, { type: string; value: string; subType: string }>>({});
@@ -38,7 +52,7 @@ function InvokeFunction({ method }: { method: FunctionSpec }) {
       const server = new Server(networkRpc[Networks.TESTNET]);
       const argsArray = Object.values(args);
       const data = {
-        contractId: contractAddress || "CBT42OCEG6ECN74FRMI4CBXOAZWXCQNJE2UC3RNNB3VNFIUHULJCP242",
+        contractId: contractAddress!,
         method: method.name,
         args: argsArray,
       };
@@ -63,7 +77,8 @@ function InvokeFunction({ method }: { method: FunctionSpec }) {
         logger.info(`TxId: ${result.hash}`);
         if (response.returnValue) {
           logger.info(`TX Result: ${scValToNative(response.returnValue)}`);
-          setIsOpen(JSON.stringify(response.returnValue, null, 2));
+          const logSignature = createLogSingnature(method, args, scValToNative(response.returnValue));
+          setIsOpen(logSignature);
         }
         toast.success(`Function invoked successfully`);
         return response;
@@ -131,11 +146,11 @@ function InvokeFunction({ method }: { method: FunctionSpec }) {
       <Dialog open={Boolean(isOpen)} onOpenChange={(val) => setIsOpen(val ? isOpen : "")}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Function Returned Value</DialogTitle>
+            <DialogTitle>Function Signature</DialogTitle>
           </DialogHeader>
 
           <div className="">
-            <textarea defaultValue={isOpen} rows={12} className="w-full resize-none p-2 text-white bg-black/10" />
+            <textarea defaultValue={isOpen} rows={6} className="w-full font-medium text-lg resize-none p-2 text-white bg-black/10" />
           </div>
 
           <DialogFooter>
