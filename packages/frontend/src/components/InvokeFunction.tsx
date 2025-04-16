@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useState } from "react";
+import { Fragment, useId, useState } from "react";
 import { store } from "@/state";
 import { useSelector } from "@xstate/store/react";
 import { Button } from "./ui/button";
@@ -16,23 +16,36 @@ import { callContract } from "@/actions";
 import { networkRpc } from "@/lib/web3";
 import { Server } from "@stellar/stellar-sdk/rpc";
 import { Networks, scValToNative, xdr, rpc } from "@stellar/stellar-sdk";
+import { useToast } from "@/hooks/use-toast";
+
+function transformValue(value: any) {
+  const mapped = {
+    string: `"${value}"`,
+    bool: value ? "true" : "false",
+  };
+
+  return mapped;
+}
 
 function createLogSingnature(method: FunctionSpec, args: any, result: any) {
   const mappedArgs = method.inputs.map((arg) => {
     const value = args[arg.name]?.value;
+    const mapped = transformValue(value);
     return {
       name: arg.name,
       type: arg.value.type,
-      value: (arg as any)?.value?.type === "string" ? `"${value}"` : value,
+      value: (mapped as any)[arg.value.type] || value,
     };
   });
   const output = method.outputs.at(0);
+  const mapped = transformValue(result);
   return {
     name: method.name,
     args: mappedArgs,
     result: {
       type: output?.type as any,
-      value: (output as any)?.type === "vec" ? `[${result}]` : result,
+      // @ts-ignore
+      value: mapped[output?.type] || result,
     },
   };
 }
@@ -46,6 +59,7 @@ function InvokeFunction({ method }: { method: FunctionSpec }) {
   const [args, setArgs] = useState<Record<string, { type: string; value: string; subType: string }>>({});
   const contractAddress = useSelector(store, (state) => state.context.contract?.address);
   const [logs, setLogs] = useState<string[]>(["Hello wrold", "Mango World"]);
+  const toastId = useId();
 
   const handleInputChange = (name: string, value: string, type: string, subType: string) => {
     setArgs((prev) => ({
@@ -70,11 +84,11 @@ function InvokeFunction({ method }: { method: FunctionSpec }) {
 
       logger.info("Invoking Contract function...");
       logger.info(JSON.stringify(data, null, 2));
+      toast.loading("Invoking function...", { id: toastId });
 
       const result = await callContract(data);
 
       let response;
-
       while (true) {
         response = await server.getTransaction(result.hash);
         if (response.status !== "NOT_FOUND") {
@@ -115,11 +129,12 @@ function InvokeFunction({ method }: { method: FunctionSpec }) {
           const logSignature = createLogSingnature(method, args, scValToNative(response.returnValue));
           setSignature(logSignature);
         }
-        toast.success(`Function invoked successfully`);
+        toast.success(`Function invoked successfully`, { id: toastId });
         return response;
       } else {
         logger.error("Transaction failed.");
         logger.info(`TxId: ${result.hash}`);
+        toast.error(`Transaction failed`, { id: toastId });
         throw new Error("Transaction failed");
       }
       console.log(result);
@@ -180,9 +195,9 @@ function InvokeFunction({ method }: { method: FunctionSpec }) {
       </Dialog>
       <Dialog open={Boolean(sg.name)} onOpenChange={(val) => setSignature(val ? sg : defaultState)}>
         <DialogContent>
-          <DialogDescription className="sr-only">
+          <DialogHeader className="sr-only">
             <DialogTitle>Invocation result</DialogTitle>
-          </DialogDescription>
+          </DialogHeader>
           <div className="">
             <p className="text-lg font-bold mb-2">Function Signature</p>
             <div className="w-full font-medium text-lg resize-none p-2 text-white bg-[rgb(31,31,31)] rounded min-h-16">
