@@ -1,6 +1,7 @@
 import { BASE_FEE, Contract, Keypair, nativeToScVal, Networks, TransactionBuilder } from "@stellar/stellar-sdk";
 import { networkRpc } from "./web3";
 import { Server } from "@stellar/stellar-sdk/rpc";
+import { isValidJSON } from "./utils";
 
 function buildOperation({
   contractId,
@@ -12,13 +13,25 @@ function buildOperation({
   args: { type: string; value: string; subType: string }[];
 }) {
   const contract = new Contract(contractId);
-  
+
   const scArgs = args.map(({ type, value, subType }) => {
     if (type === "vec") {
-      value = JSON.parse(value).map((x: any) => nativeToScVal(x, { type: subType }));
+      if (!isValidJSON(value) || !Array.isArray(JSON.parse(value))) {
+        throw new Error(`Invalid argument provided "${value}". Please provide a valid array of ${subType}`);
+      }
+      value = JSON.parse(value).map((x: any) => {
+        try {
+          return nativeToScVal(x, { type: subType });
+        } catch (error) {
+          throw new Error(`Invalid argument provided "${x}". Please provide a valid ${subType}`);
+        }
+      });
     }
-
-    return nativeToScVal(value, { type });
+    try {
+      return nativeToScVal(value, { type });
+    } catch (error) {
+      throw new Error(`Invalid argument provided "${value}". Please provide a valid ${type}`);
+    }
   });
   const operation = contract.call(method, ...scArgs);
   return operation;
@@ -39,9 +52,7 @@ export async function invokeContract({
   const sourcePublicKey = sourceKeypair.publicKey();
   await server.requestAirdrop(sourcePublicKey);
   const sourceAccount = await server.getAccount(sourcePublicKey);
-
   const operation = buildOperation({ contractId, method, args });
-
   const transaction = new TransactionBuilder(sourceAccount, {
     fee: BASE_FEE,
     networkPassphrase: Networks.TESTNET,

@@ -1,5 +1,6 @@
 "use server";
 
+import { ActionError } from "@/lib/action-util";
 import { invokeContract } from "@/lib/invoke-contract";
 
 export async function callContract({
@@ -9,8 +10,12 @@ export async function callContract({
 }: {
   method: string;
   contractId: string;
-  args: { type: string; value: string,subType: string }[];
+  args: { type: string; value: string; subType: string }[];
 }) {
-  const result = await invokeContract({ contractId, method, args });
-  return result;
+  try {
+    const result = await invokeContract({ contractId, method, args });
+    return result;
+  } catch (error: any) {
+    return ActionError(error?.message || "Error invoking contract");
+  }
 }

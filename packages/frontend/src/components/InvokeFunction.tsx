@@ -16,6 +16,7 @@ import { callContract } from "@/actions";
 import { networkRpc } from "@/lib/web3";
 import { Server } from "@stellar/stellar-sdk/rpc";
 import { Networks, scValToNative, xdr, rpc } from "@stellar/stellar-sdk";
+import { withError } from "@/lib/action-util";
 
 function transformValue(value: any) {
   const mapped = {
@@ -83,10 +84,10 @@ function InvokeFunction({ method }: { method: FunctionSpec }) {
       };
 
       logger.info("Invoking Contract function...");
-      logger.info(JSON.stringify(data, null, 2));
+      // logger.info(JSON.stringify(data, null, 2));
       toast.loading("Invoking function...", { id: toastId });
 
-      const result = await callContract(data);
+      const result = await withError(callContract(data));
 
       let response;
       while (true) {
@@ -137,10 +138,8 @@ function InvokeFunction({ method }: { method: FunctionSpec }) {
         toast.error(`Transaction failed`, { id: toastId });
         throw new Error("Transaction failed");
       }
-      console.log(result);
     } catch (error: any) {
-      console.error("Error invoking function:", error);
-      toast.error(`Error invoking function: ${error.message}`);
+      toast.error(`Error: ${error.message}`, { id: toastId });
     }
   };
 

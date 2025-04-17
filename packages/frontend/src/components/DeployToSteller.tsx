@@ -93,7 +93,7 @@ function DeployToSteller() {
                 ))}
               </SelectContent>
             </Select>
-            <Input placeholder="Enter your contract name" type="file" onChange={handleContractUpload} />
+            <Input placeholder="Enter your contract name" type="file" onChange={handleContractUpload} accept=".wasm" />
           </div>
           <DialogFooter className="mt-3">
             <DialogTrigger asChild>
