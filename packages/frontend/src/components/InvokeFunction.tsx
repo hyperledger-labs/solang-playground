@@ -17,36 +17,39 @@ import { networkRpc } from "@/lib/web3";
 import { Server } from "@stellar/stellar-sdk/rpc";
 import { Networks, scValToNative, xdr, rpc } from "@stellar/stellar-sdk";
 import { withError } from "@/lib/action-util";
+import Spinner from "./Spinner";
 
-function transformValue(value: any) {
-  const mapped = {
-    string: `"${value}"`,
-    bool: value ? "true" : "false",
-    vec: typeof value === "string" ? value : JSON.stringify(value),
-  };
-
-  return mapped;
+function transformValue(type: string, value: any) {
+  switch (type) {
+    case "string":
+      return `"${value}"`;
+    case "bool":
+      return value ? "true" : "false";
+    case "vec":
+      return typeof value === "string" ? value : JSON.stringify(value);
+    default:
+      return value;
+  }
 }
 
 function createLogSingnature(method: FunctionSpec, args: any, result: any) {
   const mappedArgs = method.inputs.map((arg) => {
     const value = args[arg.name]?.value;
-    const mapped = transformValue(value);
+    const val = transformValue(arg.value.type, value);
     return {
       name: arg.name,
       type: arg.value.type,
-      value: (mapped as any)[arg.value.type] || value,
+      value: val,
     };
   });
   const output = method.outputs.at(0);
-  const mapped = transformValue(result);
+  const val = transformValue(output?.type as any, result);
   return {
     name: method.name,
     args: mappedArgs,
     result: {
       type: output?.type as any,
-      // @ts-ignore
-      value: mapped[output?.type] || result,
+      value: val,
     },
   };
 }
@@ -61,6 +64,7 @@ function InvokeFunction({ method }: { method: FunctionSpec }) {
   const contractAddress = useSelector(store, (state) => state.context.contract?.address);
   const [logs, setLogs] = useState<string[]>(["Hello wrold", "Mango World"]);
   const toastId = useId();
+  const [block, setBlock] = useState(false);
 
   const handleInputChange = (name: string, value: string, type: string, subType: string) => {
     setArgs((prev) => ({
@@ -84,7 +88,8 @@ function InvokeFunction({ method }: { method: FunctionSpec }) {
       };
 
       logger.info("Invoking Contract function...");
-      // logger.info(JSON.stringify(data, null, 2));
+      setBlock(true);
+      logger.info(JSON.stringify(data, null, 2));
       toast.loading("Invoking function...", { id: toastId });
 
       const result = await withError(callContract(data));
@@ -128,6 +133,7 @@ function InvokeFunction({ method }: { method: FunctionSpec }) {
         if (response.returnValue) {
           logger.info(`TX Result: ${scValToNative(response.returnValue)}`);
           const logSignature = createLogSingnature(method, args, scValToNative(response.returnValue));
+          setBlock(false);
           setSignature(logSignature);
         }
         toast.success(`Function invoked successfully`, { id: toastId });
@@ -141,10 +147,22 @@ function InvokeFunction({ method }: { method: FunctionSpec }) {
     } catch (error: any) {
       toast.error(`Error: ${error.message}`, { id: toastId });
     }
+
+    setBlock(false);
   };
 
   return (
     <Fragment>
+      <Dialog open={block}>
+        <DialogContent className="w-max bg-transparent border-none shadow-none" icon={false}>
+          <DialogHeader className="sr-only">
+            <DialogTitle>Invoking Function</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <Spinner />
+          </div>
+        </DialogContent>
+      </Dialog>
       <Dialog>
         <DialogTrigger asChild>
           <Button variant="outline" key={method.name} className="w-full text-left justify-start items-center">

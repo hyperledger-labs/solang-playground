@@ -35,6 +35,7 @@ type ValueType =
   | { type: "custom"; name: string };
 
 export interface Contract {
-  address?: string;
+  address: string | null;
   methods: IDL;
+  invoking: boolean;
 }

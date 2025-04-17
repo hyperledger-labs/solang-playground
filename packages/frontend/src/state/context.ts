@@ -33,7 +33,11 @@ export const context = {
       },
     },
   } satisfies FolderType,
-  contract: null as null | Contract,
+  contract: {
+    invoking: false,
+    address: null,
+    methods: [],
+  }  as Contract,
 };
 
 export type Context = typeof context;
