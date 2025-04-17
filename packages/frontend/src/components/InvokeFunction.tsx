@@ -16,12 +16,12 @@ import { callContract } from "@/actions";
 import { networkRpc } from "@/lib/web3";
 import { Server } from "@stellar/stellar-sdk/rpc";
 import { Networks, scValToNative, xdr, rpc } from "@stellar/stellar-sdk";
-import { useToast } from "@/hooks/use-toast";
 
 function transformValue(value: any) {
   const mapped = {
     string: `"${value}"`,
     bool: value ? "true" : "false",
+    vec: typeof value === "string" ? value : JSON.stringify(value),
   };
 
   return mapped;
