@@ -36,10 +36,10 @@ function DeployToSteller() {
     setOpen(false);
     toast.loading("Deploying contract...", { id: toastId });
     const idl = await generateIdl(contract);
-    store.send({ type: "setContractIdl", idl });
+    store.send({ type: "updateContract", methods: idl });
     const contractAddress = await deployStellerContract(contract, keypair, network);
     toast.success("Contract deployed successfully", { id: toastId });
-    contractAddress && store.send({ type: "setContractAddress", address: contractAddress });
+    contractAddress && store.send({ type: "updateContract", address: contractAddress });
   }
 
   async function handleContractUpload(event: ChangeEvent<HTMLInputElement>) {
@@ -93,7 +93,7 @@ function DeployToSteller() {
                 ))}
               </SelectContent>
             </Select>
-            <Input placeholder="Enter your contract name" type="file" onChange={handleContractUpload} />
+            <Input placeholder="Enter your contract name" type="file" onChange={handleContractUpload} accept=".wasm" />
           </div>
           <DialogFooter className="mt-3">
             <DialogTrigger asChild>
